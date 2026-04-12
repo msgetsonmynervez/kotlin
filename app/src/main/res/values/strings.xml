@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MeetSterling</string>
+    <string name="notification_channel_studio">Studio Playback</string>
+    <string name="notification_channel_studio_desc">Controls music playback in Sterling Studio</string>
+</resources>

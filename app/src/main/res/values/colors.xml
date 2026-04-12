@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Used only for pre-Compose window chrome; Compose theme is authoritative for all UI. -->
+    <color name="window_background">#F7F1E3</color>
+</resources>
