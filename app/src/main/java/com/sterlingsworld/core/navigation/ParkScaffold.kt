@@ -33,7 +33,7 @@ import com.sterlingsworld.feature.arcade.ArcadeScreen
 import com.sterlingsworld.feature.cinema.CinemaScreen
 import com.sterlingsworld.feature.kidz.KidzScreen
 import com.sterlingsworld.feature.map.MapScreen
-import com.sterlingsworld.feature.studio.StudioScreen
+import com.sterlingsworld.feature.studio.MusicLandScreen
 
 private data class ParkTab(
     val label: String,
@@ -117,7 +117,7 @@ fun ParkScaffold(
                 CinemaScreen()
             }
             composable(Screen.Studio.route) {
-                StudioScreen()
+                MusicLandScreen()
             }
             composable(Screen.Kidz.route) {
                 KidzScreen(
