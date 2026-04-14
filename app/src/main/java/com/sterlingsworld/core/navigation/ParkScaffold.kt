@@ -114,9 +114,7 @@ fun ParkScaffold(
                 ArcadeScreen()
             }
             composable(Screen.Cinema.route) {
-                CinemaScreen(onVideoSelected = { videoId ->
-                    onNavigateToVideo(videoId, "cinema")
-                })
+                CinemaScreen()
             }
             composable(Screen.Studio.route) {
                 StudioScreen()
