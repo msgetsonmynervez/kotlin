@@ -48,7 +48,7 @@ fun CompletionScreen(
             modifier = Modifier.weight(1f),
         ) {
             Text(
-                text = "Well done!",
+                text = "Run complete",
                 style = MaterialTheme.typography.displayLarge,
                 color = TextPrimary,
                 textAlign = TextAlign.Center,
@@ -60,7 +60,7 @@ fun CompletionScreen(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = "Sterling says: Gentle wins are still wins.",
+                text = "Sterling says: Take what you need from this round.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = TextMuted,
                 textAlign = TextAlign.Center,

@@ -59,7 +59,6 @@ private fun VideoCard(video: Video, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column {
-            // Thumbnail placeholder — Phase 3 will wire ExoPlayer thumbnails
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

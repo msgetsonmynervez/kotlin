@@ -9,6 +9,8 @@ import com.sterlingsworld.domain.model.GameZone
 
 object GameCatalog {
 
+    private val shipReadyGameIds = setOf("lucky-paws", "ghost", "cognitive-creamery", "symptom-striker")
+
     val all: List<GameDefinition> = listOf(
         GameDefinition(
             id = "cognitive-creamery",
@@ -79,6 +81,20 @@ object GameCatalog {
             estimatedDurationSec = 75,
             partyEligible = true,
             accentLabel = "Rewards",
+        ),
+        GameDefinition(
+            id = "ghost",
+            title = "Ghost",
+            section = GameSection.GAMES,
+            zone = GameZone.ARCADE,
+            suite = GameSuite.NARRATIVE,
+            description = "A retro-terminal ghost story told through short code-choice rescue puzzles.",
+            objective = "Clear the system errors, choose the right fix, and guide Sterling through the haunted clinic run.",
+            gameTypes = listOf(GameType.STORY, GameType.PUZZLE, GameType.STRATEGY),
+            difficulty = GameDifficulty.STANDARD,
+            estimatedDurationSec = 90,
+            partyEligible = false,
+            accentLabel = "Terminal",
         ),
         GameDefinition(
             id = "aol",
@@ -156,4 +172,6 @@ object GameCatalog {
     fun byId(id: String): GameDefinition? = all.firstOrNull { it.id == id }
 
     fun bySection(section: GameSection): List<GameDefinition> = all.filter { it.section == section }
+
+    fun isShipReady(gameId: String): Boolean = gameId in shipReadyGameIds
 }

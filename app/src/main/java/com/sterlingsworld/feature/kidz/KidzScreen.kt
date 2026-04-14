@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.sterlingsworld.core.ui.theme.Accent
 import com.sterlingsworld.core.ui.theme.Background
@@ -29,6 +30,7 @@ import com.sterlingsworld.core.ui.theme.Secondary
 import com.sterlingsworld.core.ui.theme.Surface
 import com.sterlingsworld.core.ui.theme.TextMuted
 import com.sterlingsworld.core.ui.theme.TextPrimary
+import com.sterlingsworld.data.catalog.GameCatalog
 import com.sterlingsworld.data.catalog.KidzCatalog
 import com.sterlingsworld.domain.model.KidzActivity
 
@@ -47,8 +49,13 @@ fun KidzScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(activities, key = { it.id }) { activity ->
+            val isEnabled = when (activity) {
+                is KidzActivity.KidzGame -> GameCatalog.isShipReady(activity.gameId)
+                is KidzActivity.KidzVideo -> true
+            }
             KidzActivityCard(
                 activity = activity,
+                isEnabled = isEnabled,
                 onClick = {
                     when (activity) {
                         is KidzActivity.KidzGame -> onGameSelected(activity.gameId)
@@ -61,11 +68,12 @@ fun KidzScreen(
 }
 
 @Composable
-private fun KidzActivityCard(activity: KidzActivity, onClick: () -> Unit) {
+private fun KidzActivityCard(activity: KidzActivity, isEnabled: Boolean, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .alpha(if (isEnabled) 1f else 0.65f)
+            .clickable(enabled = isEnabled, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -85,7 +93,8 @@ private fun KidzActivityCard(activity: KidzActivity, onClick: () -> Unit) {
                     color = TextPrimary,
                 )
                 val subtitle = when (activity) {
-                    is KidzActivity.KidzGame -> "Game"
+                    is KidzActivity.KidzGame ->
+                        if (isEnabled) "Game" else "Not in the current playable build"
                     is KidzActivity.KidzVideo -> "Video"
                 }
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
@@ -95,11 +104,11 @@ private fun KidzActivityCard(activity: KidzActivity, onClick: () -> Unit) {
                 is KidzActivity.KidzVideo -> Secondary.copy(alpha = 0.2f)
             }
             val chipLabel = when (activity) {
-                is KidzActivity.KidzGame -> "Play"
+                is KidzActivity.KidzGame -> if (isEnabled) "Play" else "Unavailable"
                 is KidzActivity.KidzVideo -> "Watch"
             }
             SuggestionChip(
-                onClick = onClick,
+                onClick = { if (isEnabled) onClick() },
                 label = { Text(chipLabel, style = MaterialTheme.typography.labelMedium) },
                 colors = SuggestionChipDefaults.suggestionChipColors(
                     containerColor = chipColor,

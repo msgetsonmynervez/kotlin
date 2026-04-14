@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.sterlingsworld.core.ui.theme.Accent
 import com.sterlingsworld.core.ui.theme.Background
@@ -44,7 +45,11 @@ fun ArcadeScreen(onGameSelected: (gameId: String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(games, key = { it.id }) { game ->
-            GameCard(game = game, onClick = { onGameSelected(game.id) })
+            GameCard(
+                game = game,
+                isEnabled = GameCatalog.isShipReady(game.id),
+                onClick = { onGameSelected(game.id) },
+            )
         }
     }
 }
@@ -52,13 +57,15 @@ fun ArcadeScreen(onGameSelected: (gameId: String) -> Unit) {
 @Composable
 fun GameCard(
     game: GameDefinition,
+    isEnabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .alpha(if (isEnabled) 1f else 0.65f)
+            .clickable(enabled = isEnabled, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -81,7 +88,7 @@ fun GameCard(
                     onClick = {},
                     label = {
                         Text(
-                            text = game.accentLabel,
+                            text = if (isEnabled) game.accentLabel else "Unavailable",
                             style = MaterialTheme.typography.labelMedium,
                         )
                     },
@@ -97,7 +104,11 @@ fun GameCard(
                 color = TextMuted,
             )
             Text(
-                text = "~${game.estimatedDurationSec / 60} min  ·  ${game.difficulty.name.lowercase().replace('_', ' ')}",
+                text = if (isEnabled) {
+                    "~${game.estimatedDurationSec / 60} min - ${game.difficulty.name.lowercase().replace('_', ' ')}"
+                } else {
+                    "Not in the current playable build"
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = TextMuted,
             )
