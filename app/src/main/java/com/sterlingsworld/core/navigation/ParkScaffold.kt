@@ -111,7 +111,7 @@ fun ParkScaffold(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Screen.Arcade.route) {
-                ArcadeScreen(onGameSelected = onNavigateToGame)
+                ArcadeScreen()
             }
             composable(Screen.Cinema.route) {
                 CinemaScreen(onVideoSelected = { videoId ->
