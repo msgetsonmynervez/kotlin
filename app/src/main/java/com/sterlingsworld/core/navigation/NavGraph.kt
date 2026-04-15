@@ -16,6 +16,7 @@ import com.sterlingsworld.feature.game.shell.GameShellScreen
 import com.sterlingsworld.feature.kidz.KidzGameshellScreen
 import com.sterlingsworld.feature.kidz.KidzGamesScreen
 import com.sterlingsworld.feature.kidz.StorybookLandScreen
+import com.sterlingsworld.feature.kidzarcade.KidzArcadeMenuScreen
 import com.sterlingsworld.feature.kidzcinema.KidzCinemaScreen
 import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
 import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
@@ -160,8 +161,16 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.KidzGames.route) {
-            KidzGamesScreen(
-                onGameSelected = { route -> navController.navigate(route) },
+            val kidzGameRoutes = listOf(
+                Screen.LumiStarQuest.route,
+                Screen.Doodle.route,
+                Screen.Linebreaker.route,
+                Screen.Nostalgia.route,
+            )
+            KidzArcadeMenuScreen(
+                onMenuItemClick = { index ->
+                    kidzGameRoutes.getOrNull(index)?.let { navController.navigate(it) }
+                },
             )
         }
 
