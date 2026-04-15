@@ -161,6 +161,12 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.KidzGames.route) {
+            KidzGamesScreen(
+                onGameSelected = { route -> navController.navigate(route) },
+            )
+        }
+
+        composable(Screen.KidzArcadeMenu.route) {
             val kidzGameRoutes = listOf(
                 Screen.LumiStarQuest.route,
                 Screen.Doodle.route,
