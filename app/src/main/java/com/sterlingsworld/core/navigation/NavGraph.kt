@@ -7,14 +7,23 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.sterlingsworld.feature.arcade.ArcadeScreen
-import com.sterlingsworld.feature.cinema.CinemaScreen
+import com.sterlingsworld.feature.arcade.GrandArcadeIndoorScreen
+import com.sterlingsworld.feature.creamery.CreameryScreen
+import com.sterlingsworld.feature.doodle.DoodleScreen
+import com.sterlingsworld.feature.error.TechnicalDifficultiesScreen
 import com.sterlingsworld.feature.game.completion.CompletionScreen
 import com.sterlingsworld.feature.game.shell.GameShellScreen
-import com.sterlingsworld.feature.kidz.KidzScreen
-import com.sterlingsworld.feature.map.MapScreen
+import com.sterlingsworld.feature.kidz.KidzGameshellScreen
+import com.sterlingsworld.feature.kidz.KidzGamesScreen
+import com.sterlingsworld.feature.kidz.StorybookLandScreen
+import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
+import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
+import com.sterlingsworld.feature.lumistarquest.LumisStarQuestScreen
+import com.sterlingsworld.feature.nostalgia.NostalgiaScreen
+import com.sterlingsworld.feature.relaxationretreat.RelaxationRetreatScreen
 import com.sterlingsworld.feature.settings.SettingsScreen
-import com.sterlingsworld.feature.studio.StudioScreen
+import com.sterlingsworld.feature.spoongauntlet.GauntletScreen
+import com.sterlingsworld.feature.symptomstriker.SymptomStrikerScreen
 import com.sterlingsworld.feature.video.VideoPlayerScreen
 import com.sterlingsworld.feature.welcome.WelcomeScreen
 
@@ -47,6 +56,12 @@ fun MeetSterlingNavGraph(
                 onNavigateToVideo = { videoId, source ->
                     navController.navigate(Screen.VideoPlayer.withId(videoId, source))
                 },
+                onNavigateToGrandArcade = {
+                    navController.navigate(Screen.GrandArcadeIndoor.route)
+                },
+                onNavigateToKidzHub = {
+                    navController.navigate(Screen.KidzHub.route)
+                },
             )
         }
 
@@ -64,7 +79,7 @@ fun MeetSterlingNavGraph(
             GameShellScreen(
                 gameId = gameId,
                 onExit = { navController.popBackStack() },
-                onComplete = { result ->
+                onComplete = { _ ->
                     navController.navigate(Screen.Completion.withId(gameId)) {
                         popUpTo(Screen.GamePlayer.route) { inclusive = true }
                     }
@@ -106,6 +121,72 @@ fun MeetSterlingNavGraph(
                     }
                 },
             )
+        }
+
+        // ── Arcade sub-screens ────────────────────────────────────────────────
+        composable(Screen.GrandArcadeIndoor.route) {
+            GrandArcadeIndoorScreen(
+                onGameSelected = { route -> navController.navigate(route) },
+            )
+        }
+
+        composable(Screen.LuckyPaws.route) {
+            LuckyPawsScreen()
+        }
+
+        composable(Screen.Gauntlet.route) {
+            GauntletScreen()
+        }
+
+        composable(Screen.SymptomStriker.route) {
+            SymptomStrikerScreen()
+        }
+
+        composable(Screen.Creamery.route) {
+            CreameryScreen()
+        }
+
+        composable(Screen.RelaxationRetreat.route) {
+            RelaxationRetreatScreen()
+        }
+
+        // ── Kidz sub-screens ─────────────────────────────────────────────────
+        composable(Screen.KidzHub.route) {
+            KidzGameshellScreen(
+                onGamesLand = { navController.navigate(Screen.KidzGames.route) },
+                onStorybookLand = { navController.navigate(Screen.StorybookLand.route) },
+            )
+        }
+
+        composable(Screen.KidzGames.route) {
+            KidzGamesScreen(
+                onGameSelected = { route -> navController.navigate(route) },
+            )
+        }
+
+        composable(Screen.StorybookLand.route) {
+            StorybookLandScreen()
+        }
+
+        composable(Screen.Doodle.route) {
+            DoodleScreen()
+        }
+
+        composable(Screen.Linebreaker.route) {
+            LinebreakerScreen()
+        }
+
+        composable(Screen.LumiStarQuest.route) {
+            LumisStarQuestScreen()
+        }
+
+        composable(Screen.Nostalgia.route) {
+            NostalgiaScreen()
+        }
+
+        // ── Global ────────────────────────────────────────────────────────────
+        composable(Screen.TechnicalDifficulties.route) {
+            TechnicalDifficultiesScreen()
         }
     }
 }
