@@ -55,6 +55,8 @@ fun ParkScaffold(
     onNavigateToSettings: () -> Unit,
     onNavigateToGame: (gameId: String) -> Unit,
     onNavigateToVideo: (videoId: String, source: String) -> Unit,
+    onNavigateToGrandArcade: () -> Unit = {},
+    onNavigateToKidzHub: () -> Unit = {},
 ) {
     val tabNavController = rememberNavController()
     val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
@@ -111,7 +113,7 @@ fun ParkScaffold(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Screen.Arcade.route) {
-                ArcadeScreen()
+                ArcadeScreen(onEnterArcade = onNavigateToGrandArcade)
             }
             composable(Screen.Cinema.route) {
                 CinemaScreen()
@@ -125,6 +127,7 @@ fun ParkScaffold(
                     onVideoSelected = { videoId ->
                         onNavigateToVideo(videoId, "kidz")
                     },
+                    onEnterKidz = onNavigateToKidzHub,
                 )
             }
             composable(Screen.Map.route) {
