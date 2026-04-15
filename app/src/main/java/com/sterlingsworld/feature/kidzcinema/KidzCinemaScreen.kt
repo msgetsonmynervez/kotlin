@@ -22,7 +22,6 @@ import com.sterlingsworld.core.ui.components.DashedCornerButton
 fun KidzCinemaScreen(
     videoId: String = "kids-video-01",
     onPlayVideo: () -> Unit = {},
-    onNavigate: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -50,11 +49,11 @@ fun KidzCinemaScreen(
         )
 
         ActionButton(
-            label = "Label",
+            label = "Back to Stories",
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 140.dp),
-            onClick = onNavigate,
+            onClick = onBack,
         )
     }
 }

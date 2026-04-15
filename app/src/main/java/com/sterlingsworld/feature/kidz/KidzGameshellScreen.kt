@@ -57,7 +57,7 @@ fun KidzGameshellScreen(
                         .background(Color.DarkGray.copy(alpha = 0.85f))
                         .padding(horizontal = 32.dp, vertical = 12.dp),
                 ) {
-                    Text("Label", color = Color.White)
+                    Text("Enter →", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
             // Right Side — Storybook Land
@@ -80,7 +80,7 @@ fun KidzGameshellScreen(
                         .background(Color.DarkGray.copy(alpha = 0.85f))
                         .padding(horizontal = 32.dp, vertical = 12.dp),
                 ) {
-                    Text("Label", color = Color.White)
+                    Text("Enter →", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }

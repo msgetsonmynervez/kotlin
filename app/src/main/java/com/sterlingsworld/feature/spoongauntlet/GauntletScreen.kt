@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.spoongauntlet
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
 
 @Composable
-fun GauntletScreen() {
+fun GauntletScreen(onPlay: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_spoon_gauntlet),
@@ -41,9 +42,10 @@ fun GauntletScreen() {
                     .padding(bottom = 120.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(Color(0xD92D2D2D))
+                    .clickable { onPlay() }
                     .padding(horizontal = 60.dp, vertical = 16.dp),
             ) {
-                Text("Label", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Play", color = Color.White, fontWeight = FontWeight.Bold)
             }
             Column(
                 modifier = Modifier

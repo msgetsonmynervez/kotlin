@@ -46,6 +46,9 @@ sealed class Screen(val route: String) {
     object LumiStarQuest      : Screen("lumi_star_quest")
     object Nostalgia          : Screen("nostalgia")
 
+    // Studio sub-screen
+    object StudioPlayer : Screen("studio_player")
+
     // Global
     object TechnicalDifficulties : Screen("technical_difficulties")
 }

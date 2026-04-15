@@ -26,6 +26,7 @@ import com.sterlingsworld.feature.relaxationretreat.RelaxationRetreatScreen
 import com.sterlingsworld.feature.settings.SettingsScreen
 import com.sterlingsworld.feature.spoongauntlet.GauntletScreen
 import com.sterlingsworld.feature.symptomstriker.SymptomStrikerScreen
+import com.sterlingsworld.feature.studio.StudioScreen
 import com.sterlingsworld.feature.video.VideoPlayerScreen
 import com.sterlingsworld.feature.welcome.WelcomeScreen
 
@@ -63,6 +64,9 @@ fun MeetSterlingNavGraph(
                 },
                 onNavigateToKidzHub = {
                     navController.navigate(Screen.KidzHub.route)
+                },
+                onNavigateToStudio = {
+                    navController.navigate(Screen.StudioPlayer.route)
                 },
             )
         }
@@ -134,23 +138,23 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.LuckyPaws.route) {
-            LuckyPawsScreen()
+            LuckyPawsScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("lucky-paws")) })
         }
 
         composable(Screen.Gauntlet.route) {
-            GauntletScreen()
+            GauntletScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("spoon-gauntlet")) })
         }
 
         composable(Screen.SymptomStriker.route) {
-            SymptomStrikerScreen()
+            SymptomStrikerScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("symptom-striker")) })
         }
 
         composable(Screen.Creamery.route) {
-            CreameryScreen()
+            CreameryScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("cognitive-creamery")) })
         }
 
         composable(Screen.RelaxationRetreat.route) {
-            RelaxationRetreatScreen()
+            RelaxationRetreatScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("relaxation-retreat")) })
         }
 
         // ── Kidz sub-screens ─────────────────────────────────────────────────
@@ -206,11 +210,11 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.Doodle.route) {
-            DoodleScreen()
+            DoodleScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("kidz-doodle-land")) })
         }
 
         composable(Screen.Linebreaker.route) {
-            LinebreakerScreen()
+            LinebreakerScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("kidz-linebreaker")) })
         }
 
         composable(Screen.LumiStarQuest.route) {
@@ -219,6 +223,11 @@ fun MeetSterlingNavGraph(
 
         composable(Screen.Nostalgia.route) {
             NostalgiaScreen()
+        }
+
+        // ── Studio sub-screen ─────────────────────────────────────────────────
+        composable(Screen.StudioPlayer.route) {
+            StudioScreen()
         }
 
         // ── Global ────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.relaxationretreat
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
 
 @Composable
-fun RelaxationRetreatScreen() {
+fun RelaxationRetreatScreen(onPlay: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_relaxation_retreat),
@@ -41,9 +42,10 @@ fun RelaxationRetreatScreen() {
                     .padding(bottom = 110.dp)
                     .clip(RoundedCornerShape(30.dp))
                     .background(Color(0xD937474F))
+                    .clickable { onPlay() }
                     .padding(horizontal = 64.dp, vertical = 18.dp),
             ) {
-                Text("Label", color = Color.White, fontSize = 20.sp)
+                Text("Play", color = Color.White, fontSize = 20.sp)
             }
             Column(
                 modifier = Modifier

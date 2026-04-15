@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.linebreaker
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
 
 @Composable
-fun LinebreakerScreen() {
+fun LinebreakerScreen(onPlay: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_linebreaker),
@@ -43,9 +44,10 @@ fun LinebreakerScreen() {
                     .padding(bottom = 24.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(Color.Black.copy(alpha = 0.8f))
+                    .clickable { onPlay() }
                     .padding(horizontal = 50.dp, vertical = 14.dp),
             ) {
-                Text("Label", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Play", color = Color.White, fontWeight = FontWeight.Bold)
             }
             Row(
                 modifier = Modifier

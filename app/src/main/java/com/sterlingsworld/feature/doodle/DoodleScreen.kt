@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.doodle
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
 
 @Composable
-fun DoodleScreen() {
+fun DoodleScreen(onPlay: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_doodle_land),
@@ -41,9 +42,10 @@ fun DoodleScreen() {
                     .padding(bottom = 24.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color(0xD92D2D2D))
+                    .clickable { onPlay() }
                     .padding(horizontal = 64.dp, vertical = 14.dp),
             ) {
-                Text("Label", color = Color.White, fontWeight = FontWeight.SemiBold)
+                Text("Play", color = Color.White, fontWeight = FontWeight.SemiBold)
             }
             Column(
                 modifier = Modifier
