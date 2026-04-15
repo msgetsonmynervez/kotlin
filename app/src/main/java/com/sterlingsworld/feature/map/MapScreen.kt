@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.map
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
+import com.sterlingsworld.core.navigation.Screen
 
 @Composable
 fun MapScreen(onNavigateToZone: (route: String) -> Unit = {}) {
@@ -34,9 +36,10 @@ fun MapScreen(onNavigateToZone: (route: String) -> Unit = {}) {
                 .padding(start = 24.dp, bottom = 40.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color(0xD92D2D2D))
-                .padding(horizontal = 48.dp, vertical = 20.dp),
+                .padding(horizontal = 48.dp, vertical = 20.dp)
+                .clickable { onNavigateToZone(Screen.Studio.route) },
         ) {
-            Text("Label", color = Color.White, fontSize = 22.sp)
+            Text("Music Land", color = Color.White, fontSize = 22.sp)
         }
         // Movie Land — right center
         Box(
@@ -45,9 +48,10 @@ fun MapScreen(onNavigateToZone: (route: String) -> Unit = {}) {
                 .padding(end = 24.dp, bottom = 80.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color(0xD92D2D2D))
-                .padding(horizontal = 48.dp, vertical = 20.dp),
+                .padding(horizontal = 48.dp, vertical = 20.dp)
+                .clickable { onNavigateToZone(Screen.Cinema.route) },
         ) {
-            Text("Label", color = Color.White, fontSize = 22.sp)
+            Text("Movie Land", color = Color.White, fontSize = 22.sp)
         }
         // Games Land — bottom left
         Box(
@@ -56,9 +60,10 @@ fun MapScreen(onNavigateToZone: (route: String) -> Unit = {}) {
                 .padding(start = 24.dp, bottom = 120.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color(0xD92D2D2D))
-                .padding(horizontal = 48.dp, vertical = 20.dp),
+                .padding(horizontal = 48.dp, vertical = 20.dp)
+                .clickable { onNavigateToZone(Screen.Arcade.route) },
         ) {
-            Text("Label", color = Color.White, fontSize = 22.sp)
+            Text("Games Land", color = Color.White, fontSize = 22.sp)
         }
         // Kid Zone — bottom right
         Box(
@@ -67,9 +72,10 @@ fun MapScreen(onNavigateToZone: (route: String) -> Unit = {}) {
                 .padding(end = 40.dp, bottom = 160.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color(0xD92D2D2D))
-                .padding(horizontal = 48.dp, vertical = 20.dp),
+                .padding(horizontal = 48.dp, vertical = 20.dp)
+                .clickable { onNavigateToZone(Screen.Kidz.route) },
         ) {
-            Text("Label", color = Color.White, fontSize = 22.sp)
+            Text("Kid Zone", color = Color.White, fontSize = 22.sp)
         }
     }
 }
