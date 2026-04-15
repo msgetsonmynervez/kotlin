@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.kidz
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import com.sterlingsworld.R
 fun KidzScreen(
     onGameSelected: (gameId: String) -> Unit = {},
     onVideoSelected: (videoId: String) -> Unit = {},
+    onEnterKidz: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -36,9 +38,10 @@ fun KidzScreen(
                 .padding(bottom = 32.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color(0xD91B2631))
-                .padding(horizontal = 60.dp, vertical = 16.dp),
+                .padding(horizontal = 60.dp, vertical = 16.dp)
+                .clickable { onEnterKidz() },
         ) {
-            Text("Label", color = Color.White, fontSize = 18.sp)
+            Text("Enter", color = Color.White, fontSize = 18.sp)
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.sterlingsworld.feature.arcade
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +22,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.background
 import com.sterlingsworld.R
 import com.sterlingsworld.core.ui.components.DashedCornerButton
 
+private val arcadeGames = listOf(
+    "Lucky Paws"         to "lucky_paws",
+    "Gauntlet"           to "gauntlet",
+    "Symptom Striker"    to "symptom_striker",
+    "Creamery"           to "creamery",
+    "Relaxation Retreat" to "relaxation_retreat",
+)
+
 @Composable
-fun GrandArcadeIndoorScreen() {
+fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_grand_arcade_indoor),
@@ -42,17 +51,18 @@ fun GrandArcadeIndoorScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            repeat(5) {
+            arcadeGames.forEach { (label, route) ->
                 Box(
                     modifier = Modifier
                         .width(280.dp)
                         .height(50.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .border(2.dp, Color(0xFF4285F4).copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                        .background(Color(0xFF4285F4).copy(alpha = 0.15f)),
+                        .background(Color(0xFF4285F4).copy(alpha = 0.15f))
+                        .clickable { onGameSelected(route) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Label", color = Color(0xFF00CCFF), fontSize = 18.sp)
+                    Text(label, color = Color(0xFF00CCFF), fontSize = 18.sp)
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.kidz
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,10 @@ import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
 
 @Composable
-fun KidzGameshellScreen() {
+fun KidzGameshellScreen(
+    onGamesLand: () -> Unit = {},
+    onStorybookLand: () -> Unit = {},
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_kidz_gameshell),
@@ -34,7 +38,7 @@ fun KidzGameshellScreen() {
         )
         Row(modifier = Modifier.fillMaxSize()) {
             // Left Side — Games Land
-            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().clickable { onGamesLand() }) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -57,7 +61,7 @@ fun KidzGameshellScreen() {
                 }
             }
             // Right Side — Storybook Land
-            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            Box(modifier = Modifier.weight(1f).fillMaxHeight().clickable { onStorybookLand() }) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

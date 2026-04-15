@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.arcade
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.sterlingsworld.R
 
 @Composable
-fun ArcadeScreen() {
+fun ArcadeScreen(onEnterArcade: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_grand_arcadie),
@@ -33,9 +34,10 @@ fun ArcadeScreen() {
                 .padding(bottom = 32.dp)
                 .clip(RoundedCornerShape(50))
                 .background(Color(0xCC2B3245))
-                .padding(horizontal = 48.dp, vertical = 14.dp),
+                .padding(horizontal = 48.dp, vertical = 14.dp)
+                .clickable { onEnterArcade() },
         ) {
-            Text("Label", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Enter", color = Color.White, fontWeight = FontWeight.Bold)
         }
     }
 }
