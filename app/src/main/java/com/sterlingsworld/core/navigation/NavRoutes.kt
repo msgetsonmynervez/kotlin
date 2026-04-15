@@ -24,4 +24,24 @@ sealed class Screen(val route: String) {
     object Studio : Screen("studio")
     object Kidz   : Screen("kidz")
     object Map    : Screen("map")
+
+    // Arcade sub-screens
+    object GrandArcadeIndoor  : Screen("grand_arcade_indoor")
+    object LuckyPaws          : Screen("lucky_paws")
+    object Gauntlet           : Screen("gauntlet")
+    object SymptomStriker     : Screen("symptom_striker")
+    object Creamery           : Screen("creamery")
+    object RelaxationRetreat  : Screen("relaxation_retreat")
+
+    // Kidz sub-screens
+    object KidzHub            : Screen("kidz_hub")
+    object KidzGames          : Screen("kidz_games")
+    object StorybookLand      : Screen("storybook_land")
+    object Doodle             : Screen("doodle")
+    object Linebreaker        : Screen("linebreaker")
+    object LumiStarQuest      : Screen("lumi_star_quest")
+    object Nostalgia          : Screen("nostalgia")
+
+    // Global
+    object TechnicalDifficulties : Screen("technical_difficulties")
 }
