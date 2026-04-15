@@ -16,6 +16,7 @@ import com.sterlingsworld.feature.game.shell.GameShellScreen
 import com.sterlingsworld.feature.kidz.KidzGameshellScreen
 import com.sterlingsworld.feature.kidz.KidzGamesScreen
 import com.sterlingsworld.feature.kidz.StorybookLandScreen
+import com.sterlingsworld.feature.kidzcinema.KidzCinemaScreen
 import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
 import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
 import com.sterlingsworld.feature.lumistarquest.LumisStarQuestScreen
@@ -166,6 +167,14 @@ fun MeetSterlingNavGraph(
 
         composable(Screen.StorybookLand.route) {
             StorybookLandScreen()
+        }
+
+        composable(Screen.KidzCinema.route) {
+            KidzCinemaScreen(
+                onPlayVideo = {
+                    navController.navigate(Screen.VideoPlayer.withId("kids-video-01", "kidz"))
+                },
+            )
         }
 
         composable(Screen.Doodle.route) {

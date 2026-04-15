@@ -36,6 +36,7 @@ sealed class Screen(val route: String) {
     // Kidz sub-screens
     object KidzHub            : Screen("kidz_hub")
     object KidzGames          : Screen("kidz_games")
+    object KidzCinema         : Screen("kidz_cinema")
     object StorybookLand      : Screen("storybook_land")
     object Doodle             : Screen("doodle")
     object Linebreaker        : Screen("linebreaker")
