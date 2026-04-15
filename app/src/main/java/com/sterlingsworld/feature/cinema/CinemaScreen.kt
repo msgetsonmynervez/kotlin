@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.cinema
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,7 @@ import com.sterlingsworld.R
 import com.sterlingsworld.core.ui.components.DashedCornerButton
 
 @Composable
-fun CinemaScreen() {
+fun CinemaScreen(onWatchVideo: (videoId: String) -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_movie_land),
@@ -35,9 +36,10 @@ fun CinemaScreen() {
                 .padding(bottom = 32.dp)
                 .clip(RoundedCornerShape(50))
                 .background(Color(0xB32B2B2B))
-                .padding(horizontal = 48.dp, vertical = 14.dp),
+                .padding(horizontal = 48.dp, vertical = 14.dp)
+                .clickable { onWatchVideo("main-video-01") },
         ) {
-            Text("Label", color = Color.White)
+            Text("Watch Now", color = Color.White)
         }
     }
 }

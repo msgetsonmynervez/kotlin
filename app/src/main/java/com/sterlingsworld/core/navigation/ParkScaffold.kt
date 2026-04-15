@@ -116,7 +116,11 @@ fun ParkScaffold(
                 ArcadeScreen(onEnterArcade = onNavigateToGrandArcade)
             }
             composable(Screen.Cinema.route) {
-                CinemaScreen()
+                CinemaScreen(
+                    onWatchVideo = { videoId ->
+                        onNavigateToVideo(videoId, "cinema")
+                    },
+                )
             }
             composable(Screen.Studio.route) {
                 MusicLandScreen()
