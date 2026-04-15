@@ -20,8 +20,10 @@ import com.sterlingsworld.core.ui.components.DashedCornerButton
 
 @Composable
 fun KidzCinemaScreen(
+    videoId: String = "kids-video-01",
     onPlayVideo: () -> Unit = {},
     onNavigate: () -> Unit = {},
+    onBack: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -30,7 +32,10 @@ fun KidzCinemaScreen(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp))
+        DashedCornerButton(
+            modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
+            onClick = onBack,
+        )
         DashedCornerButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
 
         // Transparent tap zone over the theater screen in the artwork

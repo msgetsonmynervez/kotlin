@@ -37,7 +37,9 @@ sealed class Screen(val route: String) {
     object KidzHub            : Screen("kidz_hub")
     object KidzGames          : Screen("kidz_games")
     object KidzArcadeMenu     : Screen("kidz_arcade_menu")
-    object KidzCinema         : Screen("kidz_cinema")
+    object KidzCinema         : Screen("kidz_cinema/{videoId}") {
+        fun withId(videoId: String) = "kidz_cinema/$videoId"
+    }
     object StorybookLand      : Screen("storybook_land")
     object Doodle             : Screen("doodle")
     object Linebreaker        : Screen("linebreaker")

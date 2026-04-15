@@ -34,7 +34,7 @@ private val kidzArcadeGames = listOf(
 )
 
 @Composable
-fun KidzArcadeMenuScreen(onMenuItemClick: (Int) -> Unit = {}) {
+fun KidzArcadeMenuScreen(onMenuItemClick: (Int) -> Unit = {}, onBack: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_kidz_arcade),
@@ -42,7 +42,7 @@ fun KidzArcadeMenuScreen(onMenuItemClick: (Int) -> Unit = {}) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp))
+        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp), onClick = onBack)
         DashedCornerButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
 
         Column(

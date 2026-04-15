@@ -129,6 +129,7 @@ fun MeetSterlingNavGraph(
         composable(Screen.GrandArcadeIndoor.route) {
             GrandArcadeIndoorScreen(
                 onGameSelected = { route -> navController.navigate(route) },
+                onBack = { navController.popBackStack() },
             )
         }
 
@@ -155,7 +156,7 @@ fun MeetSterlingNavGraph(
         // ── Kidz sub-screens ─────────────────────────────────────────────────
         composable(Screen.KidzHub.route) {
             KidzGameshellScreen(
-                onGamesLand = { navController.navigate(Screen.KidzGames.route) },
+                onGamesLand = { navController.navigate(Screen.KidzArcadeMenu.route) },
                 onStorybookLand = { navController.navigate(Screen.StorybookLand.route) },
             )
         }
@@ -177,18 +178,30 @@ fun MeetSterlingNavGraph(
                 onMenuItemClick = { index ->
                     kidzGameRoutes.getOrNull(index)?.let { navController.navigate(it) }
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 
         composable(Screen.StorybookLand.route) {
-            StorybookLandScreen()
+            StorybookLandScreen(
+                onVideoSelected = { videoId ->
+                    navController.navigate(Screen.KidzCinema.withId(videoId))
+                },
+                onBack = { navController.popBackStack() },
+            )
         }
 
-        composable(Screen.KidzCinema.route) {
+        composable(
+            route = Screen.KidzCinema.route,
+            arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val videoId = backStackEntry.arguments?.getString("videoId") ?: "kids-video-01"
             KidzCinemaScreen(
+                videoId = videoId,
                 onPlayVideo = {
-                    navController.navigate(Screen.VideoPlayer.withId("kids-video-01", "kidz"))
+                    navController.navigate(Screen.VideoPlayer.withId(videoId, "kidz"))
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 

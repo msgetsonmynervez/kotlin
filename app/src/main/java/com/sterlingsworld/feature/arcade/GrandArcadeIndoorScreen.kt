@@ -34,7 +34,7 @@ private val arcadeGames = listOf(
 )
 
 @Composable
-fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}) {
+fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}, onBack: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_grand_arcade_indoor),
@@ -42,7 +42,7 @@ fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp))
+        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp), onClick = onBack)
         DashedCornerButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
         Column(
             modifier = Modifier

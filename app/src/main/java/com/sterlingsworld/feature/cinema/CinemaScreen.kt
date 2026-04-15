@@ -20,7 +20,7 @@ import com.sterlingsworld.R
 import com.sterlingsworld.core.ui.components.DashedCornerButton
 
 @Composable
-fun CinemaScreen(onWatchVideo: (videoId: String) -> Unit = {}) {
+fun CinemaScreen(onWatchVideo: (videoId: String) -> Unit = {}, onBack: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_movie_land),
@@ -28,7 +28,7 @@ fun CinemaScreen(onWatchVideo: (videoId: String) -> Unit = {}) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp))
+        DashedCornerButton(Modifier.align(Alignment.TopStart).padding(16.dp), onClick = onBack)
         DashedCornerButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
         Box(
             modifier = Modifier
