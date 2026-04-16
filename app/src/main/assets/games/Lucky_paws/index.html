@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Lucky Paws</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:#1a0f08;color:#f5e6d0;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden;user-select:none;-webkit-user-select:none}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 20%,rgba(255,170,50,0.08),transparent 60%),radial-gradient(ellipse at 50% 90%,rgba(160,100,40,0.06),transparent 50%);pointer-events:none}
+.app{position:relative;z-index:1;width:100%;max-width:420px;padding:12px 10px 24px;display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* Title */
+.title{font-family:‘Bungee’,cursive;font-size:clamp(1.5rem,5.5vw,2.2rem);color:#ffb347;text-shadow:0 0 10px rgba(255,179,71,0.4),0 2px 0 #8a5a1e;letter-spacing:2px;text-align:center}
+.subtitle{font-size:0.78rem;color:#8a7560;letter-spacing:2px;font-weight:700}
+
+/* Top bar */
+.top-bar{display:flex;justify-content:space-between;width:100%;padding:8px 10px;background:#12080a;border:1px solid #2e1a0e;border-radius:8px;align-items:center}
+.coins-display{display:flex;align-items:center;gap:6px}
+.coins-label{font-size:0.7rem;color:#8a7560;font-weight:700;letter-spacing:1px}
+.coins-val{font-family:‘Bungee’,cursive;font-size:1.1rem;color:#ffb347;text-shadow:0 0 4px rgba(255,179,71,0.3)}
+.badges{display:flex;gap:4px;align-items:center}
+.badge{font-size:1.1rem;opacity:0.2;transition:all 0.4s}
+.badge.earned{opacity:1;animation:badgePop 0.5s ease}
+@keyframes badgePop{0%{transform:scale(0.3)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.mute-btn{font-family:‘Nunito’,sans-serif;font-size:0.75rem;background:transparent;border:1px solid #2e1a0e;color:#8a7560;padding:4px 8px;border-radius:4px;cursor:pointer}
+.mute-btn:active{border-color:#ffb347;color:#ffb347}
+
+/* Reel area */
+.reel-frame{background:#0e0604;border:3px solid #2e1a0e;border-radius:12px;padding:14px 10px;width:100%;position:relative;overflow:hidden;box-shadow:inset 0 0 24px rgba(0,0,0,0.5)}
+.reel-frame::before{content:’’;position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:66px;border-top:2px solid rgba(255,179,71,0.15);border-bottom:2px solid rgba(255,179,71,0.15);pointer-events:none;z-index:2}
+.reels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.reel{height:195px;overflow:hidden;position:relative;border-radius:6px;background:#080402}
+.reel-strip{display:flex;flex-direction:column;align-items:center;will-change:transform}
+.reel-sym{width:100%;height:65px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0}
+.reel-sym.sparkle{animation:sparkle 0.6s ease infinite alternate;filter:drop-shadow(0 0 8px rgba(255,200,50,0.6))}
+@keyframes sparkle{0%{filter:drop-shadow(0 0 4px rgba(255,200,50,0.3))}100%{filter:drop-shadow(0 0 12px rgba(255,200,50,0.8))}}
+
+/* Win overlay */
+.win-banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;opacity:0;transition:opacity 0.3s}
+.win-banner.show{opacity:1}
+.win-text{font-family:‘Bungee’,cursive;font-size:1.4rem;color:#ffb347;text-shadow:0 0 16px rgba(255,179,71,0.6);background:rgba(10,5,2,0.85);padding:10px 24px;border-radius:8px;border:2px solid #ffb347}
+.win-text.bonus{color:#ff6b9d;border-color:#ff6b9d;text-shadow:0 0 16px rgba(255,107,157,0.6);font-size:1.2rem}
+
+/* Result */
+.result{font-family:‘Bungee’,cursive;font-size:clamp(0.85rem,3vw,1rem);text-align:center;min-height:1.5em;transition:all 0.3s}
+.result.win{color:#ffb347;text-shadow:0 0 6px rgba(255,179,71,0.4);animation:popIn 0.3s ease}
+.result.big-win{color:#ff6b9d;text-shadow:0 0 10px rgba(255,107,157,0.5);animation:popIn 0.3s ease;font-size:1.2rem}
+.result.lose{color:#6a5a48}
+.result.close{color:#dda050}
+@keyframes popIn{0%{transform:scale(0.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* Controls */
+.controls{display:flex;gap:8px;width:100%;align-items:center}
+.bet-section{display:flex;flex-direction:column;align-items:center;gap:2px}
+.bet-label{font-size:0.6rem;color:#8a7560;font-weight:800;letter-spacing:1px}
+.bet-row{display:flex;align-items:center;gap:4px}
+.bet-btn{width:30px;height:30px;border-radius:50%;border:1.5px solid #2e1a0e;background:#12080a;color:#ffb347;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bet-btn:active{background:#2e1a0e}
+.bet-val{font-family:‘Bungee’,cursive;font-size:0.95rem;color:#ffb347;min-width:30px;text-align:center}
+.spin-btn{flex:1;font-family:‘Bungee’,cursive;font-size:clamp(0.9rem,3vw,1.1rem);padding:14px 16px;border:none;border-radius:10px;cursor:pointer;letter-spacing:2px;transition:all 0.2s;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a0f08;box-shadow:0 4px 14px rgba(255,140,0,0.3)}
+.spin-btn:hover{box-shadow:0 6px 20px rgba(255,140,0,0.45);transform:translateY(-2px)}
+.spin-btn:active{transform:scale(0.96)}
+.spin-btn:disabled{background:linear-gradient(135deg,#3a3028,#2a2018);color:#5a4838;box-shadow:none;cursor:default;transform:none}
+
+/* Paytable */
+.paytable{width:100%;background:#12080a;border:1px solid #1e1208;border-radius:8px;padding:10px 12px}
+.pay-title{font-size:0.6rem;color:#8a7560;letter-spacing:2px;font-weight:800;margin-bottom:6px;text-align:center}
+.pay-row{display:flex;justify-content:space-between;padding:2px 0;font-size:0.78rem;align-items:center}
+.pay-sym{font-size:0.95rem;min-width:60px}
+.pay-name{color:#b09878;flex:1;font-size:0.72rem;font-weight:700}
+.pay-mult{color:#ffb347;font-weight:800;text-align:right;font-size:0.75rem}
+.pay-mult.special{color:#ff6b9d}
+.pay-divider{border:none;border-top:1px solid #1e1208;margin:4px 0}
+
+/* ═══ SOCK BONUS ═══ */
+.sock-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(10,5,2,0.7);opacity:0;pointer-events:none;transition:opacity 0.3s}
+.sock-overlay.show{opacity:1;pointer-events:auto}
+.sock-bubble{text-align:center;animation:sockBounce 0.4s ease}
+.sock-emoji{font-size:4rem;cursor:pointer;transition:transform 0.2s;animation:sockWiggle 0.5s ease infinite alternate}
+.sock-emoji:active{transform:scale(1.3)}
+@keyframes sockWiggle{0%{transform:rotate(-10deg)}100%{transform:rotate(10deg)}}
+@keyframes sockBounce{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+.sock-text{font-family:‘Bungee’,cursive;font-size:0.9rem;color:#ffb347;margin-top:8px}
+.sock-hint{font-size:0.8rem;color:#8a7560;margin-top:4px}
+
+/* ═══ BONUS ROUND ═══ */
+.bonus-screen{position:fixed;inset:0;z-index:40;background:#1a3a0a;display:none;flex-direction:column;align-items:center;padding:16px;overflow-y:auto}
+.bonus-screen.show{display:flex}
+.bonus-bg{position:absolute;inset:0;background:linear-gradient(180deg,#60c0ff 0%,#60c0ff 30%,#4aaa30 30%,#3a8820 50%,#2a6618 100%);z-index:0}
+.bonus-bg::after{content:’’;position:absolute;bottom:0;left:0;right:0;height:30%;background:repeating-linear-gradient(90deg,#5a3a1a 0px,#5a3a1a 2px,#6a4422 2px,#6a4422 4px);opacity:0.3}
+.bonus-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:400px}
+.bonus-title{font-family:‘Bungee’,cursive;font-size:clamp(1.2rem,4vw,1.6rem);color:#ffee00;text-shadow:0 0 12px rgba(255,238,0,0.5),0 2px 0 #886600;letter-spacing:2px}
+.bonus-dog{font-size:3rem;animation:tailWag 0.4s ease infinite alternate}
+@keyframes tailWag{0%{transform:rotate(-5deg)}100%{transform:rotate(5deg)}}
+.bonus-info{font-size:0.85rem;color:#ffe;text-shadow:0 1px 2px rgba(0,0,0,0.5);text-align:center;font-weight:700}
+.digs-left{font-family:‘Bungee’,cursive;font-size:0.85rem;color:#ffee00;text-shadow:0 0 6px rgba(255,238,0,0.3)}
+
+/* Mound grid */
+.mound-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;width:100%;max-width:320px;margin:8px auto}
+.mound{position:relative;height:90px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:all 0.2s}
+.mound:active{transform:scale(0.95)}
+.mound.dug{cursor:default;pointer-events:none}
+.mound-dirt{width:80px;height:40px;background:radial-gradient(ellipse at 50% 80%,#6a4422,#4a2e12);border-radius:50%;position:relative;transition:all 0.3s}
+.mound-dirt::before{content:’’;position:absolute;top:-6px;left:20%;right:20%;height:10px;background:#4aaa30;border-radius:50%;opacity:0.7}
+.mound.dug .mound-dirt{transform:scale(0.6);opacity:0.3}
+.mound-prize{position:absolute;top:5px;left:50%;transform:translateX(-50%);font-size:2rem;opacity:0;transition:all 0.4s}
+.mound.dug .mound-prize{opacity:1;animation:prizeReveal 0.5s ease}
+.mound-label{font-size:0.7rem;color:#ffe;text-shadow:0 1px 2px rgba(0,0,0,0.5);font-weight:800;opacity:0;transition:opacity 0.3s}
+.mound.dug .mound-label{opacity:1}
+.mound.revealed .mound-dirt{transform:scale(0.4);opacity:0.15}
+.mound.revealed .mound-prize{opacity:0.4}
+.mound.revealed .mound-label{opacity:0.4}
+@keyframes prizeReveal{0%{transform:translateX(-50%) translateY(20px) scale(0);opacity:0}60%{transform:translateX(-50%) translateY(-5px) scale(1.2);opacity:1}100%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
+
+/* Dirt particles */
+.dirt-particle{position:absolute;width:6px;height:6px;background:#6a4422;border-radius:50%;pointer-events:none;z-index:3;opacity:1;transition:all 0.5s ease}
+
+/* Bonus results */
+.bonus-results{background:rgba(10,5,2,0.8);border:2px solid #ffb347;border-radius:10px;padding:14px;width:100%;text-align:center}
+.bonus-result-title{font-family:‘Bungee’,cursive;font-size:1.1rem;color:#ffb347;margin-bottom:8px}
+.dig-line{font-size:0.9rem;padding:3px 0;color:#e0d0b0}
+.dig-line span{color:#ffb347;font-weight:800}
+.bonus-total{font-family:‘Bungee’,cursive;font-size:1.2rem;color:#ffee00;text-shadow:0 0 8px rgba(255,238,0,0.3);margin-top:8px}
+.collect-btn{font-family:‘Bungee’,cursive;font-size:0.95rem;background:linear-gradient(135deg,#ffb347,#ff8c00);color:#1a0f08;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;margin-top:10px;letter-spacing:2px;box-shadow:0 3px 12px rgba(255,140,0,0.3)}
+.collect-btn:active{transform:scale(0.96)}
+
+/* Comedy scene for bad bonus */
+.comedy{text-align:center;padding:16px;background:rgba(10,5,2,0.8);border:2px solid #ff6b9d;border-radius:10px;width:100%}
+.comedy-emoji{font-size:3.5rem;margin-bottom:8px}
+.comedy-text{font-family:‘Bungee’,cursive;font-size:0.85rem;color:#ff6b9d;line-height:1.6;margin-bottom:4px}
+.comedy-sub{font-size:0.8rem;color:#8a7560;margin-bottom:10px}
+
+/* Screen shake */
+.shake-screen{animation:shakeS 0.4s ease}
+@keyframes shakeS{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+/* Gold flash */
+.gold-flash{animation:goldF 0.5s ease}
+@keyframes goldF{0%{box-shadow:0 0 0 rgba(255,179,71,0)}50%{box-shadow:0 0 40px rgba(255,179,71,0.4)}100%{box-shadow:0 0 0 rgba(255,179,71,0)}}
+
+@media(max-width:380px){.reel-sym{font-size:1.9rem;height:56px}.reel{height:168px}.mound{height:80px}.mound-dirt{width:68px;height:34px}}
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+  <div class="title">&#x1F43E; Lucky Paws</div>
+  <div class="subtitle">STERLING PLAY &middot; SPIN &middot; MATCH &middot; DIG</div>
+
+  <div class="top-bar">
+    <div class="coins-display">
+      <div class="coins-label">COINS</div>
+      <div class="coins-val" id="coins">100</div>
+    </div>
+    <div class="badges">
+      <span class="badge" id="badge1" title="200 coins">&#x1F949;</span>
+      <span class="badge" id="badge2" title="500 coins">&#x1F948;</span>
+      <span class="badge" id="badge3" title="1000 coins">&#x1F947;</span>
+    </div>
+    <button class="mute-btn" id="mute-btn">&#x1F50A;</button>
+  </div>
+
+  <div class="reel-frame" id="reel-frame">
+    <div class="win-banner" id="win-banner"><div class="win-text" id="win-text"></div></div>
+    <div class="reels" id="reels">
+      <div class="reel"><div class="reel-strip" id="strip0"></div></div>
+      <div class="reel"><div class="reel-strip" id="strip1"></div></div>
+      <div class="reel"><div class="reel-strip" id="strip2"></div></div>
+    </div>
+  </div>
+
+  <div class="result" id="result">&nbsp;</div>
+
+  <div class="controls">
+    <div class="bet-section">
+      <div class="bet-label">BET</div>
+      <div class="bet-row">
+        <button class="bet-btn" id="bet-down">-</button>
+        <div class="bet-val" id="bet-val">5</div>
+        <button class="bet-btn" id="bet-up">+</button>
+      </div>
+    </div>
+    <button class="spin-btn" id="spin-btn">SPIN &#x1F43E;</button>
+  </div>
+
+  <div class="paytable">
+    <div class="pay-title">PAYTABLE</div>
+    <div class="pay-row"><span class="pay-sym">&#x1F429;</span><span class="pay-name">Labradoodle</span><span class="pay-mult special">3x = BONUS!</span></div>
+    <div class="pay-row"><span class="pay-sym">&#x1F429;</span><span class="pay-name"></span><span class="pay-mult special">2x = 1 Free Dig</span></div>
+    <hr class="pay-divider">
+    <div class="pay-row"><span class="pay-sym">&#x1F9E1;</span><span class="pay-name">Golden Retriever</span><span class="pay-mult">3x = x10</span></div>
+    <div class="pay-row"><span class="pay-sym">&#x1F43A;</span><span class="pay-name">Husky</span><span class="pay-mult">3x = x5</span></div>
+    <div class="pay-row"><span class="pay-sym">&#x1F436;</span><span class="pay-name">Corgi</span><span class="pay-mult">3x = x3</span></div>
+    <div class="pay-row"><span class="pay-sym">&#x1F43B;</span><span class="pay-name">Pug</span><span class="pay-mult">3x = x3</span></div>
+    <div class="pay-row"><span class="pay-sym">&#x1F43E;</span><span class="pay-name">Chihuahua</span><span class="pay-mult">3x = x2</span></div>
+    <hr class="pay-divider">
+    <div class="pay-row"><span class="pay-sym">&#x1F9E6;</span><span class="pay-name">Random Sock!</span><span class="pay-mult special">Tap for bonus</span></div>
+    <div class="pay-row"><span class="pay-sym"></span><span class="pay-name">Any 2 match</span><span class="pay-mult">= bet back</span></div>
+  </div>
+</div>
+
+<!-- Sock overlay -->
+
+<div class="sock-overlay" id="sock-overlay">
+  <div class="sock-bubble">
+    <div class="sock-emoji" id="sock-grab">&#x1F9E6;</div>
+    <div class="sock-text">THE LABRADOODLE FOUND A SOCK!</div>
+    <div class="sock-hint">TAP IT before he runs away!</div>
+  </div>
+</div>
+
+<!-- Bonus round -->
+
+<div class="bonus-screen" id="bonus-screen">
+  <div class="bonus-bg"></div>
+  <div class="bonus-content" id="bonus-content"></div>
+</div>
+
+<script>
+(function(){
+  /* ═══════════════════════════════════
+     AUDIO (iOS-safe)
+     ═══════════════════════════════════ */
+  var audioCtx=null,masterGain=null,muted=false,audioReady=false;
+
+  function ensureAudio(){
+    if(audioCtx)return audioCtx.resume();
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.gain.value=0.1;
+    masterGain.connect(audioCtx.destination);
+    // iOS silent unlock
+    var buf=audioCtx.createBuffer(1,1,22050);
+    var src=audioCtx.createBufferSource();
+    src.buffer=buf;src.connect(audioCtx.destination);src.start(0);
+    audioReady=true;
+    return audioCtx.resume();
+  }
+
+  function sfx(type){
+    if(!audioCtx||muted)return;
+    var t=audioCtx.currentTime;
+    var o=audioCtx.createOscillator();
+    var g=audioCtx.createGain();
+    o.connect(g);g.connect(masterGain);
+    g.gain.value=0.15;
+    if(type==='tick'){
+      o.type='square';o.frequency.value=800;
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      o.start(t);o.stop(t+0.05);
+    }else if(type==='win'){
+      o.type='square';
+      o.frequency.setValueAtTime(523,t);
+      o.frequency.setValueAtTime(659,t+0.08);
+      o.frequency.setValueAtTime(784,t+0.16);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      o.start(t);o.stop(t+0.35);
+    }else if(type==='bigwin'){
+      o.type='square';
+      [523,659,784,1047].forEach(function(f,i){
+        o.frequency.setValueAtTime(f,t+i*0.1);
+      });
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.start(t);o.stop(t+0.5);
+    }else if(type==='lose'){
+      o.type='sawtooth';o.frequency.value=180;
+      o.frequency.exponentialRampToValueAtTime(80,t+0.25);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      o.start(t);o.stop(t+0.25);
+    }else if(type==='dig'){
+      o.type='triangle';o.frequency.value=300;
+      o.frequency.setValueAtTime(500,t+0.05);
+      o.frequency.setValueAtTime(200,t+0.1);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.start(t);o.stop(t+0.15);
+    }else if(type==='reveal'){
+      o.type='square';
+      o.frequency.setValueAtTime(600,t);
+      o.frequency.setValueAtTime(900,t+0.1);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+      o.start(t);o.stop(t+0.2);
+    }else if(type==='bigreveal'){
+      o.type='square';
+      [600,800,1000,1200].forEach(function(f,i){
+        o.frequency.setValueAtTime(f,t+i*0.08);
+      });
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o.start(t);o.stop(t+0.4);
+    }else if(type==='sock'){
+      o.type='square';
+      o.frequency.setValueAtTime(400,t);
+      o.frequency.setValueAtTime(800,t+0.1);
+      o.frequency.setValueAtTime(600,t+0.15);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      o.start(t);o.stop(t+0.25);
+    }else if(type==='bonus'){
+      g.gain.value=0.1;
+      [523,659,784,1047,784,1047,1319].forEach(function(f,i){
+        o.frequency.setValueAtTime(f,t+i*0.12);
+      });
+      o.type='square';
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.9);
+      o.start(t);o.stop(t+0.9);
+    }
+  }
+
+  /* ═══════════════════════════════════
+     SYMBOLS
+     ═══════════════════════════════════ */
+  var SYMS=[
+    {emoji:'\uD83D\uDC29',name:'labradoodle',w:8,mult:0},
+    {emoji:'\uD83E\uDDE1',name:'golden',w:6,mult:10},
+    {emoji:'\uD83D\uDC3A',name:'husky',w:8,mult:5},
+    {emoji:'\uD83D\uDC36',name:'corgi',w:10,mult:3},
+    {emoji:'\uD83D\uDC3B',name:'pug',w:10,mult:3},
+    {emoji:'\uD83D\uDC3E',name:'chihuahua',w:12,mult:2}
+  ];
+  var totalW=0;
+  SYMS.forEach(function(s){totalW+=s.w;});
+
+  function wPick(){
+    var r=Math.random()*totalW,a=0;
+    for(var i=0;i<SYMS.length;i++){a+=SYMS[i].w;if(r<a)return i;}
+    return SYMS.length-1;
+  }
+
+  /* ═══════════════════════════════════
+     DIG PRIZES (3 tiers)
+     ═══════════════════════════════════ */
+  var DIG_POOLS=[
+    // Dig 1: safe
+    [{emoji:'\uD83D\uDC5F',name:'Old Shoe',mult:2,odds:30},{emoji:'\uD83C\uDFBE',name:'Tennis Ball',mult:3,odds:30},{emoji:'\uD83E\uDDF8',name:'Squeaky Toy',mult:4,odds:25},{emoji:'\uD83D\uDD76',name:'Sunglasses',mult:6,odds:15}],
+    // Dig 2: mid
+    [{emoji:'\uD83C\uDFBE',name:'Tennis Ball',mult:3,odds:20},{emoji:'\uD83E\uDDF8',name:'Squeaky Toy',mult:5,odds:25},{emoji:'\uD83D\uDD76',name:'Sunglasses',mult:8,odds:25},{emoji:'\uD83D\uDC8E',name:'Diamond Collar',mult:12,odds:20},{emoji:'\uD83E\uDDB4',name:'Golden Bone',mult:18,odds:10}],
+    // Dig 3: wild
+    [{emoji:'\uD83E\uDDF8',name:'Squeaky Toy',mult:5,odds:15},{emoji:'\uD83D\uDD76',name:'Sunglasses',mult:8,odds:20},{emoji:'\uD83D\uDC8E',name:'Diamond Collar',mult:15,odds:25},{emoji:'\uD83E\uDDB4',name:'Golden Bone',mult:25,odds:25},{emoji:'\uD83D\uDC51',name:'CROWN!',mult:50,odds:15}]
+  ];
+
+  function pickFromPool(pool){
+    var total=0;pool.forEach(function(p){total+=p.odds;});
+    var r=Math.random()*total,a=0;
+    for(var i=0;i<pool.length;i++){a+=pool[i].odds;if(r<a)return pool[i];}
+    return pool[pool.length-1];
+  }
+
+  /* ═══════════════════════════════════
+     COMEDY SCENES
+     ═══════════════════════════════════ */
+  var COMEDY=[
+    {emoji:'\uD83D\uDC29\uD83D\uDE34',title:'SLEEPY BOY!',text:'The labradoodle put on pajamas and fell asleep mid-dig!',sub:'"Five more minutes..."'},
+    {emoji:'\uD83D\uDC29\uD83D\uDCA8',title:'FAN ATTACK!',text:'The labradoodle saw a fan and bolted! Prizes scattered everywhere!',sub:'"NOT THE SPINNY THING!"'},
+    {emoji:'\uD83D\uDC29\uD83D\uDCE6',title:'DELIVERY MAN!',text:'The wicked delivery man rang the doorbell! The labradoodle abandoned everything to bark!',sub:'"INTRUDER ALERT! WOOF WOOF WOOF!"'}
+  ];
+
+  /* ═══════════════════════════════════
+     STATE
+     ═══════════════════════════════════ */
+  var coins=100,bet=5,spinning=false,pityArmed=false;
+  var reelResults=[0,0,0];
+  var strips=[],SPIN_COUNT=22,VISIBLE=3;
+  var highCoins=100;
+  var sockTimer=null;
+
+  var coinsEl=document.getElementById('coins');
+  var resultEl=document.getElementById('result');
+  var spinBtn=document.getElementById('spin-btn');
+  var reelFrame=document.getElementById('reel-frame');
+  var winBanner=document.getElementById('win-banner');
+  var winText=document.getElementById('win-text');
+
+  strips=[document.getElementById('strip0'),document.getElementById('strip1'),document.getElementById('strip2')];
+
+  /* ═══════════════════════════════════
+     BADGES
+     ═══════════════════════════════════ */
+  function checkBadges(){
+    if(coins>=200)earnBadge('badge1');
+    if(coins>=500)earnBadge('badge2');
+    if(coins>=1000)earnBadge('badge3');
+  }
+  function earnBadge(id){
+    var el=document.getElementById(id);
+    if(!el.classList.contains('earned')){
+      el.classList.add('earned');
+    }
+  }
+  function resetBadges(){
+    ['badge1','badge2','badge3'].forEach(function(id){
+      document.getElementById(id).classList.remove('earned');
+    });
+  }
+
+  /* ═══════════════════════════════════
+     REEL RENDERING
+     ═══════════════════════════════════ */
+  function showIdle(){
+    strips.forEach(function(s){
+      s.innerHTML='';
+      for(var i=0;i<VISIBLE;i++){
+        var d=document.createElement('div');
+        d.className='reel-sym';
+        d.textContent=SYMS[Math.floor(Math.random()*SYMS.length)].emoji;
+        s.appendChild(d);
+      }
+      s.style.transition='none';
+      s.style.transform='translateY(0)';
+    });
+  }
+
+  function buildStrip(el,finalIdx){
+    el.innerHTML='';
+    for(var i=0;i<SPIN_COUNT;i++){
+      var d=document.createElement('div');
+      d.className='reel-sym';
+      d.textContent=(i===1)?SYMS[finalIdx].emoji:SYMS[Math.floor(Math.random()*SYMS.length)].emoji;
+      el.appendChild(d);
+    }
+    var symH=el.parentElement.offsetHeight/VISIBLE;
+    el.style.transition='none';
+    el.style.transform='translateY(-'+(SPIN_COUNT-VISIBLE)*symH+'px)';
+    el.offsetHeight;
+  }
+
+  /* ═══════════════════════════════════
+     SPIN
+     ═══════════════════════════════════ */
+  function spin(){
+    if(spinning)return;
+    ensureAudio();
+
+    if(coins<bet){
+      resultEl.textContent='Not enough coins!';
+      resultEl.className='result lose';
+      return;
+    }
+
+    spinning=true;
+    spinBtn.disabled=true;
+    coins-=bet;
+    coinsEl.textContent=coins;
+    resultEl.innerHTML='&nbsp;';
+    resultEl.className='result';
+    winBanner.classList.remove('show');
+
+    // Check pity: if this bet would leave us at 0 or unable to bet again
+    if(coins<bet&&!pityArmed){
+      pityArmed=true;
+      // Force a jackpot on this spin
+      var bestNonDoodle=1;// golden retriever
+      reelResults=[bestNonDoodle,bestNonDoodle,bestNonDoodle];
+    }else{
+      pityArmed=false;
+      reelResults=[wPick(),wPick(),wPick()];
+    }
+
+    strips.forEach(function(el,i){buildStrip(el,reelResults[i]);});
+    strips[0].offsetHeight;
+
+    // Reel 1 & 2 normal speed, reel 3 slow
+    var durations=[0.6,0.95,1.6];
+    strips.forEach(function(el,i){
+      setTimeout(function(){
+        var ease=i===2?'cubic-bezier(0.1,0.7,0.3,1)':'cubic-bezier(0.15,0.85,0.35,1)';
+        el.style.transition='transform '+durations[i]+'s '+ease;
+        el.style.transform='translateY(0)';
+      },30);
+    });
+
+    // Tick sounds for slow reel
+    if(!muted){
+      var tickStart=600;
+      for(var t=0;t<6;t++){
+        (function(delay){setTimeout(function(){sfx('tick');},tickStart+delay);})(t*150);
+      }
+    }
+
+    setTimeout(resolve,durations[2]*1000+120);
+  }
+
+  /* ═══════════════════════════════════
+     RESOLVE SPIN
+     ═══════════════════════════════════ */
+  function resolve(){
+    var a=reelResults[0],b=reelResults[1],c=reelResults[2];
+    var isLabra=SYMS[a].name==='labradoodle';
+    var labraCount=(SYMS[a].name==='labradoodle'?1:0)+(SYMS[b].name==='labradoodle'?1:0)+(SYMS[c].name==='labradoodle'?1:0);
+
+    // Sparkle labradoodles
+    sparkleLabras();
+
+    if(a===b&&b===c){
+      if(SYMS[a].name==='labradoodle'){
+        // BONUS ROUND!
+        sfx('bonus');
+        winText.textContent='\uD83C\uDF89 BONUS ROUND!';
+        winText.className='win-text bonus';
+        winBanner.classList.add('show');
+        reelFrame.classList.add('shake-screen');
+        setTimeout(function(){reelFrame.classList.remove('shake-screen');},400);
+        setTimeout(function(){
+          winBanner.classList.remove('show');
+          startBonus(3);
+        },1500);
+        return;
+      }
+      // Normal triple
+      var mult=SYMS[a].mult;
+      var win=bet*mult;
+      coins+=win;
+      coinsEl.textContent=coins;
+      checkBadges();
+      if(mult>=10){
+        sfx('bigwin');
+        resultEl.textContent=SYMS[a].emoji+' JACKPOT x'+mult+'! +'+win;
+        resultEl.className='result big-win';
+        reelFrame.classList.add('shake-screen','gold-flash');
+        setTimeout(function(){reelFrame.classList.remove('shake-screen','gold-flash');},500);
+      }else{
+        sfx('win');
+        resultEl.textContent=SYMS[a].emoji+' x'+mult+' +'+win;
+        resultEl.className='result win';
+        reelFrame.classList.add('gold-flash');
+        setTimeout(function(){reelFrame.classList.remove('gold-flash');},500);
+      }
+    }else if(labraCount===2){
+      // 2 labradoodles = mini bonus (1 dig)
+      sfx('win');
+      winText.textContent='\uD83D\uDC29 SO CLOSE! Free Dig!';
+      winText.className='win-text bonus';
+      winBanner.classList.add('show');
+      setTimeout(function(){
+        winBanner.classList.remove('show');
+        startBonus(1);
+      },1300);
+      return;
+    }else if(a===b||b===c||a===c){
+      coins+=bet;
+      coinsEl.textContent=coins;
+      resultEl.textContent='2 match \u2014 bet returned';
+      resultEl.className='result close';
+    }else{
+      resultEl.textContent='No match';
+      resultEl.className='result lose';
+      sfx('lose');
+    }
+
+    finishSpin();
+  }
+
+  function finishSpin(){
+    spinning=false;
+    spinBtn.disabled=false;
+    checkBust();
+    maybeSock();
+  }
+
+  function sparkleLabras(){
+    strips.forEach(function(el){
+      var syms=el.querySelectorAll('.reel-sym');
+      if(syms[1]&&syms[1].textContent==='\uD83D\uDC29'){
+        syms[1].classList.add('sparkle');
+        setTimeout(function(){syms[1].classList.remove('sparkle');},2000);
+      }
+    });
+  }
+
+  function checkBust(){
+    if(coins<=0){
+      coins=100;
+      coinsEl.textContent=coins;
+      resetBadges();
+      resultEl.textContent='Busted! Here\'s 100 coins \uD83D\uDC3E';
+      resultEl.className='result close';
+    }
+  }
+
+  /* ═══════════════════════════════════
+     SOCK MINI-BONUS
+     ═══════════════════════════════════ */
+  function maybeSock(){
+    if(Math.random()<0.125){
+      clearTimeout(sockTimer);
+      sockTimer=setTimeout(showSock,800);
+    }
+  }
+
+  function showSock(){
+    sfx('sock');
+    var overlay=document.getElementById('sock-overlay');
+    overlay.classList.add('show');
+    var grabbed=false;
+
+    var autoHide=setTimeout(function(){
+      if(!grabbed){
+        overlay.classList.remove('show');
+      }
+    },2500);
+
+    document.getElementById('sock-grab').onclick=function(){
+      if(grabbed)return;
+      grabbed=true;
+      clearTimeout(autoHide);
+      var bonus=bet*([1,1,2,2,2,3][Math.floor(Math.random()*6)]);
+      coins+=bonus;
+      coinsEl.textContent=coins;
+      checkBadges();
+      var el=document.getElementById('sock-grab');
+      el.textContent='+'+bonus+'!';
+      el.style.animation='none';
+      sfx('win');
+      setTimeout(function(){
+        overlay.classList.remove('show');
+        el.textContent='\uD83E\uDDE6';
+        el.style.animation='';
+        resultEl.textContent='\uD83E\uDDE6 Sock bonus! +'+bonus;
+        resultEl.className='result win';
+      },800);
+    };
+  }
+
+  /* ═══════════════════════════════════
+     BONUS ROUND
+     ═══════════════════════════════════ */
+  var bonusDigsTotal=0,bonusDone=0,bonusWinnings=0,bonusMounds=[];
+  var bonusDigResults=[];
+
+  function startBonus(digs){
+    bonusDigsTotal=digs;
+    bonusDone=0;
+    bonusWinnings=0;
+    bonusDigResults=[];
+
+    // Generate 6 mounds with prizes
+    bonusMounds=[];
+    for(var i=0;i<6;i++){
+      // Use highest tier pool available for all mounds for simplicity, weighting still handles balance
+      var pool=DIG_POOLS[Math.min(i%3,2)];
+      bonusMounds.push({prize:pickFromPool(pool),dug:false});
+    }
+
+    var scr=document.getElementById('bonus-screen');
+    scr.classList.add('show');
+    renderBonusDig();
+  }
+
+  function renderBonusDig(){
+    var bc=document.getElementById('bonus-content');
+    var remaining=bonusDigsTotal-bonusDone;
+
+    var html='<div class="bonus-title">\uD83D\uDC29 DIG FOR TREASURE!</div>'
+      +'<div class="bonus-dog">\uD83D\uDC29</div>'
+      +'<div class="digs-left">Digs remaining: '+remaining+' / '+bonusDigsTotal+'</div>'
+      +'<div class="bonus-info">'+(bonusDone===0?'Pick a mound to dig!':(bonusDone<bonusDigsTotal?'Keep digging!':''))+'</div>'
+      +'<div class="mound-grid" id="mound-grid">';
+
+    for(var i=0;i<6;i++){
+      var m=bonusMounds[i];
+      var dugClass=m.dug?'dug':'';
+      html+='<div class="mound '+dugClass+'" data-idx="'+i+'">'
+        +'<div class="mound-prize">'+(m.dug?m.prize.emoji:'')+'</div>'
+        +'<div class="mound-dirt"></div>'
+        +'<div class="mound-label">'+(m.dug?m.prize.name+' +'+m.prize.mult+'x':'')+'</div>'
+        +'</div>';
+    }
+    html+='</div>';
+    bc.innerHTML=html;
+
+    // Bind mound clicks
+    document.querySelectorAll('.mound:not(.dug)').forEach(function(el){
+      el.addEventListener('click',function(){digMound(parseInt(el.dataset.idx));});
+    });
+  }
+
+  function digMound(idx){
+    if(bonusMounds[idx].dug||bonusDone>=bonusDigsTotal)return;
+
+    // Determine prize based on which dig number this is
+    var pool=DIG_POOLS[Math.min(bonusDone,2)];
+    var prize=pickFromPool(pool);
+    bonusMounds[idx].prize=prize;
+    bonusMounds[idx].dug=true;
+    bonusDone++;
+
+    var payout=bet*prize.mult;
+    bonusWinnings+=payout;
+    bonusDigResults.push({prize:prize,payout:payout});
+
+    // Animate
+    var moundEl=document.querySelectorAll('.mound')[idx];
+    sfx('dig');
+
+    // Dirt particles
+    for(var p=0;p<6;p++){
+      var particle=document.createElement('div');
+      particle.className='dirt-particle';
+      particle.style.left='40px';
+      particle.style.top='30px';
+      moundEl.appendChild(particle);
+      (function(pp){
+        var dx=(Math.random()*60-30);
+        var dy=(-20-Math.random()*30);
+        setTimeout(function(){
+          pp.style.transform='translate('+dx+'px,'+dy+'px)';
+          pp.style.opacity='0';
+        },20);
+        setTimeout(function(){pp.remove();},520);
+      })(particle);
+    }
+
+    setTimeout(function(){
+      moundEl.classList.add('dug');
+      moundEl.querySelector('.mound-prize').textContent=prize.emoji;
+      moundEl.querySelector('.mound-label').textContent=prize.name+' +'+payout;
+
+      if(prize.mult>=15)sfx('bigreveal');
+      else sfx('reveal');
+
+      // Update digs left
+      var digsLeft=bonusDigsTotal-bonusDone;
+      var dlEl=document.querySelector('.digs-left');
+      if(dlEl)dlEl.textContent='Digs remaining: '+digsLeft+' / '+bonusDigsTotal;
+
+      if(bonusDone>=bonusDigsTotal){
+        setTimeout(showBonusResults,600);
+      }
+    },400);
+  }
+
+  function showBonusResults(){
+    var bc=document.getElementById('bonus-content');
+    var isLowPayout=bonusWinnings<bet*6;
+
+    // Reveal un-dug mounds
+    document.querySelectorAll('.mound:not(.dug)').forEach(function(el){
+      var idx=parseInt(el.dataset.idx);
+      el.classList.add('revealed');
+      el.querySelector('.mound-prize').textContent=bonusMounds[idx].prize.emoji;
+      el.querySelector('.mound-label').textContent='(missed)';
+    });
+
+    setTimeout(function(){
+      var html='';
+
+      if(isLowPayout){
+        // Comedy scene!
+        var scene=COMEDY[Math.floor(Math.random()*COMEDY.length)];
+        html+='<div class="comedy">'
+          +'<div class="comedy-emoji">'+scene.emoji+'</div>'
+          +'<div class="comedy-text">'+scene.title+'</div>'
+          +'<div class="comedy-sub">'+scene.text+'<br><em>'+scene.sub+'</em></div>'
+          +'</div>';
+      }
+
+      html+='<div class="bonus-results">';
+      html+='<div class="bonus-result-title">'+(isLowPayout?'Well... you tried!':'NICE DIGGING!')+'</div>';
+      bonusDigResults.forEach(function(d,i){
+        html+='<div class="dig-line">Dig '+(i+1)+': '+d.prize.emoji+' '+d.prize.name+' <span>+'+d.payout+'</span></div>';
+      });
+      html+='<div class="bonus-total">TOTAL: +'+bonusWinnings+'</div>';
+      html+='<button class="collect-btn" id="collect-btn">COLLECT \uD83D\uDC3E</button>';
+      html+='</div>';
+
+      bc.innerHTML+=html;
+
+      document.getElementById('collect-btn').addEventListener('click',function(){
+        coins+=bonusWinnings;
+        coinsEl.textContent=coins;
+        checkBadges();
+        document.getElementById('bonus-screen').classList.remove('show');
+        resultEl.textContent='\uD83D\uDC29 Bonus: +'+bonusWinnings+'!';
+        resultEl.className='result '+(isLowPayout?'close':'big-win');
+        spinning=false;
+        spinBtn.disabled=false;
+        checkBust();
+      });
+    },800);
+  }
+
+  /* ═══════════════════════════════════
+     CONTROLS
+     ═══════════════════════════════════ */
+  document.getElementById('bet-up').addEventListener('click',function(){
+    if(bet<50&&bet<coins){bet+=5;document.getElementById('bet-val').textContent=bet;}
+  });
+  document.getElementById('bet-down').addEventListener('click',function(){
+    if(bet>5){bet-=5;document.getElementById('bet-val').textContent=bet;}
+  });
+
+  spinBtn.addEventListener('click',function(){ensureAudio().then(spin);});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key===' '||e.key==='Enter'){e.preventDefault();ensureAudio().then(spin);}
+  });
+
+  document.getElementById('mute-btn').addEventListener('click',function(){
+    muted=!muted;
+    if(masterGain)masterGain.gain.value=muted?0:0.1;
+    this.textContent=muted?'\uD83D\uDD07':'\uD83D\uDD0A';
+  });
+
+  // Init
+  showIdle();
+})();
+</script>
+
+</body>
+</html>
