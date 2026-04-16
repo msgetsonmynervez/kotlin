@@ -2,51 +2,44 @@
 
 ## Objective
 
-The next sprint is not about adding more surface area.
-It is about making `C:\Users\Gutie\projects\android` a real, buildable, cleaner Kotlin project and eliminating the most visible fake-complete behavior.
+The next sprint is not about rescuing project basics anymore.
+The project is already buildable and the shell is materially real.
 
-This sprint must directly address the current blockers found in review.
+The next sprint should harden the `new-ui` build, verify the newly launched attraction surfaces, and close the gap between "launchable in app" and "ship-ready for v1".
 
 ## Current checkpoint summary
 
 What is solid:
 
-- app structure
-- navigation shell
+- app structure and Gradle wrapper flow
+- typed navigation shell and themed park attraction screens
 - welcome/state foundations
 - settings/reset foundations
 - catalog migration
-- Room/DataStore foundations
-- initial unit tests for catalogs
+- native game shell and completion flow
+- Media3-backed video playback for Cinema and Kidz
+- packaged HTML/WebView game entry for non-native titles
+- targeted unit tests for catalog and native gameplay flows
 
 What is not acceptable yet:
 
-- no verified Gradle build path
-- missing Gradle wrapper bootstrap
-- missing packaged assets
-- missing launcher resources
-- placeholder media playback
-- placeholder game runtime
-- placeholder visual assets on core screens
-- leftover package debris under `com.meetsterling`
-- mojibake/encoding corruption in source
+- no manual QA pass against the current `new-ui` flow
+- no verified device/emulator smoke test for the seven WebView-backed games
+- Studio PAD runtime still not proven in a Play-installed build
+- battle-family follow-on titles are live in UI but not yet promoted into the ship-ready set
+- project docs were lagging behind the new UI branch until this update
 
 ## Sprint goals
 
 Claude must complete the following in this sprint.
 
-### 1. Restore build bootstrap and prove compilation
+### 1. Re-verify build and test baseline on the promoted UI branch
 
 Required outcomes:
 
-- add a complete Gradle wrapper to the Kotlin project:
-  - `gradlew`
-  - `gradlew.bat`
-  - `gradle/wrapper/gradle-wrapper.jar`
-- ensure the project can be built from the project root with a wrapper command
-- report the exact first successful command, for example:
-  - `.\gradlew.bat assembleDebug`
-  - `.\gradlew.bat test`
+- prove the promoted `new-ui` branch still builds from the project root
+- rerun the targeted unit test suite that covers the current ship-ready games and catalog state
+- report the exact commands used and whether they passed
 
 Required reporting:
 
@@ -54,89 +47,64 @@ Required reporting:
 - whether it passed
 - if it failed, exact blocker and file
 
-This is the first priority because no build status is trustworthy until the project can compile locally through its own wrapper.
+This is still the first priority because the current PR to make `new-ui` the main build should not merge on stale build assumptions.
 
-### 2. Fix project hygiene issues that can poison later work
+### 2. Run a manual QA pass on the current routed surface area
 
 Required outcomes:
 
-- remove or reconcile stale Kotlin files under `app/src/main/java/com/meetsterling`
-- keep only the canonical `com.sterlingsworld` package tree unless there is a very explicit justified reason not to
-- fix mojibake/encoding corruption in current Kotlin source files
-- ensure comments and strings are ASCII-clean unless non-ASCII is truly required
+- verify the four ship-ready native games:
+  - `Lucky Paws`
+  - `Ghost`
+  - `Cognitive Creamery`
+  - `Symptom Striker`
+- smoke test the seven packaged WebView-backed titles:
+  - `Relaxation Retreat`
+  - `Spoon Gauntlet`
+  - `AOL`
+  - `Kidz Doodle Land`
+  - `Kidz Linebreaker`
+  - `Lumi's Star Quest`
+  - `Nostalgia`
+- verify the attraction-to-runtime routing from the new park UI
+- verify Cinema and Kidz video routing through the shared player
 
 Required reporting:
 
-- list of files removed or merged
-- list of files with encoding cleanup
-- whether any package/namespace mismatch remains
+- what was exercised
+- exact failure points
+- whether failures are content bugs, routing bugs, or asset-loading bugs
 
-### 3. Make resource packaging minimally real
+### 3. Validate Studio honestly
 
 Required outcomes:
 
-- add the missing launcher resources required by the manifest, or update the manifest/resources to a valid consistent state
-- create the correct Android asset directory structure for the migrated content
-- document where app assets now live in the Kotlin project
-
-At minimum, this sprint must establish a real asset packaging plan in code and filesystem layout, not just catalog strings pointing at files that do not exist in the Android app.
+- prove whether PAD-provided Studio assets resolve in the intended install path
+- confirm whether playback can be promoted from "unavailable in this build" to a real ready state
+- if PAD validation still cannot be completed, keep the documentation and user-facing copy explicit about that limitation
 
 Required reporting:
 
-- actual asset root used
-- whether map/image/video/audio files were copied yet
-- what remains to be copied
+- whether the blocker is tooling, install method, asset resolution, or playback
+- what exact change would be required to graduate Studio into v1
 
-### 4. Remove obvious placeholder visuals from core shell screens
-
-Required outcomes:
-
-- replace the placeholder map panel in `MapScreen` with the real bundled park map if the asset is available
-- replace the placeholder welcome mascot box with the real bundled mascot image if the asset is available
-- replace obvious thumbnail placeholder blocks in `CinemaScreen` if the asset path strategy supports real artwork now
-
-Important:
-
-- do not fake this with generic icons or text boxes
-- if the real assets are not copied in this sprint, say so explicitly and explain what is blocked
-
-### 5. Replace placeholder media architecture with real implementation start, not comments
+### 4. Decide the next ship-ready promotion candidate
 
 Required outcomes:
 
-- convert `StudioPlaybackService` from a no-op registered service into a real Media3-backed playback foundation
-- wire `StudioScreen` to real playback state and at least real play selection behavior from the catalog
-- convert `VideoPlayerScreen` from placeholder text to a real Media3/ExoPlayer-backed local player if asset packaging is ready
-
-Important:
-
-- do not leave “Phase 3” comments in these files after the work
-- if a subsystem cannot be completed because assets are not yet packaged, then complete the real player plumbing anyway and document the exact missing asset blockers
-
-### 6. Remove fake-complete game behavior from the current game shell
-
-Required outcomes:
-
-- remove the `Complete (dev)` behavior from `GameShellScreen`
-- remove any UI text that presents unfinished game work inside the user-facing runtime
-- replace the current shell behavior with one of these two acceptable states:
-  1. a real first implemented game runtime for one concrete game, or
-  2. a non-user-facing internal shell that is no longer pretending to be a playable screen
-
-Important:
-
-- the game screen must not remain a dressed-up placeholder
-- if full game runtime work is not started in this sprint, then Claude must refactor the shell so it is an internal foundation, not a fake player-facing experience
+- choose whether `AOL` or `Lumi's Star Quest` is the next title to move from WebView-backed launchable state into a native or otherwise ship-ready state
+- do not start both in the same sprint
+- use reuse from `Symptom Striker` where possible instead of inventing another parallel battle implementation
 
 ## Explicit non-goals for this sprint
 
 Do not:
 
-- add more new screens just to show motion
+- add more attraction screens just for visual coverage
 - expand into speculative features
-- add analytics/backend/auth/notifications
-- leave new “Phase N” comments in core feature files
-- claim media or game systems are complete if they are still UI shells
+- add analytics, backend, auth, or notifications
+- claim Studio is solved without a verified Play-installed PAD path
+- claim the WebView-backed games are v1 ship-ready without manual validation and a deliberate scope decision
 
 ## Deliverables required at end of sprint
 
@@ -145,33 +113,30 @@ Claude must provide:
 1. Build status
    - exact working wrapper commands
    - whether `assembleDebug` works
-   - whether unit tests run
+   - whether targeted tests run
 
-2. Cleanup status
-   - stale package files removed or reconciled
-   - encoding issues fixed
+2. QA status
+   - native game pass/fail notes
+   - WebView game pass/fail notes
+   - media routing pass/fail notes
 
-3. Asset/resource status
-   - launcher resources status
-   - asset directory status
-   - map/welcome/media asset integration status
+3. Studio status
+   - PAD validation result
+   - playback readiness result
+   - remaining blocker if still unavailable
 
-4. Media status
-   - what part of Studio playback is real now
-   - what part of video playback is real now
-   - what remains blocked
-
-5. Game status
-   - whether the fake completion shell was removed
-   - what the current real game-runtime plan is for the next sprint
+4. Game status
+   - which titles remain v1 ship-ready
+   - which titles are still launchable-only
+   - which title is the next promotion candidate
 
 ## Completion standard
 
-This sprint is successful only if the Kotlin project is materially more real at the end:
+This sprint is successful only if the promoted UI branch is materially more trustworthy at the end:
 
-- buildable or much closer to buildable
-- cleaner
-- less placeholder-driven
-- more honest in media/game implementation state
+- verified by build and targeted tests
+- manually exercised on the surfaced routes that now exist
+- more honest about Studio readiness
+- clearer about which games are truly in v1 versus only launchable in the app
 
-The next sprint should not begin until this one produces a concrete build/bootstrap answer.
+The next sprint should not begin until this one produces a concrete QA and validation answer.
