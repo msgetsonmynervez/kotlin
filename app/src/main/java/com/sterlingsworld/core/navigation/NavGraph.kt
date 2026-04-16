@@ -1,20 +1,56 @@
 package com.sterlingsworld.core.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.sterlingsworld.feature.arcade.ArcadeScreen
-import com.sterlingsworld.feature.cinema.CinemaScreen
+import com.sterlingsworld.core.ui.theme.Surface
+import com.sterlingsworld.core.ui.theme.TextMuted
+import com.sterlingsworld.core.ui.theme.TextPrimary
+import com.sterlingsworld.data.catalog.GameCatalog
+import com.sterlingsworld.domain.model.GameDefinition
+import com.sterlingsworld.domain.model.GameResult
+import com.sterlingsworld.feature.aol.AolScreen
+import com.sterlingsworld.feature.arcade.GrandArcadeIndoorScreen
+import com.sterlingsworld.feature.game.games.webview.WebViewGame
+import com.sterlingsworld.feature.creamery.CreameryScreen
+import com.sterlingsworld.feature.doodle.DoodleScreen
+import com.sterlingsworld.feature.error.TechnicalDifficultiesScreen
 import com.sterlingsworld.feature.game.completion.CompletionScreen
+import com.sterlingsworld.feature.game.games.cognitivecreamery.CognitiveCreameryGame
+import com.sterlingsworld.feature.game.games.ghost.GhostGame
+import com.sterlingsworld.feature.game.games.luckypaws.LuckyPawsGame
+import com.sterlingsworld.feature.game.games.symptomstriker.SymptomStrikerGame
 import com.sterlingsworld.feature.game.shell.GameShellScreen
-import com.sterlingsworld.feature.kidz.KidzScreen
-import com.sterlingsworld.feature.map.MapScreen
+import com.sterlingsworld.feature.kidz.KidzGamesScreen
+import com.sterlingsworld.feature.kidz.KidzGameshellScreen
+import com.sterlingsworld.feature.kidz.StorybookLandScreen
+import com.sterlingsworld.feature.kidzarcade.KidzArcadeMenuScreen
+import com.sterlingsworld.feature.kidzcinema.KidzCinemaScreen
+import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
+import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
+import com.sterlingsworld.feature.lumistarquest.LumisStarQuestScreen
+import com.sterlingsworld.feature.nostalgia.NostalgiaScreen
+import com.sterlingsworld.feature.relaxationretreat.RelaxationRetreatScreen
 import com.sterlingsworld.feature.settings.SettingsScreen
+import com.sterlingsworld.feature.spoongauntlet.GauntletScreen
 import com.sterlingsworld.feature.studio.StudioScreen
+import com.sterlingsworld.feature.symptomstriker.SymptomStrikerScreen
 import com.sterlingsworld.feature.video.VideoPlayerScreen
 import com.sterlingsworld.feature.welcome.WelcomeScreen
 
@@ -47,28 +83,62 @@ fun MeetSterlingNavGraph(
                 onNavigateToVideo = { videoId, source ->
                     navController.navigate(Screen.VideoPlayer.withId(videoId, source))
                 },
+                onNavigateToGrandArcade = {
+                    navController.navigate(Screen.GrandArcadeIndoor.route)
+                },
+                onNavigateToKidzHub = {
+                    navController.navigate(Screen.KidzHub.route)
+                },
+                onNavigateToStudio = {
+                    navController.navigate(Screen.StudioPlayer.route)
+                },
             )
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                onBack = { navController.popBackStack() },
-            )
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(
             route = Screen.GamePlayer.route,
             arguments = listOf(navArgument("gameId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
+            val gameId = backStackEntry.arguments
+                ?.getString("gameId")
+                ?.let(Screen::decodeArg)
+                ?: return@composable
+            val game = GameCatalog.byId(gameId)
+
+            val gameContent: @Composable (onComplete: (GameResult) -> Unit) -> Unit =
+                when (game?.id) {
+                    "cognitive-creamery" -> { onComplete -> CognitiveCreameryGame(onDone = onComplete) }
+                    "ghost" -> { onComplete -> GhostGame(onDone = onComplete) }
+                    "lucky-paws" -> { onComplete -> LuckyPawsGame(onDone = onComplete) }
+                    "symptom-striker" -> { onComplete -> SymptomStrikerGame(onDone = onComplete) }
+                    "kidz-doodle-land" -> { onComplete -> WebViewGame(assetFolder = "Kidz-doodle_land", onDone = onComplete) }
+                    "kidz-linebreaker" -> { onComplete -> WebViewGame(assetFolder = "Kidz-linebreaker", onDone = onComplete) }
+                    "relaxation-retreat" -> { onComplete -> WebViewGame(assetFolder = "relaxation-retreat", onDone = onComplete) }
+                    "spoon-gauntlet" -> { onComplete -> WebViewGame(assetFolder = "spoon-gauntlet", onDone = onComplete) }
+                    "lumis-star-quest" -> { onComplete -> WebViewGame(assetFolder = "Lumis_star_quest", onDone = onComplete) }
+                    "nostalgia" -> { onComplete -> WebViewGame(assetFolder = "Nostalgia", onDone = onComplete) }
+                    "aol" -> { onComplete -> WebViewGame(assetFolder = "AOL", onDone = onComplete) }
+                    else -> { _ -> InertGameContent(game = game) }
+                }
+
             GameShellScreen(
                 gameId = gameId,
                 onExit = { navController.popBackStack() },
-                onComplete = { result ->
+                onRestart = {
+                    navController.navigate(Screen.GamePlayer.withId(gameId)) {
+                        popUpTo(Screen.GamePlayer.route) { inclusive = true }
+                    }
+                },
+                onComplete = { _ ->
                     navController.navigate(Screen.Completion.withId(gameId)) {
                         popUpTo(Screen.GamePlayer.route) { inclusive = true }
                     }
                 },
+                gameContent = gameContent,
             )
         }
 
@@ -79,8 +149,15 @@ fun MeetSterlingNavGraph(
                 navArgument("source") { type = NavType.StringType },
             ),
         ) { backStackEntry ->
-            val videoId = backStackEntry.arguments?.getString("videoId") ?: return@composable
-            val source  = backStackEntry.arguments?.getString("source") ?: return@composable
+            val videoId = backStackEntry.arguments
+                ?.getString("videoId")
+                ?.let(Screen::decodeArg)
+                ?: return@composable
+            val source = backStackEntry.arguments
+                ?.getString("source")
+                ?.let(Screen::decodeArg)
+                ?: return@composable
+
             VideoPlayerScreen(
                 videoId = videoId,
                 source = source,
@@ -92,12 +169,17 @@ fun MeetSterlingNavGraph(
             route = Screen.Completion.route,
             arguments = listOf(navArgument("gameId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
+            val gameId = backStackEntry.arguments
+                ?.getString("gameId")
+                ?.let(Screen::decodeArg)
+                ?: return@composable
+
             CompletionScreen(
                 gameId = gameId,
                 onReturnToPark = {
                     navController.navigate(Screen.Park.route) {
                         popUpTo(Screen.Park.route) { inclusive = false }
+                        launchSingleTop = true
                     }
                 },
                 onReplay = {
@@ -105,6 +187,147 @@ fun MeetSterlingNavGraph(
                         popUpTo(Screen.Completion.route) { inclusive = true }
                     }
                 },
+            )
+        }
+
+        composable(Screen.GrandArcadeIndoor.route) {
+            GrandArcadeIndoorScreen(
+                onGameSelected = { route -> navController.navigate(route) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.LuckyPaws.route) {
+            LuckyPawsScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("lucky-paws")) })
+        }
+
+        composable(Screen.Gauntlet.route) {
+            GauntletScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("spoon-gauntlet")) })
+        }
+
+        composable(Screen.SymptomStriker.route) {
+            SymptomStrikerScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("symptom-striker")) })
+        }
+
+        composable(Screen.Creamery.route) {
+            CreameryScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("cognitive-creamery")) })
+        }
+
+        composable(Screen.RelaxationRetreat.route) {
+            RelaxationRetreatScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("relaxation-retreat")) })
+        }
+
+        composable(Screen.KidzHub.route) {
+            KidzGameshellScreen(
+                onGamesLand = { navController.navigate(Screen.KidzArcadeMenu.route) },
+                onStorybookLand = { navController.navigate(Screen.StorybookLand.route) },
+            )
+        }
+
+        composable(Screen.KidzGames.route) {
+            KidzGamesScreen(onGameSelected = { route -> navController.navigate(route) })
+        }
+
+        composable(Screen.KidzArcadeMenu.route) {
+            val kidzGameRoutes = listOf(
+                Screen.LumiStarQuest.route,
+                Screen.Doodle.route,
+                Screen.Linebreaker.route,
+                Screen.Nostalgia.route,
+            )
+            KidzArcadeMenuScreen(
+                onMenuItemClick = { index ->
+                    kidzGameRoutes.getOrNull(index)?.let { navController.navigate(it) }
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.StorybookLand.route) {
+            StorybookLandScreen(
+                onVideoSelected = { videoId ->
+                    navController.navigate(Screen.KidzCinema.withId(videoId))
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(
+            route = Screen.KidzCinema.route,
+            arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val videoId = backStackEntry.arguments
+                ?.getString("videoId")
+                ?.let(Screen::decodeArg)
+                ?: "kids-video-01"
+
+            KidzCinemaScreen(
+                videoId = videoId,
+                onPlayVideo = {
+                    navController.navigate(Screen.VideoPlayer.withId(videoId, "kidz"))
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.Doodle.route) {
+            DoodleScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("kidz-doodle-land")) })
+        }
+
+        composable(Screen.Linebreaker.route) {
+            LinebreakerScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("kidz-linebreaker")) })
+        }
+
+        composable(Screen.LumiStarQuest.route) {
+            LumisStarQuestScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("lumis-star-quest")) })
+        }
+
+        composable(Screen.Nostalgia.route) {
+            NostalgiaScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("nostalgia")) })
+        }
+
+        composable(Screen.Aol.route) {
+            AolScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("aol")) })
+        }
+
+        composable(Screen.StudioPlayer.route) {
+            StudioScreen()
+        }
+
+        composable(Screen.TechnicalDifficulties.route) {
+            TechnicalDifficultiesScreen()
+        }
+    }
+}
+
+@Composable
+private fun InertGameContent(game: GameDefinition?) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Surface),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(32.dp),
+        ) {
+            Text(
+                text = game?.title ?: "",
+                style = MaterialTheme.typography.titleLarge,
+                color = TextPrimary,
+            )
+            Text(
+                text = game?.description ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextMuted,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = "Not part of the current playable build",
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted,
             )
         }
     }

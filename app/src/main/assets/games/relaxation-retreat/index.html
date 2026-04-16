@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relaxation Retreat</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+width:100%; min-height:100vh;
+font-family:‘Nunito’,‘Verdana’,sans-serif;
+font-size:22px; line-height:1.6; color:#1a2e05;
+background:linear-gradient(170deg,#e0f7fa 0%,#b2ebf2 30%,#ffe0b2 70%,#fff8e1 100%);
+background-attachment:fixed;
+}
+
+/* ==================== MAIN MENU ==================== */
+.main-menu { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:36px 20px; }
+.main-menu.hidden { display:none; }
+.menu-header { text-align:center; margin-bottom:28px; }
+.menu-header h1 { font-family:‘Pacifico’,cursive; font-size:52px; color:#00695c; text-shadow:2px 3px 8px rgba(0,0,0,0.15); margin-bottom:6px; }
+.menu-header .menu-emoji { font-size:44px; letter-spacing:12px; margin-bottom:10px; display:block; }
+.menu-header p { font-size:22px; color:#004d40; max-width:640px; margin:0 auto; line-height:1.7; font-weight:600; }
+
+.menu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; max-width:960px; width:100%; margin-bottom:32px; }
+.menu-card {
+background:rgba(255,255,255,0.94); border:3px solid #b2dfdb; border-radius:18px;
+padding:22px 24px; cursor:pointer; transition:all 0.25s ease;
+box-shadow:0 4px 18px rgba(0,0,0,0.08);
+}
+.menu-card:hover { transform:translateY(-5px); box-shadow:0 10px 32px rgba(0,0,0,0.16); border-color:#00897b; }
+.menu-card .card-icon { font-size:40px; margin-bottom:10px; display:block; }
+.menu-card h3 { font-family:‘Pacifico’,cursive; font-size:26px; color:#00695c; margin-bottom:8px; }
+.menu-card p { font-size:18px; color:#263238; line-height:1.6; font-weight:600; }
+.menu-card .how-to { font-size:16px; color:#00695c; margin-top:10px; font-weight:700; border-top:2px solid #e0f2f1; padding-top:10px; }
+
+.menu-start-btn {
+font-family:‘Nunito’,sans-serif; font-size:24px; font-weight:900;
+padding:18px 56px; border:none; border-radius:18px; cursor:pointer;
+background:linear-gradient(135deg,#ffb300,#ff8f00); color:#3e2723;
+box-shadow:0 5px 20px rgba(255,179,0,0.45); transition:all 0.2s; margin-bottom:24px;
+}
+.menu-start-btn:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(255,179,0,0.55); }
+
+/* ==================== SUITE WRAPPER ==================== */
+.suite-wrapper { display:none; }
+.suite-wrapper.active { display:block; }
+
+.suite-header {
+background:linear-gradient(135deg,#00897b,#00695c);
+padding:14px 24px; text-align:center;
+box-shadow:0 4px 16px rgba(0,0,0,0.18);
+}
+.suite-header h1 { font-family:‘Pacifico’,cursive; font-size:32px; color:#fff; text-shadow:2px 3px 6px rgba(0,0,0,0.3); }
+
+/* –– NAV –– */
+.nav-bar {
+display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
+gap:8px; padding:12px 10px;
+background:linear-gradient(135deg,#004d40,#00796b);
+}
+.nav-btn {
+font-family:‘Nunito’,sans-serif; font-size:17px; font-weight:800;
+padding:12px 18px; border:3px solid transparent; border-radius:12px;
+cursor:pointer; background:#e0f2f1; color:#004d40; transition:all 0.25s;
+}
+.nav-btn:hover { background:#fff9c4; transform:translateY(-2px); }
+.nav-btn.active { background:#ffb300; color:#3e2723; border-color:#ff8f00; box-shadow:0 4px 14px rgba(255,179,0,0.4); }
+.nav-btn.menu-back { background:#ef5350; color:#fff; border-color:#c62828; font-size:16px; }
+.nav-btn.menu-back:hover { background:#c62828; }
+
+.vol-control { display:flex; align-items:center; gap:6px; margin-left:10px; }
+.vol-btn { font-size:24px; background:none; border:none; cursor:pointer; color:#b2dfdb; padding:4px; }
+.vol-btn:hover { color:#fff; }
+.vol-slider { width:80px; height:8px; cursor:pointer; accent-color:#ffb300; }
+
+/* –– GAME SECTIONS –– */
+.game-section {
+display:none; max-width:920px; margin:18px auto;
+padding:24px; background:rgba(255,255,255,0.94);
+border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,0.1);
+border:2px solid #b2dfdb;
+}
+.game-section.active { display:block; }
+.game-section h2 { font-family:‘Pacifico’,cursive; font-size:32px; color:#00695c; text-align:center; margin-bottom:6px; }
+.game-section .game-subtitle { text-align:center; color:#37474f; font-size:18px; font-weight:700; margin-bottom:18px; }
+
+/* –– BUTTONS –– */
+.game-btn {
+font-family:‘Nunito’,sans-serif; font-size:20px; font-weight:800;
+padding:14px 28px; border:none; border-radius:14px; cursor:pointer;
+background:linear-gradient(135deg,#00897b,#00695c); color:#fff;
+transition:all 0.2s; box-shadow:0 3px 12px rgba(0,0,0,0.15);
+}
+.game-btn:hover { background:linear-gradient(135deg,#00796b,#004d40); transform:translateY(-2px); }
+.game-btn.secondary { background:linear-gradient(135deg,#ffb300,#ff8f00); color:#3e2723; }
+.game-btn.secondary:hover { background:linear-gradient(135deg,#ffa000,#e65100); }
+.btn-row { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:16px 0; }
+
+/* –– MESSAGES –– */
+.game-message { text-align:center; font-size:20px; font-weight:800; padding:12px; border-radius:12px; margin:12px 0; }
+.game-message.success { background:#c8e6c9; color:#1b5e20; border:2px solid #66bb6a; }
+.game-message.error { background:#ffcdd2; color:#b71c1c; border:2px solid #ef5350; }
+.game-message.info { background:#fff9c4; color:#f57f17; border:2px solid #ffee58; }
+
+/* ==================== SUDOKU ==================== */
+.sudoku-grid {
+display:grid; grid-template-columns:repeat(9,1fr); gap:2px;
+max-width:504px; margin:0 auto 16px; background:#004d40;
+padding:3px; border-radius:10px; border:3px solid #004d40;
+}
+.sudoku-cell {
+width:100%; aspect-ratio:1; text-align:center;
+font-family:‘Nunito’,sans-serif; font-size:22px; font-weight:800;
+border:1px solid #b2dfdb; background:#fff; color:#004d40; outline:none;
+}
+.sudoku-cell:focus { background:#e0f7fa; box-shadow:inset 0 0 0 2px #00897b; }
+.sudoku-cell.given { background:#e0f2f1; color:#00695c; font-weight:900; }
+.sudoku-cell.invalid { background:#ffcdd2; color:#b71c1c; }
+.sudoku-cell.border-right { border-right:3px solid #004d40; }
+.sudoku-cell.border-bottom { border-bottom:3px solid #004d40; }
+
+/* ==================== CROSSWORD ==================== */
+.crossword-container { display:flex; flex-direction:column; gap:20px; align-items:center; }
+.crossword-grid-wrap { overflow-x:auto; max-width:100%; }
+.crossword-grid { display:inline-grid; gap:2px; background:#004d40; padding:4px; border-radius:10px; }
+.cw-cell-wrap { width:54px; height:54px; position:relative; }
+.cw-cell-wrap.blocked { background:#004d40; border-radius:2px; }
+.cw-cell-wrap input {
+width:100%; height:100%; text-align:center;
+font-family:‘Nunito’,sans-serif; font-size:24px; font-weight:800;
+border:2px solid #b2dfdb; background:#fff; color:#004d40;
+text-transform:uppercase; outline:none; padding:0; border-radius:2px;
+}
+.cw-cell-wrap input:focus { background:#e0f7fa; box-shadow:inset 0 0 0 2px #00897b; }
+.cw-cell-wrap input.correct-cell { background:#c8e6c9; }
+.cw-cell-wrap input.incorrect-cell { background:#ffcdd2; }
+.cw-cell-num { position:absolute; top:2px; left:4px; font-size:12px; font-weight:900; color:#00695c; pointer-events:none; z-index:2; line-height:1; }
+.crossword-clues { width:100%; max-width:700px; display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
+.clue-group { flex:1; min-width:240px; }
+.clue-group h3 { font-size:22px; color:#00695c; margin-bottom:6px; border-bottom:3px solid #b2dfdb; padding-bottom:4px; font-weight:900; }
+.clue-group p { font-size:18px; margin:6px 0; padding:6px 10px; color:#263238; font-weight:600; line-height:1.5; }
+
+/* ==================== MATCH-3 ==================== */
+.match3-grid {
+display:grid; grid-template-columns:repeat(6,1fr); gap:6px;
+max-width:408px; margin:0 auto 16px; padding:10px;
+background:linear-gradient(135deg,#e0f2f1,#b2dfdb);
+border-radius:14px; border:3px solid #00897b;
+}
+.match3-tile {
+width:100%; aspect-ratio:1; border-radius:12px; cursor:pointer;
+font-size:30px; display:flex; align-items:center; justify-content:center;
+border:3px solid transparent;
+transition:transform 0.2s ease, opacity 0.3s ease, border-color 0.2s;
+user-select:none;
+}
+.match3-tile:hover { transform:scale(1.08); }
+.match3-tile.selected { border-color:#ffb300; box-shadow:0 0 14px rgba(255,179,0,0.6); transform:scale(1.1); }
+.match3-tile.removing { opacity:0; transform:scale(0.3); }
+.match3-score { text-align:center; font-size:26px; font-weight:900; color:#00695c; margin-bottom:12px; }
+
+/* ==================== SOLITAIRE — RESPONSIVE ==================== */
+.solitaire-area { width:100%; max-width:560px; margin:0 auto; }
+.solitaire-top { display:flex; justify-content:space-between; gap:4px; margin-bottom:14px; }
+.solitaire-foundations, .solitaire-stock-waste { display:flex; gap:4px; }
+
+.card-slot {
+width:calc((100% - 20px)/6); max-width:72px; min-width:44px;
+aspect-ratio:0.72; border:2px dashed #80cbc4; border-radius:8px;
+display:flex; align-items:center; justify-content:center;
+font-size:22px; color:#80cbc4; background:rgba(0,105,92,0.08);
+cursor:pointer; transition:border-color 0.2s; font-weight:800;
+}
+.card-slot:hover { border-color:#ffb300; }
+.card-slot.has-card { border-style:solid; border-color:#00897b; }
+
+.solitaire-tableau { display:flex; gap:2%; justify-content:center; }
+.tableau-column { width:12.8%; min-width:40px; max-width:72px; position:relative; }
+
+.playing-card {
+width:100%; aspect-ratio:0.72; border-radius:6px;
+border:2px solid #b0bec5; display:flex; flex-direction:column;
+align-items:center; justify-content:center; font-weight:900;
+cursor:pointer; position:absolute; left:0;
+transition:box-shadow 0.2s, transform 0.15s;
+user-select:none; box-shadow:1px 2px 4px rgba(0,0,0,0.1); line-height:1;
+}
+.playing-card .card-rank { font-size:clamp(12px,2.8vw,18px); }
+.playing-card .card-suit { font-size:clamp(15px,3.2vw,22px); }
+.playing-card.face-up { background:#fffde7; }
+.playing-card.face-down { background:linear-gradient(135deg,#00897b,#004d40); cursor:default; }
+.playing-card.face-down .card-rank, .playing-card.face-down .card-suit { display:none; }
+.playing-card.face-down::after { content:‘🌴’; font-size:clamp(14px,3vw,24px); position:absolute; }
+.playing-card.red-card .card-rank, .playing-card.red-card .card-suit { color:#c62828; }
+.playing-card.black-card .card-rank, .playing-card.black-card .card-suit { color:#212121; }
+.playing-card.selected-card { box-shadow:0 0 0 3px #ffb300,1px 3px 12px rgba(255,179,0,0.5); transform:translateY(-3px); z-index:999 !important; }
+
+.slot-card {
+position:relative; width:100%; height:100%; border-radius:6px;
+border:2px solid #b0bec5; display:flex; flex-direction:column;
+align-items:center; justify-content:center; font-weight:900;
+cursor:pointer; user-select:none; line-height:1; background:#fffde7;
+}
+.slot-card .card-rank { font-size:clamp(12px,2.8vw,18px); }
+.slot-card .card-suit { font-size:clamp(15px,3.2vw,22px); }
+.slot-card.red-card .card-rank, .slot-card.red-card .card-suit { color:#c62828; }
+.slot-card.black-card .card-rank, .slot-card.black-card .card-suit { color:#212121; }
+.slot-card.selected-card { box-shadow:0 0 0 3px #ffb300; }
+
+/* ==================== WORDLE ==================== */
+.wordle-board { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:16px; }
+.wordle-row { display:flex; gap:8px; }
+.wordle-tile {
+width:60px; height:60px; border:3px solid #b2dfdb; border-radius:10px;
+display:flex; align-items:center; justify-content:center;
+font-size:28px; font-weight:900; text-transform:uppercase;
+background:#fff; color:#004d40; transition:all 0.3s ease;
+}
+.wordle-tile.correct { background:#43a047; border-color:#2e7d32; color:#fff; }
+.wordle-tile.present { background:#ffb300; border-color:#ff8f00; color:#3e2723; }
+.wordle-tile.absent { background:#607d8b; border-color:#455a64; color:#fff; }
+.wordle-tile.filled { border-color:#00897b; }
+
+.wordle-keyboard { display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:12px; }
+.wordle-kb-row { display:flex; gap:5px; }
+.wordle-key {
+font-family:‘Nunito’,sans-serif; font-size:17px; font-weight:800;
+padding:14px 12px; min-width:36px; border:2px solid #b2dfdb;
+border-radius:8px; background:#e0f2f1; color:#004d40;
+cursor:pointer; text-transform:uppercase; transition:all 0.2s; text-align:center;
+}
+.wordle-key:hover { background:#b2dfdb; }
+.wordle-key.correct { background:#43a047; border-color:#2e7d32; color:#fff; }
+.wordle-key.present { background:#ffb300; border-color:#ff8f00; color:#3e2723; }
+.wordle-key.absent { background:#607d8b; border-color:#455a64; color:#fff; }
+.wordle-key.wide-key { min-width:68px; font-size:14px; }
+
+/* ==================== TRIVIA ==================== */
+.trivia-question {
+font-size:24px; font-weight:800; color:#004d40; margin-bottom:18px;
+text-align:center; padding:18px; background:#e0f2f1;
+border-radius:14px; border-left:6px solid #00897b; line-height:1.5;
+}
+.trivia-options { display:flex; flex-direction:column; gap:10px; max-width:640px; margin:0 auto 16px; }
+.trivia-option {
+font-family:‘Nunito’,sans-serif; font-size:21px; font-weight:700;
+padding:16px 22px; border:3px solid #b2dfdb; border-radius:14px;
+background:#fff; color:#004d40; cursor:pointer; text-align:left; transition:all 0.2s;
+}
+.trivia-option:hover { background:#e0f7fa; border-color:#00897b; }
+.trivia-option.chosen-correct { background:#c8e6c9; border-color:#43a047; color:#1b5e20; }
+.trivia-option.chosen-wrong { background:#ffcdd2; border-color:#e53935; color:#b71c1c; }
+.trivia-option.show-correct { background:#c8e6c9; border-color:#43a047; }
+.trivia-option.disabled { cursor:default; opacity:0.85; }
+.trivia-progress { text-align:center; font-size:20px; font-weight:800; color:#00695c; margin-bottom:12px; }
+.trivia-score { text-align:center; font-size:30px; font-weight:900; color:#00695c; margin:20px 0; }
+
+.suite-footer { text-align:center; padding:16px; color:#37474f; font-size:16px; font-weight:600; }
+
+/* –– RESPONSIVE –– */
+@media (max-width:600px) {
+html, body { font-size:19px; }
+.menu-header h1 { font-size:36px; }
+.menu-header p { font-size:18px; }
+.menu-grid { grid-template-columns:1fr; }
+.suite-header h1 { font-size:24px; }
+.nav-btn { font-size:14px; padding:9px 12px; }
+.game-section { margin:8px 6px; padding:16px; }
+.game-section h2 { font-size:26px; }
+.sudoku-cell { font-size:18px; }
+.cw-cell-wrap { width:44px; height:44px; }
+.cw-cell-wrap input { font-size:18px; }
+.clue-group p { font-size:16px; }
+.match3-tile { font-size:24px; }
+.wordle-tile { width:50px; height:50px; font-size:24px; }
+.wordle-key { padding:10px 8px; min-width:28px; font-size:14px; }
+.trivia-question { font-size:20px; }
+.trivia-option { font-size:18px; padding:14px 16px; }
+.vol-slider { width:50px; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- ==================== MAIN MENU ==================== -->
+
+<div class="main-menu" id="mainMenu">
+  <div class="menu-header">
+    <span class="menu-emoji">🌴🌺🌊☀️🐚🍍</span>
+    <h1>Relaxation Retreat</h1>
+    <p>Welcome to your tropical island game paradise! Pick a game below to unwind, challenge your mind, and enjoy some island vibes. Each game has its own fun tropical music!</p>
+  </div>
+  <div class="menu-grid" id="menuGrid">
+    <div class="menu-card" data-game="sudoku">
+      <span class="card-icon">🔢</span>
+      <h3>Island Sudoku</h3>
+      <p>Classic 9×9 number puzzle. Fill every row, column, and 3×3 box with 1 through 9.</p>
+      <p class="how-to">Tap an empty cell, type a number. Press "Check Solution" to see your progress.</p>
+    </div>
+    <div class="menu-card" data-game="crossword">
+      <span class="card-icon">📝</span>
+      <h3>MS Crossword</h3>
+      <p>A crossword featuring Multiple Sclerosis and nervous system terms. New puzzle each time!</p>
+      <p class="how-to">Read the clues, type letters. Press "Check Words" when you're done.</p>
+    </div>
+    <div class="menu-card" data-game="match3">
+      <span class="card-icon">💎</span>
+      <h3>Tropical Match-3</h3>
+      <p>Swap colorful island tiles to line up 3 or more. They disappear and new ones fall in!</p>
+      <p class="how-to">Tap one tile, then tap a neighbor to swap. Match 3 or more to score!</p>
+    </div>
+    <div class="menu-card" data-game="solitaire">
+      <span class="card-icon">🃏</span>
+      <h3>Island Solitaire</h3>
+      <p>Classic Klondike solitaire. Stack cards in alternating colors, build suits on foundations.</p>
+      <p class="how-to">Tap a card to select (glows gold), then tap where to move it.</p>
+    </div>
+    <div class="menu-card" data-game="wordle">
+      <span class="card-icon">🔤</span>
+      <h3>Health Wordle</h3>
+      <p>Guess a secret 5-letter health word in 6 tries. Green = right spot. Yellow = wrong spot.</p>
+      <p class="how-to">Type a word, press Enter. Use color clues to narrow it down!</p>
+    </div>
+    <div class="menu-card" data-game="trivia">
+      <span class="card-icon">🧠</span>
+      <h3>Nervous System Trivia</h3>
+      <p>Five fun questions about the human nervous system. See how many you get right!</p>
+      <p class="how-to">Tap the answer you think is correct. Score shown at the end.</p>
+    </div>
+  </div>
+  <button class="menu-start-btn" id="menuStartBtn">🌺 Start Playing! 🌺</button>
+</div>
+
+<!-- ==================== SUITE ==================== -->
+
+<div class="suite-wrapper" id="suiteWrapper">
+<header class="suite-header"><h1>🌴 Relaxation Retreat 🌺</h1></header>
+<nav class="nav-bar" id="navBar">
+  <button class="nav-btn menu-back" id="backToMenuBtn">🏠 Menu</button>
+  <button class="nav-btn active" data-game="sudoku">🔢 Sudoku</button>
+  <button class="nav-btn" data-game="crossword">📝 Crossword</button>
+  <button class="nav-btn" data-game="match3">💎 Match-3</button>
+  <button class="nav-btn" data-game="solitaire">🃏 Solitaire</button>
+  <button class="nav-btn" data-game="wordle">🔤 Wordle</button>
+  <button class="nav-btn" data-game="trivia">🧠 Trivia</button>
+  <div class="vol-control">
+    <button class="vol-btn" id="volToggle" title="Mute/Unmute">🔊</button>
+    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="50">
+  </div>
+</nav>
+
+<section class="game-section active" id="game-sudoku">
+  <h2>🌺 Island Sudoku</h2>
+  <p class="game-subtitle">Fill the grid: every row, column, and 3×3 box gets 1–9</p>
+  <div class="sudoku-grid" id="sudokuGrid"></div>
+  <div id="sudokuMessage"></div>
+  <div class="btn-row">
+    <button class="game-btn" onclick="SudokuGame.check()">✅ Check Solution</button>
+    <button class="game-btn secondary" onclick="SudokuGame.init()">🔄 New Puzzle</button>
+  </div>
+</section>
+
+<section class="game-section" id="game-crossword">
+  <h2>🌴 MS Crossword</h2>
+  <p class="game-subtitle">Multiple Sclerosis terms — fill in the blanks!</p>
+  <div class="crossword-container">
+    <div class="crossword-grid-wrap"><div class="crossword-grid" id="crosswordGrid"></div></div>
+    <div class="crossword-clues" id="crosswordClues"></div>
+  </div>
+  <div id="crosswordMessage"></div>
+  <div class="btn-row">
+    <button class="game-btn" onclick="CrosswordGame.check()">✅ Check Words</button>
+    <button class="game-btn secondary" onclick="CrosswordGame.init()">🔄 New Puzzle</button>
+  </div>
+</section>
+
+<section class="game-section" id="game-match3">
+  <h2>🐚 Tropical Match-3</h2>
+  <p class="game-subtitle">Swap tiles to match 3 or more in a row!</p>
+  <div class="match3-score">Score: <span id="match3Score">0</span></div>
+  <div class="match3-grid" id="match3Grid"></div>
+  <div id="match3Message"></div>
+  <div class="btn-row"><button class="game-btn secondary" onclick="Match3Game.init()">🔄 New Game</button></div>
+</section>
+
+<section class="game-section" id="game-solitaire">
+  <h2>🏝️ Island Solitaire</h2>
+  <p class="game-subtitle">Tap to select (glows gold), then tap to place</p>
+  <div class="solitaire-area">
+    <div class="solitaire-top">
+      <div class="solitaire-stock-waste">
+        <div class="card-slot" id="solStock" onclick="SolitaireGame.drawCard()">🌴</div>
+        <div class="card-slot" id="solWaste" onclick="SolitaireGame.handleWasteClick()"></div>
+      </div>
+      <div class="solitaire-foundations">
+        <div class="card-slot" id="solFound0" onclick="SolitaireGame.handleFoundationClick(0)">♠</div>
+        <div class="card-slot" id="solFound1" onclick="SolitaireGame.handleFoundationClick(1)">♥</div>
+        <div class="card-slot" id="solFound2" onclick="SolitaireGame.handleFoundationClick(2)">♦</div>
+        <div class="card-slot" id="solFound3" onclick="SolitaireGame.handleFoundationClick(3)">♣</div>
+      </div>
+    </div>
+    <div class="solitaire-tableau" id="solTableau"></div>
+  </div>
+  <div id="solitaireMessage"></div>
+  <div class="btn-row"><button class="game-btn secondary" onclick="SolitaireGame.init()">🔄 New Game</button></div>
+</section>
+
+<section class="game-section" id="game-wordle">
+  <h2>🌊 Health Wordle</h2>
+  <p class="game-subtitle">Guess the 5-letter health word in 6 tries!</p>
+  <div class="btn-row" style="margin-top:0;margin-bottom:16px;">
+    <button class="game-btn secondary" onclick="WordleGame.init()">🔄 New Word</button>
+  </div>
+  <div class="wordle-board" id="wordleBoard"></div>
+  <div id="wordleMessage"></div>
+  <div class="wordle-keyboard" id="wordleKeyboard"></div>
+</section>
+
+<section class="game-section" id="game-trivia">
+  <h2>🧠 Nervous System Trivia</h2>
+  <p class="game-subtitle">Fun facts about the human nervous system!</p>
+  <div class="trivia-progress" id="triviaProgress"></div>
+  <div class="trivia-question" id="triviaQuestion"></div>
+  <div class="trivia-options" id="triviaOptions"></div>
+  <div id="triviaMessage"></div>
+  <div id="triviaScoreArea"></div>
+  <div class="btn-row">
+    <button class="game-btn" id="triviaNextBtn" onclick="TriviaGame.next()" style="display:none;">Next Question ➡️</button>
+    <button class="game-btn secondary" onclick="TriviaGame.init()">🔄 Restart Quiz</button>
+  </div>
+</section>
+
+<footer class="suite-footer">🌴 Relaxation Retreat — Take a break, play a game, breathe easy. 🌺</footer>
+</div>
+
+<script>
+/* ============================================================
+   UPBEAT TROPICAL MUSIC ENGINE — Web Audio API
+   Steel drum melodies, percussion, bouncy rhythms per game
+   ============================================================ */
+var MusicEngine = (function() {
+  var ctx=null, masterGain=null, currentNodes=[], currentGame='', muted=false, volume=0.5, loopTimers=[];
+
+  function ensure() {
+    if (!ctx) { ctx=new(window.AudioContext||window.webkitAudioContext)(); masterGain=ctx.createGain(); masterGain.gain.value=volume; masterGain.connect(ctx.destination); }
+    if (ctx.state==='suspended') ctx.resume();
+  }
+
+  function stopAll() {
+    loopTimers.forEach(function(t){clearInterval(t);});loopTimers=[];
+    currentNodes.forEach(function(n){try{n.stop();}catch(e){}try{n.disconnect();}catch(e){}});currentNodes=[];
+  }
+
+  function setVolume(v) { volume=v; if(masterGain) masterGain.gain.setTargetAtTime(muted?0:v,ctx.currentTime,0.05); }
+  function toggleMute() { muted=!muted; if(masterGain) masterGain.gain.setTargetAtTime(muted?0:volume,ctx.currentTime,0.05); return muted; }
+
+  /* Steel drum / bell tone — bright attack, fast decay */
+  function steelDrum(freq, time, dur, vol) {
+    var osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='triangle';
+    osc.frequency.setValueAtTime(freq,time);
+    /* Bright harmonic */
+    var osc2=ctx.createOscillator(), g2=ctx.createGain();
+    osc2.type='sine'; osc2.frequency.setValueAtTime(freq*2.01,time);
+    g.gain.setValueAtTime(vol||0.15,time);
+    g.gain.exponentialRampToValueAtTime(0.001,time+(dur||0.4));
+    g2.gain.setValueAtTime((vol||0.15)*0.3,time);
+    g2.gain.exponentialRampToValueAtTime(0.001,time+(dur||0.4));
+    osc.connect(g); g.connect(masterGain);
+    osc2.connect(g2); g2.connect(masterGain);
+    osc.start(time); osc.stop(time+(dur||0.4)+0.05);
+    osc2.start(time); osc2.stop(time+(dur||0.4)+0.05);
+    currentNodes.push(osc,osc2);
+  }
+
+  /* Percussion hit */
+  function perc(time, freq, vol) {
+    var osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='square'; osc.frequency.setValueAtTime(freq||80,time);
+    osc.frequency.exponentialRampToValueAtTime(30,time+0.08);
+    g.gain.setValueAtTime(vol||0.12,time);
+    g.gain.exponentialRampToValueAtTime(0.001,time+0.12);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(time); osc.stop(time+0.15);
+    currentNodes.push(osc);
+  }
+
+  /* Hi-hat click */
+  function hat(time, vol) {
+    var buf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
+    var d=buf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    var src=ctx.createBufferSource();src.buffer=buf;
+    var hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=8000;
+    var g=ctx.createGain();g.gain.setValueAtTime(vol||0.08,time);g.gain.exponentialRampToValueAtTime(0.001,time+0.05);
+    src.connect(hp);hp.connect(g);g.connect(masterGain);
+    src.start(time);currentNodes.push(src);
+  }
+
+  /* Warm background pad */
+  function bgPad(freqs, vol) {
+    freqs.forEach(function(f,i) {
+      var osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type='sine'; osc.frequency.value=f;
+      g.gain.value=(vol||0.04);
+      var pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
+      osc.connect(g);
+      if(pan){g.connect(pan);pan.pan.value=(i%2===0?-0.3:0.3);pan.connect(masterGain);}
+      else{g.connect(masterGain);}
+      osc.start(); currentNodes.push(osc);
+    });
+  }
+
+  /* Looping melody scheduler */
+  function melodyLoop(notes, bpm, volBase) {
+    var beatMs = 60000/bpm;
+    var idx=0;
+    function tick() {
+      if(!ctx) return;
+      var note=notes[idx%notes.length];
+      var t=ctx.currentTime;
+      if(note>0) steelDrum(note, t, 0.35, volBase||0.13);
+      idx++;
+    }
+    tick();
+    var timer=setInterval(tick, beatMs);
+    loopTimers.push(timer);
+  }
+
+  /* Rhythm loop */
+  function rhythmLoop(pattern, bpm) {
+    var beatMs=60000/bpm;
+    var idx=0;
+    function tick() {
+      if(!ctx) return;
+      var t=ctx.currentTime;
+      var p=pattern[idx%pattern.length];
+      if(p==='k') perc(t,90,0.10);
+      else if(p==='h') hat(t,0.06);
+      else if(p==='K') perc(t,120,0.14);
+      else if(p==='H') hat(t,0.10);
+      idx++;
+    }
+    tick();
+    var timer=setInterval(tick, beatMs);
+    loopTimers.push(timer);
+  }
+
+  /* ---- Per-game music profiles ---- */
+  var profiles = {
+    sudoku: function() {
+      /* Calm steel drum melody in C major, gentle groove */
+      bgPad([130.8, 196.0, 261.6], 0.03);
+      melodyLoop([523.3,0,392.0,0,329.6,0,392.0,0, 440.0,0,392.0,0,349.2,0,329.6,0], 140, 0.10);
+      rhythmLoop(['h','.','h','k','h','.','h','k'], 140);
+    },
+    crossword: function() {
+      /* Breezy island waltz feel in Am */
+      bgPad([110.0, 164.8, 220.0, 329.6], 0.03);
+      melodyLoop([440.0,0,523.3,0,440.0,0,392.0,329.6,0,0,349.2,0,329.6,0,293.7,0], 120, 0.11);
+      rhythmLoop(['K','.','.','h','.','.','k','h'], 120);
+    },
+    match3: function() {
+      /* Peppy bouncy tune in F major — most energetic */
+      bgPad([174.6, 220.0, 261.6], 0.03);
+      melodyLoop([523.3,349.2,440.0,349.2,523.3,587.3,523.3,440.0, 349.2,440.0,523.3,0,587.3,523.3,440.0,349.2], 170, 0.14);
+      rhythmLoop(['K','h','k','h','K','h','k','H'], 170);
+    },
+    solitaire: function() {
+      /* Relaxed reggae-ish in Dm */
+      bgPad([146.8, 174.6, 220.0, 293.7], 0.03);
+      melodyLoop([440.0,0,0,349.2,0,0,329.6,0, 293.7,0,0,349.2,0,0,329.6,0], 110, 0.10);
+      rhythmLoop(['.','h','.','k','.','h','.','K'], 110);
+    },
+    wordle: function() {
+      /* Thoughtful melody in Em */
+      bgPad([164.8, 196.0, 246.9, 329.6], 0.03);
+      melodyLoop([493.9,0,440.0,0,392.0,0,329.6,0, 392.0,0,440.0,0,493.9,0,0,0], 125, 0.11);
+      rhythmLoop(['h','.','h','k','h','.','h','K'], 125);
+    },
+    trivia: function() {
+      /* Upbeat quiz-show feel in G */
+      bgPad([196.0, 246.9, 293.7, 392.0], 0.03);
+      melodyLoop([587.3,493.9,587.3,0,523.3,493.9,440.0,0, 392.0,440.0,493.9,0,587.3,0,0,0], 155, 0.12);
+      rhythmLoop(['K','h','h','k','K','h','k','H'], 155);
+    }
+  };
+
+  function play(name) {
+    if(name===currentGame) return;
+    currentGame=name; ensure(); stopAll();
+    if(profiles[name]) profiles[name]();
+  }
+  function stop() { stopAll(); currentGame=''; }
+
+  return { play:play, stop:stop, setVolume:setVolume, toggleMute:toggleMute };
+})();
+
+/* ============================================================
+   NAVIGATION & MENU
+   ============================================================ */
+(function() {
+  var mm=document.getElementById('mainMenu'), sw=document.getElementById('suiteWrapper');
+  var nb=document.getElementById('navBar'), btns=nb.querySelectorAll('.nav-btn[data-game]');
+  var secs=document.querySelectorAll('.game-section');
+
+  function showSuite(g) { mm.classList.add('hidden'); sw.classList.add('active'); switchG(g||'sudoku'); }
+  function showMenu() { sw.classList.remove('active'); mm.classList.remove('hidden'); MusicEngine.stop(); }
+  function switchG(g) {
+    btns.forEach(function(b){b.classList.remove('active');});
+    nb.querySelector('[data-game="'+g+'"]').classList.add('active');
+    secs.forEach(function(s){s.classList.remove('active');});
+    document.getElementById('game-'+g).classList.add('active');
+    MusicEngine.play(g);
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){switchG(b.getAttribute('data-game'));});});
+  document.getElementById('backToMenuBtn').addEventListener('click',showMenu);
+  document.querySelectorAll('.menu-card').forEach(function(c){c.addEventListener('click',function(){showSuite(c.getAttribute('data-game'));});});
+  document.getElementById('menuStartBtn').addEventListener('click',function(){showSuite('sudoku');});
+  document.getElementById('volSlider').addEventListener('input',function(e){MusicEngine.setVolume(parseInt(e.target.value)/100);});
+  document.getElementById('volToggle').addEventListener('click',function(){var m=MusicEngine.toggleMute();this.textContent=m?'🔇':'🔊';});
+})();
+
+/* ============================================================
+   SUDOKU
+   ============================================================ */
+var SudokuGame=(function(){
+  var sol=[],puz=[],gEl;
+  function gen(){var g=[];for(var i=0;i<9;i++)g.push([0,0,0,0,0,0,0,0,0]);fill(g);return g;}
+  function fill(g){var c=fe(g);if(!c)return true;var r=c[0],co=c[1],ns=sh([1,2,3,4,5,6,7,8,9]);for(var i=0;i<9;i++){if(iv(g,r,co,ns[i])){g[r][co]=ns[i];if(fill(g))return true;g[r][co]=0;}}return false;}
+  function fe(g){for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(g[r][c]===0)return[r,c];return null;}
+  function iv(g,r,c,n){for(var i=0;i<9;i++){if(g[r][i]===n)return false;if(g[i][c]===n)return false;}var br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(var rr=br;rr<br+3;rr++)for(var cc=bc;cc<bc+3;cc++)if(g[rr][cc]===n)return false;return true;}
+  function sh(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
+  function cp(s,cnt){var p=s.map(function(r){return r.slice();});var cs=[];for(var r=0;r<9;r++)for(var c=0;c<9;c++)cs.push([r,c]);cs=sh(cs);var rm=81-cnt;for(var i=0;i<rm&&i<cs.length;i++)p[cs[i][0]][cs[i][1]]=0;return p;}
+  function ren(){
+    gEl.innerHTML='';
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+      var inp=document.createElement('input');inp.type='text';inp.maxLength=1;inp.className='sudoku-cell';
+      inp.setAttribute('data-row',r);inp.setAttribute('data-col',c);
+      if((c+1)%3===0&&c<8)inp.classList.add('border-right');
+      if((r+1)%3===0&&r<8)inp.classList.add('border-bottom');
+      if(puz[r][c]!==0){inp.value=puz[r][c];inp.classList.add('given');inp.readOnly=true;}
+      else inp.addEventListener('input',function(e){var v=e.target.value;if(v&&(isNaN(v)||v<1||v>9))e.target.value='';gEl.querySelectorAll('.sudoku-cell').forEach(function(c){c.classList.remove('invalid');});});
+      gEl.appendChild(inp);
+    }
+  }
+  function check(){
+    gEl.querySelectorAll('.sudoku-cell').forEach(function(c){c.classList.remove('invalid');});
+    var cs=gEl.querySelectorAll('.sudoku-cell'),af=true,ac=true;
+    cs.forEach(function(c){var r=parseInt(c.getAttribute('data-row')),co=parseInt(c.getAttribute('data-col')),v=parseInt(c.value);if(!v)af=false;else if(v!==sol[r][co]){c.classList.add('invalid');ac=false;}});
+    var m=document.getElementById('sudokuMessage');
+    if(!af){m.className='game-message info';m.textContent='🌴 Some cells are still empty.';}
+    else if(ac){m.className='game-message success';m.textContent='🎉 Perfect! Mahalo!';}
+    else{m.className='game-message error';m.textContent='🔴 Some numbers are wrong. Check highlighted cells.';}
+  }
+  function init(){gEl=document.getElementById('sudokuGrid');document.getElementById('sudokuMessage').innerHTML='';sol=gen();puz=cp(sol,36);ren();}
+  return{init:init,check:check};
+})();
+
+/* ============================================================
+   CROSSWORD
+   ============================================================ */
+var CrosswordGame=(function(){
+  var puzzles=[
+    {grid:[['M','Y','E','L','I','N','#'],['#','#','#','E','#','E','#'],['F','L','A','S','H','U','#'],['#','#','X','I','#','R','#'],['#','#','O','O','#','O','#'],['#','#','N','N','#','N','#'],['#','#','#','S','#','#','#']],words:[{word:'MYELIN',row:0,col:0,dir:'across',num:1,clue:'Protective nerve coating damaged in MS'},{word:'FLASH',row:2,col:0,dir:'across',num:3,clue:'Brief symptom recurrence (hot ___)'},{word:'LESIONS',row:0,col:3,dir:'down',num:2,clue:'Damage areas visible on MRI'},{word:'AXON',row:2,col:2,dir:'down',num:4,clue:'Thread-like nerve cell projection'},{word:'NEURON',row:0,col:5,dir:'down',num:5,clue:'Basic nerve system cell'}]},
+    {grid:[['#','R','E','L','A','P','S','E'],['#','#','#','#','#','L','#','#'],['N','E','R','V','E','A','#','#'],['#','#','#','#','#','Q','#','#'],['B','R','A','I','N','U','#','#'],['#','#','#','#','#','E','#','#'],['S','C','A','N','#','S','#','#']],words:[{word:'RELAPSE',row:0,col:1,dir:'across',num:1,clue:'MS symptoms return after stability'},{word:'NERVE',row:2,col:0,dir:'across',num:3,clue:'Carries signals through body'},{word:'BRAIN',row:4,col:0,dir:'across',num:5,clue:'Central organ MS affects'},{word:'SCAN',row:6,col:0,dir:'across',num:6,clue:'MRI ___ detects MS damage'},{word:'PLAQUES',row:0,col:5,dir:'down',num:2,clue:'Hardened damaged myelin patches'}]},
+    {grid:[['F','A','T','I','G','U','E'],['#','#','#','#','#','#','#'],['#','O','P','T','I','C','#'],['#','#','#','R','#','#','#'],['#','#','#','E','#','#','#'],['#','#','#','M','#','#','#'],['#','#','#','O','#','#','#'],['#','#','#','R','#','#','#']],words:[{word:'FATIGUE',row:0,col:0,dir:'across',num:1,clue:'Overwhelming tiredness in MS'},{word:'OPTIC',row:2,col:1,dir:'across',num:3,clue:'___ neuritis: eye nerve swelling'},{word:'TREMOR',row:2,col:3,dir:'down',num:4,clue:'Involuntary limb shaking'}]},
+    {grid:[['G','L','I','A','L','#'],['#','#','#','#','#','#'],['S','H','E','A','T','H'],['#','#','#','#','#','#'],['S','P','I','N','A','L'],['#','#','#','#','#','#'],['C','O','R','T','E','X']],words:[{word:'GLIAL',row:0,col:0,dir:'across',num:1,clue:'Nerve support cell type'},{word:'SHEATH',row:2,col:0,dir:'across',num:2,clue:'Myelin ___: nerve covering'},{word:'SPINAL',row:4,col:0,dir:'across',num:3,clue:'___ cord: nerve bundle in back'},{word:'CORTEX',row:6,col:0,dir:'across',num:4,clue:'Outer brain layer'}]}
+  ];
+  var cur=null,gEl,cEl;
+  function init(){gEl=document.getElementById('crosswordGrid');cEl=document.getElementById('crosswordClues');document.getElementById('crosswordMessage').innerHTML='';cur=puzzles[Math.floor(Math.random()*puzzles.length)];ren();}
+  function ren(){
+    var p=cur,rows=p.grid.length,cols=p.grid[0].length;gEl.style.gridTemplateColumns='repeat('+cols+',auto)';gEl.innerHTML='';
+    var nm={};p.words.forEach(function(w){nm[w.row+'-'+w.col]=w.num;});
+    for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){var ch=p.grid[r][c],wr=document.createElement('div');wr.className='cw-cell-wrap';
+      if(ch==='#')wr.classList.add('blocked');
+      else{var inp=document.createElement('input');inp.type='text';inp.maxLength=1;inp.setAttribute('data-row',r);inp.setAttribute('data-col',c);inp.setAttribute('data-answer',ch);inp.addEventListener('input',function(e){e.target.value=e.target.value.toUpperCase();gEl.querySelectorAll('.cw-cell-wrap input').forEach(function(i){i.classList.remove('correct-cell','incorrect-cell');});});wr.appendChild(inp);if(nm[r+'-'+c]){var ns=document.createElement('span');ns.className='cw-cell-num';ns.textContent=nm[r+'-'+c];wr.appendChild(ns);}}
+      gEl.appendChild(wr);}
+    cEl.innerHTML='';
+    var ac=p.words.filter(function(w){return w.dir==='across';}),dc=p.words.filter(function(w){return w.dir==='down';});
+    if(ac.length){var ga=document.createElement('div');ga.className='clue-group';var h=document.createElement('h3');h.textContent='Across';ga.appendChild(h);ac.forEach(function(w){var cp=document.createElement('p');cp.textContent=w.num+'. '+w.clue+' ('+w.word.length+')';ga.appendChild(cp);});cEl.appendChild(ga);}
+    if(dc.length){var gd=document.createElement('div');gd.className='clue-group';var hd=document.createElement('h3');hd.textContent='Down';gd.appendChild(hd);dc.forEach(function(w){var cp=document.createElement('p');cp.textContent=w.num+'. '+w.clue+' ('+w.word.length+')';gd.appendChild(cp);});cEl.appendChild(gd);}
+  }
+  function check(){
+    var ins=gEl.querySelectorAll('.cw-cell-wrap input'),ac=true,af=true;
+    ins.forEach(function(i){var a=i.getAttribute('data-answer'),v=i.value.toUpperCase();if(!v)af=false;else if(v===a){i.classList.add('correct-cell');i.classList.remove('incorrect-cell');}else{i.classList.add('incorrect-cell');i.classList.remove('correct-cell');ac=false;}});
+    var m=document.getElementById('crosswordMessage');if(!af){m.className='game-message info';m.textContent='🌴 Some cells are empty.';}else if(ac){m.className='game-message success';m.textContent='🎉 All correct!';}else{m.className='game-message error';m.textContent='🔴 Some letters are wrong.';}
+  }
+  return{init:init,check:check};
+})();
+
+/* ============================================================
+   MATCH-3
+   ============================================================ */
+var Match3Game=(function(){
+  var R=6,C=6,T=['🌺','🌴','🐚','🌊','☀️','🍍'],b=[],sc=0,sel=null,gEl,sEl,pr=false;
+  function init(){gEl=document.getElementById('match3Grid');sEl=document.getElementById('match3Score');document.getElementById('match3Message').innerHTML='';sc=0;sEl.textContent='0';sel=null;pr=false;bld();while(fm().length>0)bld();ren();}
+  function bld(){b=[];for(var r=0;r<R;r++){b.push([]);for(var c=0;c<C;c++)b[r].push(rt());}}
+  function rt(){return Math.floor(Math.random()*T.length);}
+  function ren(){gEl.innerHTML='';for(var r=0;r<R;r++)for(var c=0;c<C;c++){var t=document.createElement('div');t.className='match3-tile';t.textContent=T[b[r][c]];t.setAttribute('data-row',r);t.setAttribute('data-col',c);t.style.background=['#fce4ec','#e8f5e9','#fff3e0','#e3f2fd','#fffde7','#f3e5f5'][b[r][c]]||'#fff';if(sel&&sel[0]===r&&sel[1]===c)t.classList.add('selected');t.addEventListener('click',hC);gEl.appendChild(t);}}
+  function hC(e){if(pr)return;var r=parseInt(e.currentTarget.getAttribute('data-row')),c=parseInt(e.currentTarget.getAttribute('data-col'));if(!sel){sel=[r,c];ren();}else{var sr=sel[0],sc2=sel[1];if(Math.abs(sr-r)+Math.abs(sc2-c)===1){sw(sr,sc2,r,c);if(fm().length>0){sel=null;pr=true;ren();pm();}else{sw(sr,sc2,r,c);sel=null;ren();sm('No match!','info');}}else{sel=[r,c];ren();}}}
+  function sw(r1,c1,r2,c2){var t=b[r1][c1];b[r1][c1]=b[r2][c2];b[r2][c2]=t;}
+  function fm(){var m=[];for(var r=0;r<R;r++)for(var c=0;c<C-2;c++){var v=b[r][c];if(v!==-1&&b[r][c+1]===v&&b[r][c+2]===v){var e=c+2;while(e+1<C&&b[r][e+1]===v)e++;for(var i=c;i<=e;i++)m.push([r,i]);c=e;}}for(var c2=0;c2<C;c2++)for(var r2=0;r2<R-2;r2++){var v2=b[r2][c2];if(v2!==-1&&b[r2+1][c2]===v2&&b[r2+2][c2]===v2){var e2=r2+2;while(e2+1<R&&b[e2+1][c2]===v2)e2++;for(var i2=r2;i2<=e2;i2++)m.push([i2,c2]);r2=e2;}}var u={},res=[];m.forEach(function(x){var k=x[0]+'-'+x[1];if(!u[k]){u[k]=true;res.push(x);}});return res;}
+  function pm(){var ms=fm();if(ms.length===0){pr=false;ren();return;}sc+=ms.length*10;sEl.textContent=sc;ms.forEach(function(x){b[x[0]][x[1]]=-1;});ren();var mS={};ms.forEach(function(x){mS[x[0]+'-'+x[1]]=true;});gEl.querySelectorAll('.match3-tile').forEach(function(t){if(mS[t.getAttribute('data-row')+'-'+t.getAttribute('data-col')])t.classList.add('removing');});setTimeout(function(){for(var c=0;c<C;c++){var w=R-1;for(var r=R-1;r>=0;r--){if(b[r][c]!==-1){b[w][c]=b[r][c];if(w!==r)b[r][c]=-1;w--;}}for(var r2=w;r2>=0;r2--)b[r2][c]=rt();}ren();setTimeout(function(){pm();},350);},400);}
+  function sm(t,ty){var el=document.getElementById('match3Message');el.className='game-message '+ty;el.textContent=t;setTimeout(function(){el.innerHTML='';},2000);}
+  return{init:init};
+})();
+
+/* ============================================================
+   SOLITAIRE — RESPONSIVE
+   ============================================================ */
+var SolitaireGame=(function(){
+  var SU=['♠','♥','♦','♣'],SC={'♠':'black','♣':'black','♥':'red','♦':'red'},RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  var dk,st,wa,fn,tb,sel=null,OV=22;
+  function mc(s,r){return{suit:s,rank:r,value:RK.indexOf(r),color:SC[s],faceUp:false};}
+  function shuf(){var d=[];SU.forEach(function(s){RK.forEach(function(r){d.push(mc(s,r));});});for(var i=d.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=d[i];d[i]=d[j];d[j]=t;}return d;}
+  function init(){document.getElementById('solitaireMessage').innerHTML='';dk=shuf();st=[];wa=[];fn=[[],[],[],[]];tb=[[],[],[],[],[],[],[]];sel=null;var idx=0;for(var col=0;col<7;col++)for(var row=0;row<=col;row++){var c=dk[idx++];c.faceUp=(row===col);tb[col].push(c);}for(;idx<52;idx++){dk[idx].faceUp=false;st.push(dk[idx]);}ren();}
+  function ren(){rSW();rF();rT();}
+  function mkS(card,isSel){var d=document.createElement('div');d.className='slot-card';d.classList.add(card.color==='red'?'red-card':'black-card');if(isSel)d.classList.add('selected-card');var rs=document.createElement('span');rs.className='card-rank';rs.textContent=card.rank;d.appendChild(rs);var ss=document.createElement('span');ss.className='card-suit';ss.textContent=card.suit;d.appendChild(ss);return d;}
+  function mkT(card,isSel){var d=document.createElement('div');d.className='playing-card';if(card.faceUp){d.classList.add('face-up');d.classList.add(card.color==='red'?'red-card':'black-card');if(isSel)d.classList.add('selected-card');var rs=document.createElement('span');rs.className='card-rank';rs.textContent=card.rank;d.appendChild(rs);var ss=document.createElement('span');ss.className='card-suit';ss.textContent=card.suit;d.appendChild(ss);}else d.classList.add('face-down');return d;}
+  function rSW(){var sEl=document.getElementById('solStock');sEl.innerHTML=st.length>0?'🌴':'↻';sEl.className='card-slot'+(st.length>0?' has-card':'');var wEl=document.getElementById('solWaste');wEl.innerHTML='';if(wa.length>0){wEl.appendChild(mkS(wa[wa.length-1],sel&&sel.type==='waste'));wEl.classList.add('has-card');}else wEl.classList.remove('has-card');}
+  function rF(){for(var f=0;f<4;f++){var el=document.getElementById('solFound'+f);el.innerHTML='';if(fn[f].length>0){el.appendChild(mkS(fn[f][fn[f].length-1],false));el.classList.add('has-card');}else{el.textContent=SU[f];el.classList.remove('has-card');}}}
+  function rT(){var tEl=document.getElementById('solTableau');tEl.innerHTML='';for(var col=0;col<7;col++){var cd=document.createElement('div');cd.className='tableau-column';if(tb[col].length===0){var em=document.createElement('div');em.className='card-slot';em.style.position='relative';em.textContent='K';em.style.fontSize='16px';em.style.width='100%';em.style.maxWidth='none';em.addEventListener('click',(function(c){return function(){hTC(c,-1);};})(col));cd.appendChild(em);cd.style.paddingBottom='140%';}else{for(var i=0;i<tb[col].length;i++){var card=tb[col][i];var isSel=sel&&sel.type==='tableau'&&sel.colIdx===col&&i>=sel.cardIdx;var cv=mkT(card,card.faceUp&&isSel);cv.style.top=(i*OV)+'px';cv.style.zIndex=i+1;if(card.faceUp)cv.addEventListener('click',(function(c,ci){return function(){hTC(c,ci);};})(col,i));cd.appendChild(cv);}cd.style.paddingBottom='0';cd.style.height='calc('+(tb[col].length-1)*OV+'px + 140%)';}tEl.appendChild(cd);}}
+  function handleWasteClick(){if(wa.length===0)return;if(sel&&sel.type==='waste')sel=null;else if(!sel)sel={type:'waste',colIdx:0,cardIdx:wa.length-1};ren();}
+  function hTC(ci,cdi){if(sel){if(sel.type==='tableau'&&sel.colIdx===ci&&sel.cardIdx===cdi){sel=null;ren();return;}tryP('tableau',ci);}else{if(cdi===-1)return;if(!tb[ci][cdi].faceUp)return;sel={type:'tableau',colIdx:ci,cardIdx:cdi};ren();}}
+  function handleFoundationClick(fi){if(sel)tryP('foundation',fi);}
+  function tryP(tt,ti){if(!sel)return;var ok=false;if(tt==='foundation')ok=mvF(sel,ti);else if(tt==='tableau')ok=mvT(sel,ti);if(ok){flip();chk();}else sM('Cannot place there.','info');sel=null;ren();}
+  function gC(s){if(s.type==='waste')return wa.length>0?[wa[wa.length-1]]:[];if(s.type==='tableau')return tb[s.colIdx].slice(s.cardIdx);if(s.type==='foundation'){var fp=fn[s.colIdx];return fp.length>0?[fp[fp.length-1]]:[];}return[];}
+  function mvF(s,fi){var cs=gC(s);if(cs.length!==1)return false;var c=cs[0],fp=fn[fi];if(fp.length===0){if(c.rank!=='A')return false;}else{var top=fp[fp.length-1];if(top.suit!==c.suit)return false;if(c.value!==top.value+1)return false;}rmS(s);fp.push(c);return true;}
+  function mvT(s,ci){var cs=gC(s);if(cs.length===0)return false;var f=cs[0],tg=tb[ci];if(tg.length===0){if(f.rank!=='K')return false;}else{var top=tg[tg.length-1];if(!top.faceUp)return false;if(f.color===top.color)return false;if(f.value!==top.value-1)return false;}rmS(s);cs.forEach(function(c){tg.push(c);});return true;}
+  function rmS(s){if(s.type==='waste')wa.pop();else if(s.type==='tableau')tb[s.colIdx].splice(s.cardIdx);else if(s.type==='foundation')fn[s.colIdx].pop();}
+  function flip(){for(var i=0;i<7;i++)if(tb[i].length>0)tb[i][tb[i].length-1].faceUp=true;}
+  function drawCard(){if(sel){sel=null;ren();return;}if(st.length===0){while(wa.length>0){var c=wa.pop();c.faceUp=false;st.push(c);}}else{var card=st.pop();card.faceUp=true;wa.push(card);}ren();}
+  function chk(){var tot=0;fn.forEach(function(f){tot+=f.length;});if(tot===52)sM('🎉 You won! Aloha!','success');}
+  function sM(t,ty){var el=document.getElementById('solitaireMessage');el.className='game-message '+ty;el.textContent=t;if(ty!=='success')setTimeout(function(){el.innerHTML='';},2000);}
+  return{init:init,drawCard:drawCard,handleFoundationClick:handleFoundationClick,handleWasteClick:handleWasteClick};
+})();
+
+/* ============================================================
+   WORDLE
+   ============================================================ */
+var WordleGame=(function(){
+  var W=['nerve','brain','spine','axons','cells','gland','fiber','motor','sense','sleep','focus','acute','dizzy','spasm','rigid','tonic','flare','input','sight','optic','pulse','tract','lucid','edema','toxin','graft','serum','lymph','genes','viral','gamma','alpha','delta','theta','vagus','ulnar','scalp','skull','lobes','sinus','glial','palsy','decay','apnea','tumor','cysts','nodes','cramp','pains','shock','onset','tests','scans','image','rehab','brace','seize','falls','blurs','stiff','drain','fever','blood','organ','patch','trial','doses','shots','pills','treat','sweat','flush','heart','lungs','liver','colon','renal','femur','ankle','elbow','wrist','thigh','heals','clean','teeth','mouth','nails','tummy','belly','bowel','sugar','child','women','aging','vital','rates','check','nurse','donor','salve','herbs','juice','diets','plant','steam','grain','dairy','fruit','meats','snack','meals','bread','pasta','wheat','beans','seeds','olive','lemon','honey','cocoa','mango','berry','apple','peach','grape','melon','basil','thyme','clove','onion','salad','broth','roast','grill','blend','toast','walks','cycle','swims','dance','lifts','plank','squat','lunge','press','curls','pulls','gains','toned','agile','power','speed','steps','miles','track','climb','sauna','baths','relax','pause','water','fresh','sunny','shade','float','waves','shore','ocean','coral','sandy','winds','clear','green','earth','aroma','peace','whole','alert','awake','aware','alive','mends','bonds','goals','hardy','happy','jolly','bliss','smile','laugh','trust','faith','grace','vigor','brave','proud','noble','gleam','shine','light','spark','surge','boost','soars','peaks','bloom','grown','tends','roots','stems','petal','tides','pools','dunes','coves','haven','oasis','lodge','cabin','porch','trail','creek','brook','marsh','grove','yield','craft','built','forge'];
+  var ws={},VW=[];W.forEach(function(w){var l=w.toLowerCase().trim();if(l.length===5&&!ws[l]){ws[l]=true;VW.push(l);}});
+  var MG=6,tw='',gs=[],cg='',go=false,ks={};
+  function init(){tw=VW[Math.floor(Math.random()*VW.length)];gs=[];cg='';go=false;ks={};document.getElementById('wordleMessage').innerHTML='';rB();rK();document.removeEventListener('keydown',hKD);document.addEventListener('keydown',hKD);}
+  function rB(){var b=document.getElementById('wordleBoard');b.innerHTML='';for(var r=0;r<MG;r++){var rd=document.createElement('div');rd.className='wordle-row';for(var c=0;c<5;c++){var t=document.createElement('div');t.className='wordle-tile';if(r<gs.length){t.textContent=gs[r].l[c];t.classList.add(gs[r].s[c]);}else if(r===gs.length&&c<cg.length){t.textContent=cg[c];t.classList.add('filled');}rd.appendChild(t);}b.appendChild(rd);}}
+  function rK(){var k=document.getElementById('wordleKeyboard');k.innerHTML='';[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']].forEach(function(row){var rd=document.createElement('div');rd.className='wordle-kb-row';row.forEach(function(key){var b=document.createElement('button');b.className='wordle-key';b.textContent=key;if(key==='ENTER'||key==='⌫')b.classList.add('wide-key');if(ks[key.toLowerCase()])b.classList.add(ks[key.toLowerCase()]);b.addEventListener('click',function(){hK(key);});rd.appendChild(b);});k.appendChild(rd);});}
+  function hKD(e){if(go)return;if(e.key==='Enter')hK('ENTER');else if(e.key==='Backspace')hK('⌫');else if(/^[a-zA-Z]$/.test(e.key))hK(e.key.toUpperCase());}
+  function hK(key){if(go)return;if(key==='⌫')cg=cg.slice(0,-1);else if(key==='ENTER'){if(cg.length<5){sM('Need 5 letters!','info');return;}sub();return;}else if(cg.length<5)cg+=key.toLowerCase();rB();}
+  function sub(){var g=cg.toLowerCase(),st=ev(g,tw);gs.push({l:g.split(''),s:st});for(var i=0;i<5;i++){var lt=g[i],s=st[i];if(s==='correct')ks[lt]='correct';else if(s==='present'&&ks[lt]!=='correct')ks[lt]='present';else if(s==='absent'&&!ks[lt])ks[lt]='absent';}cg='';if(g===tw){go=true;sM('🎉 Correct! "'+tw.toUpperCase()+'"!','success');}else if(gs.length>=MG){go=true;sM('The word was "'+tw.toUpperCase()+'".','error');}rB();rK();}
+  function ev(g,t){var s=['absent','absent','absent','absent','absent'],ta=t.split(''),ga=g.split(''),u=[false,false,false,false,false];for(var i=0;i<5;i++){if(ga[i]===ta[i]){s[i]='correct';u[i]=true;ga[i]=null;}}for(var j=0;j<5;j++){if(ga[j]===null)continue;for(var k=0;k<5;k++){if(!u[k]&&ga[j]===ta[k]){s[j]='present';u[k]=true;break;}}}return s;}
+  function sM(t,ty){var el=document.getElementById('wordleMessage');el.className='game-message '+ty;el.textContent=t;}
+  return{init:init};
+})();
+
+/* ============================================================
+   TRIVIA — EASY
+   ============================================================ */
+var TriviaGame=(function(){
+  var AQ=[
+    {q:'What organ is the control center of the nervous system?',opts:['Brain','Heart','Liver','Stomach'],answer:0},
+    {q:'The brain and spinal cord make up the...',opts:['Central nervous system','Digestive system','Respiratory system','Skeletal system'],answer:0},
+    {q:'What runs down your back inside your spine?',opts:['Spinal cord','Bicep','Esophagus','Aorta'],answer:0},
+    {q:'True or false: The brain uses electrical signals to send messages.',opts:['True','False'],answer:0},
+    {q:'Does your brain help process all five senses?',opts:['Yes, all five','Only three','Only hearing','Only sight'],answer:0},
+    {q:'What are the cells called that carry messages in the nervous system?',opts:['Neurons (nerve cells)','Red blood cells','Skin cells','Fat cells'],answer:0},
+    {q:'What protects your brain from bumps?',opts:['Your skull','Your ribs','Your muscles','Your skin'],answer:0},
+    {q:'Pulling your hand away from something hot is called a...',opts:['Reflex','Sneeze','Yawn','Cramp'],answer:0},
+    {q:'About how much does the adult brain weigh?',opts:['About 3 pounds','About 10 pounds','About 1 ounce','About 20 pounds'],answer:0},
+    {q:'Which body part lets you feel hot and cold?',opts:['Your skin','Your bones','Your hair','Your nails'],answer:0},
+    {q:'What happens to your brain during sleep?',opts:['It rests and repairs','It shuts off completely','It stops working','It shrinks'],answer:0},
+    {q:'Does the nervous system control breathing and heartbeat?',opts:['Yes','No'],answer:0},
+    {q:'Which helps keep your brain healthy?',opts:['All of these','Exercise','Sleep','Puzzles'],answer:0},
+    {q:'What does "MS" stand for?',opts:['Multiple Sclerosis','Muscle Strain','Memory Shortage','Motor System'],answer:0},
+    {q:'How many senses do humans traditionally have?',opts:['Five','Three','Seven','Ten'],answer:0}
+  ];
+  var qs=[],ci=0,sc=0,ans=false;
+  function sh(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
+  function init(){qs=sh(AQ).slice(0,5);qs.forEach(function(q){var c=q.opts[q.answer];q.opts=sh(q.opts);q.answer=q.opts.indexOf(c);});ci=0;sc=0;ans=false;document.getElementById('triviaMessage').innerHTML='';document.getElementById('triviaScoreArea').innerHTML='';document.getElementById('triviaNextBtn').style.display='none';rQ();}
+  function rQ(){if(ci>=qs.length){fin();return;}ans=false;var q=qs[ci];document.getElementById('triviaProgress').textContent='Question '+(ci+1)+' of '+qs.length;document.getElementById('triviaQuestion').textContent=q.q;document.getElementById('triviaMessage').innerHTML='';document.getElementById('triviaNextBtn').style.display='none';var o=document.getElementById('triviaOptions');o.innerHTML='';q.opts.forEach(function(opt,idx){var b=document.createElement('button');b.className='trivia-option';b.textContent=opt;b.addEventListener('click',function(){hA(idx);});o.appendChild(b);});}
+  function hA(idx){if(ans)return;ans=true;var q=qs[ci];document.querySelectorAll('.trivia-option').forEach(function(b,i){b.classList.add('disabled');if(i===q.answer)b.classList.add('show-correct');if(i===idx)b.classList.add(idx===q.answer?'chosen-correct':'chosen-wrong');});if(idx===q.answer){sc++;sM('✅ Correct!','success');}else sM('❌ The answer is: '+q.opts[q.answer],'error');document.getElementById('triviaNextBtn').style.display='inline-block';}
+  function next(){ci++;rQ();}
+  function fin(){document.getElementById('triviaProgress').textContent='Quiz Complete!';document.getElementById('triviaQuestion').textContent='Great job!';document.getElementById('triviaOptions').innerHTML='';document.getElementById('triviaNextBtn').style.display='none';document.getElementById('triviaMessage').innerHTML='';var e=sc>=4?'🏆':sc>=2?'👍':'💪';document.getElementById('triviaScoreArea').innerHTML='<div class="trivia-score">'+e+' Score: '+sc+' / '+qs.length+'</div>';}
+  function sM(t,ty){var el=document.getElementById('triviaMessage');el.className='game-message '+ty;el.textContent=t;}
+  return{init:init,next:next};
+})();
+
+/* INIT */
+document.addEventListener('DOMContentLoaded',function(){SudokuGame.init();CrosswordGame.init();Match3Game.init();SolitaireGame.init();WordleGame.init();TriviaGame.init();});
+</script>
+
+</body>
+</html>

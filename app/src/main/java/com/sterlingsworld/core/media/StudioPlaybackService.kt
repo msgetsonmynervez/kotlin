@@ -13,6 +13,9 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.sterlingsworld.R
 import com.sterlingsworld.data.catalog.StudioCatalog
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * StudioPlaybackService — foreground Media3 MediaSessionService for Studio audio playback.
@@ -22,9 +25,14 @@ import com.sterlingsworld.data.catalog.StudioCatalog
  *  - Runs as a foreground service while audio is playing, allowing background playback.
  *  - Released when the last controller unbinds and no playback is active.
  *
- * Queue: the full 126-track catalog is loaded on creation. Tracks are resolved
- * from the Android assets directory using the "asset:///" URI scheme via
- * ExoPlayer's built-in AssetDataSource.
+ * Audio delivery:
+ *  - Paths are resolved via [StudioAudioLocator], which handles the debug-fallback vs.
+ *    PAD-delivery distinction.
+ *  - If no assets are accessible, the player queue is not populated and [audioAvailability]
+ *    is set to [StudioAvailability.UNAVAILABLE]. The service remains bound so the
+ *    MediaController can connect, but playback actions will no-op silently.
+ *  - Do NOT call player.prepare() without a populated queue — that would leave the player
+ *    in an indeterminate state with broken URIs.
  */
 class StudioPlaybackService : MediaSessionService() {
 
@@ -46,25 +54,40 @@ class StudioPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
-        val mediaItems = StudioCatalog.allTracks.map { track ->
-            MediaItem.Builder()
-                .setMediaId(track.id)
-                .setUri("file:///android_asset/${track.assetPath}")
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(track.title)
-                        .setAlbumTitle(
-                            StudioCatalog.albumById(track.albumId)?.title ?: track.albumId
-                        )
-                        .setArtist("Sterling Sound Team")
-                        .setTrackNumber(track.trackNumber)
-                        .build()
-                )
-                .build()
-        }
+        val locator = StudioAudioLocator(this)
+        val (resolvedTracks, availability) = locator.resolveAll()
 
-        player.setMediaItems(mediaItems)
-        player.prepare()
+        _audioAvailability.value = availability
+
+        if (availability == StudioAvailability.READY || availability == StudioAvailability.WAITING_FOR_ASSETS) {
+            // Build queue from whichever tracks resolved (all of them when READY,
+            // a subset if somehow partially available).
+            val resolvedById = resolvedTracks.toMap()
+            val mediaItems = StudioCatalog.allTracks.mapNotNull { track ->
+                val uri = resolvedById[track.id] ?: return@mapNotNull null
+                MediaItem.Builder()
+                    .setMediaId(track.id)
+                    .setUri(uri)
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(track.title)
+                            .setAlbumTitle(
+                                StudioCatalog.albumById(track.albumId)?.title ?: track.albumId
+                            )
+                            .setArtist("Sterling Sound Team")
+                            .setTrackNumber(track.trackNumber)
+                            .build()
+                    )
+                    .build()
+            }
+
+            if (mediaItems.isNotEmpty()) {
+                player.setMediaItems(mediaItems)
+                player.prepare()
+            }
+        }
+        // If UNAVAILABLE: player is built but no queue is set. The service stays alive
+        // so the MediaController can bind. Playback actions will be ignored by the player.
 
         mediaSession = MediaSession.Builder(this, player).build()
     }
@@ -78,6 +101,8 @@ class StudioPlaybackService : MediaSessionService() {
             release()
             mediaSession = null
         }
+        // Reset to WAITING so a future service start begins with the correct initial state.
+        _audioAvailability.value = StudioAvailability.WAITING_FOR_ASSETS
         super.onDestroy()
     }
 
@@ -97,5 +122,16 @@ class StudioPlaybackService : MediaSessionService() {
 
     companion object {
         const val CHANNEL_ID = "studio_playback"
+
+        private val _audioAvailability = MutableStateFlow(StudioAvailability.WAITING_FOR_ASSETS)
+
+        /**
+         * Current audio availability state, written by the service and collected by
+         * [com.sterlingsworld.feature.studio.StudioViewModel].
+         *
+         * Initialized to [StudioAvailability.WAITING_FOR_ASSETS] so the UI shows a
+         * loading/waiting state before the service has had a chance to probe assets.
+         */
+        val audioAvailability: StateFlow<StudioAvailability> = _audioAvailability.asStateFlow()
     }
 }

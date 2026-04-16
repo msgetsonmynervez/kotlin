@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sterling's Line Builder</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Avenir Next','Trebuchet MS',sans-serif;background:#f7f0e4;color:#332719;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,0,200,0.08),transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(0,200,255,0.06),transparent 60%);pointer-events:none}
+.game{position:relative;z-index:1;display:flex;gap:12px;padding:10px;max-width:520px;width:100%}
+.side-panel{display:flex;flex-direction:column;gap:10px;min-width:90px}
+.main-panel{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+.title{font-family:'Trebuchet MS','Avenir Next','Segoe UI',sans-serif;font-size:clamp(1.2rem,4vw,1.6rem);text-align:center;color:#7e5330;letter-spacing:1px;font-weight:800}
+.board-wrap{position:relative;border:2px solid #dfc9aa;border-radius:12px;overflow:hidden;box-shadow:0 14px 30px rgba(87,58,24,0.14)}
+canvas{display:block;background:#fffaf3}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,250,243,0.94);z-index:3;gap:14px;padding:16px;transition:opacity 0.3s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.overlay-title{font-family:'Trebuchet MS','Avenir Next','Segoe UI',sans-serif;font-size:clamp(0.9rem,3vw,1.3rem);text-align:center;line-height:1.6;font-weight:800}
+.overlay-title.go{color:#7e5330}
+.overlay-title.over{color:#b65448}
+.overlay-sub{font-size:0.8rem;color:#75624c;text-align:center;line-height:1.5}
+.overlay-sub span{color:#d99058}
+.play-btn{font-family:'Trebuchet MS','Avenir Next','Segoe UI',sans-serif;font-size:0.75rem;background:#d99058;border:2px solid #bb7442;color:#fff7ef;padding:10px 24px;border-radius:999px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;text-transform:uppercase;font-weight:800}
+.play-btn:hover{background:#bb7442;box-shadow:0 8px 16px rgba(125,80,35,0.2)}
+.play-btn:active{transform:scale(0.96)}
+.info-box{background:#fffaf3;border:1px solid #dfc9aa;border-radius:12px;padding:10px;text-align:center}
+.info-label{font-size:0.6rem;color:#75624c;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.info-val{font-family:'Trebuchet MS','Avenir Next','Segoe UI',sans-serif;font-size:1rem;color:#7e5330;font-weight:800}
+.info-val.pink{color:#d99058}
+.next-canvas,.hold-canvas{display:block;margin:0 auto}
+.mobile-controls{display:none;width:100%;max-width:300px;margin:0 auto}
+.mob-row{display:flex;justify-content:center;gap:6px;margin-bottom:6px}
+.mob-btn{background:rgba(217,144,88,0.08);border:1.5px solid #dfc9aa;border-radius:8px;color:#7b664e;font-size:0.7rem;font-family:'Segoe UI','Avenir Next','Trebuchet MS',sans-serif;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;padding:12px 16px;min-width:54px;letter-spacing:1px;text-transform:uppercase;transition:all 0.1s}
+.mob-btn:active{background:rgba(217,144,88,0.18);border-color:#d99058;color:#7e5330}
+.mob-btn.wide{flex:1;max-width:120px}
+.mob-btn.accent{border-color:#d99058;color:#d99058}
+.hint{font-size:0.65rem;color:#75624c;text-align:center;letter-spacing:1px}
+@media(max-width:520px){
+  .game{flex-direction:column;align-items:center;gap:8px}
+  .side-panel{flex-direction:row;min-width:unset;gap:8px;width:100%;max-width:300px;justify-content:center}
+  .side-panel .info-box{flex:1}
+  .mobile-controls{display:block}
+  .hint{display:none}
+}
+@media(pointer:coarse){.mobile-controls{display:block}.hint{display:none}}
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="side-panel">
+    <div class="info-box"><div class="info-label">Score</div><div class="info-val pink" id="score">0</div></div>
+    <div class="info-box"><div class="info-label">Level</div><div class="info-val" id="level">1</div></div>
+    <div class="info-box"><div class="info-label">Lines</div><div class="info-val" id="lines">0</div></div>
+    <div class="info-box">
+      <div class="info-label">Next</div>
+      <canvas class="next-canvas" id="next-cv" width="80" height="80"></canvas>
+    </div>
+    <div class="info-box">
+      <div class="info-label">Hold</div>
+      <canvas class="hold-canvas" id="hold-cv" width="80" height="80"></canvas>
+    </div>
+  </div>
+
+  <div class="main-panel">
+    <div class="title">Sterling's Line Builder</div>
+    <div class="board-wrap">
+      <canvas id="board" width="200" height="400"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="overlay-title go" id="ov-title">Line Builder</div>
+        <div class="overlay-sub" id="ov-sub">Stack gently.<br>Clear lines to level up.</div>
+        <button class="play-btn" id="play-btn">Start</button>
+      </div>
+    </div>
+    <div class="hint">Arrows move &middot; Up rotates &middot; Space drops &middot; C holds</div>
+    <div class="mobile-controls" id="mob-ctrl">
+      <div class="mob-row">
+        <button class="mob-btn accent" data-act="rotate">ROTATE</button>
+        <button class="mob-btn accent" data-act="hold">HOLD</button>
+      </div>
+      <div class="mob-row">
+        <button class="mob-btn wide" data-act="left">&#x25C0;</button>
+        <button class="mob-btn wide" data-act="down">&#x25BC;</button>
+        <button class="mob-btn wide" data-act="right">&#x25B6;</button>
+      </div>
+      <div class="mob-row">
+        <button class="mob-btn wide accent" data-act="drop">DROP</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var COLS=10,ROWS=20,SZ=20;
+  var COLORS=['#00d4ff','#ffee00','#a855f7','#00ff88','#ff0066','#ff8800','#00c8ff'];
+  var SHAPES=[
+    [[1,1,1,1]],
+    [[1,1],[1,1]],
+    [[0,1,0],[1,1,1]],
+    [[1,0,0],[1,1,1]],
+    [[0,0,1],[1,1,1]],
+    [[0,1,1],[1,1,0]],
+    [[1,1,0],[0,1,1]]
+  ];
+
+  var canvas=document.getElementById('board');
+  var ctx=canvas.getContext('2d');
+  var nextCv=document.getElementById('next-cv');
+  var nextCtx=nextCv.getContext('2d');
+  var holdCv=document.getElementById('hold-cv');
+  var holdCtx=holdCv.getContext('2d');
+  var overlay=document.getElementById('overlay');
+  var ovTitle=document.getElementById('ov-title');
+  var ovSub=document.getElementById('ov-sub');
+  var playBtn=document.getElementById('play-btn');
+  var scoreEl=document.getElementById('score');
+  var levelEl=document.getElementById('level');
+  var linesEl=document.getElementById('lines');
+
+  var board,current,nextPiece,holdPiece,canHold;
+  var score,lines,level,alive,dropTime,lastDrop,rafId;
+  var bag=[];
+
+  function rotate(shape){
+    var rows=shape.length,cols=shape[0].length;
+    var r=[];
+    for(var c=0;c<cols;c++){
+      r[c]=[];
+      for(var rr=rows-1;rr>=0;rr--){
+        r[c].push(shape[rr][c]);
+      }
+    }
+    return r;
+  }
+
+  function fillBag(){
+    var indices=[0,1,2,3,4,5,6];
+    for(var i=indices.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var t=indices[i];indices[i]=indices[j];indices[j]=t;
+    }
+    bag=bag.concat(indices);
+  }
+
+  function nextFromBag(){
+    if(bag.length<2)fillBag();
+    return bag.shift();
+  }
+
+  function newPiece(typeIdx){
+    var shape=SHAPES[typeIdx].map(function(row){return row.slice();});
+    return{
+      shape:shape,
+      color:COLORS[typeIdx],
+      type:typeIdx,
+      x:Math.floor((COLS-shape[0].length)/2),
+      y:0
+    };
+  }
+
+  function collides(piece,offX,offY,shape){
+    shape=shape||piece.shape;
+    for(var r=0;r<shape.length;r++){
+      for(var c=0;c<shape[r].length;c++){
+        if(!shape[r][c])continue;
+        var nx=piece.x+c+(offX||0);
+        var ny=piece.y+r+(offY||0);
+        if(nx<0||nx>=COLS||ny>=ROWS)return true;
+        if(ny>=0&&board[ny][nx])return true;
+      }
+    }
+    return false;
+  }
+
+  function lock(){
+    var s=current.shape;
+    for(var r=0;r<s.length;r++){
+      for(var c=0;c<s[r].length;c++){
+        if(!s[r][c])continue;
+        var y=current.y+r;
+        var x=current.x+c;
+        if(y<0){gameOver();return;}
+        board[y][x]=current.color;
+      }
+    }
+    clearLines();
+    spawn();
+  }
+
+  function clearLines(){
+    var cleared=0;
+    for(var r=ROWS-1;r>=0;r--){
+      var full=true;
+      for(var c=0;c<COLS;c++){
+        if(!board[r][c]){full=false;break;}
+      }
+      if(full){
+        board.splice(r,1);
+        board.unshift(new Array(COLS).fill(null));
+        cleared++;
+        r++;
+      }
+    }
+    if(cleared>0){
+      var pts=[0,100,300,500,800];
+      score+=pts[cleared]*level;
+      lines+=cleared;
+      scoreEl.textContent=score;
+      linesEl.textContent=lines;
+      var newLevel=Math.floor(lines/10)+1;
+      if(newLevel!==level){
+        level=newLevel;
+        levelEl.textContent=level;
+        dropTime=Math.max(50,500-((level-1)*40));
+      }
+    }
+  }
+
+  function spawn(){
+    current=newPiece(nextPiece.type);
+    nextPiece=newPiece(nextFromBag());
+    canHold=true;
+    drawNext();
+    if(collides(current,0,0)){
+      gameOver();
+    }
+  }
+
+  function doHold(){
+    if(!canHold)return;
+    canHold=false;
+    if(holdPiece===null){
+      holdPiece=current.type;
+      spawn();
+    }else{
+      var tmp=holdPiece;
+      holdPiece=current.type;
+      current=newPiece(tmp);
+    }
+    drawHold();
+  }
+
+  function hardDrop(){
+    while(!collides(current,0,1)){
+      current.y++;
+      score+=2;
+    }
+    scoreEl.textContent=score;
+    lock();
+  }
+
+  function ghostY(){
+    var gy=current.y;
+    while(!collides(current,0,gy-current.y+1)){
+      gy++;
+    }
+    return gy;
+  }
+
+  function drawBlock(c,x,y,sz,alpha){
+    c.globalAlpha=alpha||1;
+    c.fillStyle=current?current.color:'#fff';
+    c.fillRect(x,y,sz,sz);
+    c.fillStyle='rgba(255,255,255,0.15)';
+    c.fillRect(x,y,sz,2);
+    c.fillRect(x,y,2,sz);
+    c.fillStyle='rgba(0,0,0,0.2)';
+    c.fillRect(x+sz-2,y,2,sz);
+    c.fillRect(x,y+sz-2,sz,2);
+    c.globalAlpha=1;
+  }
+
+  function draw(){
+    ctx.fillStyle='#08010f';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,0,200,0.03)';
+    ctx.lineWidth=0.5;
+    for(var i=0;i<=COLS;i++){
+      ctx.beginPath();ctx.moveTo(i*SZ,0);ctx.lineTo(i*SZ,canvas.height);ctx.stroke();
+    }
+    for(var j=0;j<=ROWS;j++){
+      ctx.beginPath();ctx.moveTo(0,j*SZ);ctx.lineTo(canvas.width,j*SZ);ctx.stroke();
+    }
+
+    // Board
+    for(var r=0;r<ROWS;r++){
+      for(var c=0;c<COLS;c++){
+        if(board[r][c]){
+          ctx.fillStyle=board[r][c];
+          ctx.fillRect(c*SZ+1,r*SZ+1,SZ-2,SZ-2);
+          ctx.fillStyle='rgba(255,255,255,0.12)';
+          ctx.fillRect(c*SZ+1,r*SZ+1,SZ-2,2);
+          ctx.fillRect(c*SZ+1,r*SZ+1,2,SZ-2);
+          ctx.fillStyle='rgba(0,0,0,0.2)';
+          ctx.fillRect(c*SZ+SZ-3,r*SZ+1,2,SZ-2);
+          ctx.fillRect(c*SZ+1,r*SZ+SZ-3,SZ-2,2);
+        }
+      }
+    }
+
+    if(!current)return;
+
+    // Ghost
+    var gy=ghostY();
+    var s=current.shape;
+    for(var r=0;r<s.length;r++){
+      for(var c=0;c<s[r].length;c++){
+        if(!s[r][c])continue;
+        ctx.fillStyle=current.color;
+        ctx.globalAlpha=0.15;
+        ctx.fillRect((current.x+c)*SZ+1,(gy+r)*SZ+1,SZ-2,SZ-2);
+        ctx.globalAlpha=1;
+      }
+    }
+
+    // Current piece
+    for(var r=0;r<s.length;r++){
+      for(var c=0;c<s[r].length;c++){
+        if(!s[r][c])continue;
+        var px=(current.x+c)*SZ+1;
+        var py=(current.y+r)*SZ+1;
+        ctx.shadowColor=current.color;
+        ctx.shadowBlur=6;
+        ctx.fillStyle=current.color;
+        ctx.fillRect(px,py,SZ-2,SZ-2);
+        ctx.shadowBlur=0;
+        ctx.fillStyle='rgba(255,255,255,0.15)';
+        ctx.fillRect(px,py,SZ-2,2);
+        ctx.fillRect(px,py,2,SZ-2);
+        ctx.fillStyle='rgba(0,0,0,0.2)';
+        ctx.fillRect(px+SZ-4,py,2,SZ-2);
+        ctx.fillRect(px,py+SZ-4,SZ-2,2);
+      }
+    }
+  }
+
+  function drawMini(c,typeIdx){
+    c.fillStyle='#0f0520';
+    c.fillRect(0,0,80,80);
+    if(typeIdx===null||typeIdx===undefined)return;
+    var shape=SHAPES[typeIdx];
+    var color=COLORS[typeIdx];
+    var sz=16;
+    var ox=Math.floor((80-shape[0].length*sz)/2);
+    var oy=Math.floor((80-shape.length*sz)/2);
+    for(var r=0;r<shape.length;r++){
+      for(var cc=0;cc<shape[r].length;cc++){
+        if(!shape[r][cc])continue;
+        c.fillStyle=color;
+        c.fillRect(ox+cc*sz+1,oy+r*sz+1,sz-2,sz-2);
+        c.fillStyle='rgba(255,255,255,0.12)';
+        c.fillRect(ox+cc*sz+1,oy+r*sz+1,sz-2,2);
+      }
+    }
+  }
+
+  function drawNext(){drawMini(nextCtx,nextPiece?nextPiece.type:null);}
+  function drawHold(){drawMini(holdCtx,holdPiece);}
+
+  function gameOver(){
+    alive=false;
+    cancelAnimationFrame(rafId);
+    ovTitle.textContent='GAME OVER';
+    ovTitle.className='overlay-title over';
+    ovSub.innerHTML='Score: <span>'+score+'</span><br>Lines: '+lines+' \u2022 Level: '+level;
+    playBtn.textContent='RETRY';
+    overlay.classList.remove('hidden');
+  }
+
+  function init(){
+    board=[];
+    for(var r=0;r<ROWS;r++){
+      board.push(new Array(COLS).fill(null));
+    }
+    bag=[];fillBag();
+    score=0;lines=0;level=1;
+    dropTime=500;lastDrop=0;alive=true;
+    holdPiece=null;canHold=true;
+    scoreEl.textContent='0';
+    linesEl.textContent='0';
+    levelEl.textContent='1';
+    nextPiece=newPiece(nextFromBag());
+    spawn();
+    drawHold();
+  }
+
+  function loop(time){
+    if(!alive)return;
+    rafId=requestAnimationFrame(loop);
+    if(!lastDrop)lastDrop=time;
+    if(time-lastDrop>=dropTime){
+      lastDrop=time;
+      if(!collides(current,0,1)){
+        current.y++;
+      }else{
+        lock();
+      }
+    }
+    draw();
+  }
+
+  function startGame(){
+    init();
+    overlay.classList.add('hidden');
+    lastDrop=0;
+    cancelAnimationFrame(rafId);
+    rafId=requestAnimationFrame(loop);
+  }
+
+  // Keyboard
+  document.addEventListener('keydown',function(e){
+    if(!alive)return;
+    switch(e.key){
+      case 'ArrowLeft':case 'a':case 'A':
+        e.preventDefault();
+        if(!collides(current,-1,0))current.x--;
+        break;
+      case 'ArrowRight':case 'd':case 'D':
+        e.preventDefault();
+        if(!collides(current,1,0))current.x++;
+        break;
+      case 'ArrowDown':case 's':case 'S':
+        e.preventDefault();
+        if(!collides(current,0,1)){current.y++;score+=1;scoreEl.textContent=score;}
+        break;
+      case 'ArrowUp':case 'w':case 'W':
+        e.preventDefault();
+        var rotated=rotate(current.shape);
+        if(!collides(current,0,0,rotated)){
+          current.shape=rotated;
+        }else if(!collides(current,1,0,rotated)){
+          current.x++;current.shape=rotated;
+        }else if(!collides(current,-1,0,rotated)){
+          current.x--;current.shape=rotated;
+        }
+        break;
+      case ' ':
+        e.preventDefault();hardDrop();break;
+      case 'c':case 'C':
+        e.preventDefault();doHold();break;
+    }
+  });
+
+  // Mobile
+  document.querySelectorAll('.mob-btn').forEach(function(btn){
+    function handle(e){
+      e.preventDefault();
+      if(!alive)return;
+      var act=btn.dataset.act;
+      if(act==='left'&&!collides(current,-1,0))current.x--;
+      else if(act==='right'&&!collides(current,1,0))current.x++;
+      else if(act==='down'&&!collides(current,0,1)){current.y++;score++;scoreEl.textContent=score;}
+      else if(act==='rotate'){
+        var rot=rotate(current.shape);
+        if(!collides(current,0,0,rot))current.shape=rot;
+        else if(!collides(current,1,0,rot)){current.x++;current.shape=rot;}
+        else if(!collides(current,-1,0,rot)){current.x--;current.shape=rot;}
+      }
+      else if(act==='drop')hardDrop();
+      else if(act==='hold')doHold();
+    }
+    btn.addEventListener('touchstart',handle);
+    btn.addEventListener('mousedown',handle);
+  });
+
+  // Swipe on board
+  var tx=0,ty=0;
+  canvas.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+  canvas.addEventListener('touchend',function(e){
+    if(!alive)return;
+    var dx=e.changedTouches[0].clientX-tx;
+    var dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)<15&&Math.abs(dy)<15){
+      var rot=rotate(current.shape);
+      if(!collides(current,0,0,rot))current.shape=rot;
+      return;
+    }
+    if(Math.abs(dx)>Math.abs(dy)){
+      if(dx>0&&!collides(current,1,0))current.x++;
+      else if(dx<0&&!collides(current,-1,0))current.x--;
+    }else{
+      if(dy>30)hardDrop();
+    }
+  },{passive:true});
+
+  playBtn.addEventListener('click',startGame);
+
+  // Show initial
+  ovTitle.textContent='Line Builder';
+  ovTitle.className='overlay-title go';
+  ovSub.innerHTML='Stack gently.<br>Clear lines to level up.';
+  playBtn.textContent='Start';
+})();
+</script>
+
+</body>
+</html>

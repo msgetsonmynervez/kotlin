@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sterling's Doodle Trails</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+        background:
+            radial-gradient(circle at 50% 0%, rgba(217, 144, 88, 0.24) 0%, transparent 48%),
+            linear-gradient(180deg, #f7efe1 0%, #efdfca 100%);
+        font-family: 'Segoe UI', 'Avenir Next', 'Trebuchet MS', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden;
+        touch-action: manipulation;
+        color: #332719;
+        padding: 12px 0;
+    }
+
+    #app {
+        width: 100%;
+        max-width: 500px;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 250, 243, 0.74);
+        border: 2px solid #dec8ab;
+        border-radius: 28px;
+        box-shadow: 0 16px 34px rgba(87, 58, 24, 0.14);
+    }
+
+    .view { display: none; position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh; padding: 20px; }
+    .view.active { display: flex; flex-direction: column; align-items: center; animation: popIn 0.32s ease-out; }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes wiggle { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+    @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes celebrate { 0% { transform: scale(1); } 50% { transform: scale(1.15) rotate(3deg); } 100% { transform: scale(1); } }
+    @keyframes confettiDrop { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(120vh) rotate(720deg); opacity: 0; } }
+    @keyframes gateSwing { 0% { transform: perspective(600px) rotateY(0deg); } 100% { transform: perspective(600px) rotateY(-90deg); } }
+    @keyframes starBurst { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(3) rotate(180deg); opacity: 0; } }
+
+    /* ===== HOME: DOODLE LAND GATE ===== */
+    #view-home {
+        background: linear-gradient(180deg, #f6d6aa 0%, #f5e5c7 55%, #f7efe1 100%);
+        justify-content: center;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .gate-arch {
+        font-family: 'Trebuchet MS', 'Avenir Next', 'Segoe UI', sans-serif;
+        font-size: 3rem;
+        font-weight: 800;
+        color: #7e5330;
+        text-shadow: none;
+        letter-spacing: 2px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .gate-sub {
+        font-size: 1.1rem;
+        color: #7b664e;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .gate-kicker {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #b67542;
+        font-weight: 800;
+    }
+
+    .gate-icons {
+        font-size: 2.5rem;
+        letter-spacing: 8px;
+        animation: float 3s ease-in-out infinite;
+        animation-delay: 0.5s;
+    }
+
+    .play-btn {
+        background: #d88f58;
+        color: #fff7ef;
+        border: none;
+        padding: 18px 44px;
+        border-radius: 100px;
+        font-family: 'Trebuchet MS', 'Avenir Next', 'Segoe UI', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(125, 80, 35, 0.2);
+        transition: transform 0.1s;
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .play-btn:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(125, 80, 35, 0.18); }
+
+    /* ===== MAP: THEME PARK SELECTOR ===== */
+    #view-map {
+        background: linear-gradient(180deg, #f7efdf 0%, #f0e2c7 100%);
+        padding-top: 30px;
+        gap: 15px;
+    }
+
+    .map-title {
+        font-family: 'Trebuchet MS', 'Avenir Next', 'Segoe UI', sans-serif;
+        font-size: 2rem;
+        color: #6f4d2d;
+        text-shadow: none;
+    }
+
+    .map-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 400px;
+        padding: 0 10px;
+    }
+
+    .ride-card {
+        background: rgba(255, 250, 243, 0.96);
+        border-radius: 22px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(95, 67, 32, 0.12);
+        transition: transform 0.15s;
+        border-left: 8px solid var(--ride-color);
+        min-height: 90px;
+        border: 1px solid rgba(118, 86, 50, 0.12);
+    }
+    .ride-card:active { transform: scale(0.98) translateY(2px); box-shadow: 0 4px 10px rgba(95, 67, 32, 0.1); }
+
+    .ride-icon { font-size: 2.8rem; flex-shrink: 0; }
+    .ride-name { font-weight: 700; font-size: 1.15rem; color: #3f3122; }
+    .ride-desc { font-size: 0.8rem; color: #7b664e; margin-top: 2px; }
+    .ride-level { font-size: 0.75rem; color: var(--ride-color); font-weight: 700; margin-top: 4px; }
+
+    .back-home-btn {
+        background: rgba(255,250,243,0.95);
+        border: none;
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        font-size: 1.8rem;
+        cursor: pointer;
+        box-shadow: 0 8px 16px rgba(95, 67, 32, 0.14);
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .back-home-btn:active { transform: translateX(-50%) translateY(2px); }
+
+    /* ===== GAME VIEWS ===== */
+    .game-view {
+        padding-top: 20px;
+        gap: 15px;
+    }
+
+    .game-hud {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 5px;
+    }
+
+    .hud-back {
+        background: rgba(255,250,243,0.85);
+        border: none;
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        flex-shrink: 0;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 16px rgba(95, 67, 32, 0.14);
+    }
+    .hud-back:active { transform: scale(0.9); }
+
+    .hud-bar-wrap {
+        flex-grow: 1;
+        height: 18px;
+        background: rgba(255,250,243,0.45);
+        border-radius: 100px;
+        overflow: hidden;
+        border: 2px solid rgba(255,250,243,0.5);
+    }
+
+    .hud-bar-fill {
+        height: 100%;
+        border-radius: 100px;
+        background: #fff;
+        transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+
+    .hud-level {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: none;
+        min-width: 45px;
+        text-align: right;
+    }
+
+    .game-prompt {
+        background: rgba(255,250,243,0.22);
+        backdrop-filter: blur(10px);
+        border-radius: 22px;
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+        border: 1px solid rgba(255,250,243,0.32);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
+    }
+
+    .prompt-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 5px;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+
+    .prompt-text {
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+
+    .game-grid {
+        display: grid;
+        gap: 14px;
+        width: 100%;
+        max-width: 380px;
+        justify-content: center;
+        padding: 5px;
+    }
+
+    .game-tile {
+        aspect-ratio: 1;
+        min-width: 90px;
+        min-height: 90px;
+        background: rgba(255,250,243,0.95);
+        border: none;
+        border-radius: 18px;
+        font-size: 2.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 16px rgba(95, 67, 32, 0.12);
+        transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .game-tile:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(95, 67, 32, 0.1); }
+    .game-tile.correct { animation: celebrate 0.5s ease; background: #bdd78a; box-shadow: 0 8px 14px rgba(122,156,72,0.18); }
+    .game-tile.wrong { animation: wiggle 0.4s ease; background: #fca5a5; }
+    .game-tile.disabled { pointer-events: none; opacity: 0.5; }
+
+    /* Color tile variant */
+    .color-tile {
+        min-width: 100px;
+        min-height: 100px;
+        border-radius: 50%;
+        border: 5px solid rgba(255,255,255,0.5);
+        box-shadow: 0 5px 0 rgba(0,0,0,0.15), inset 0 -5px 15px rgba(0,0,0,0.1);
+    }
+    .color-tile:active { transform: translateY(3px) scale(0.95); }
+    .color-tile.correct { border-color: #fff; animation: celebrate 0.5s ease; box-shadow: 0 0 30px rgba(255,255,255,0.5); }
+    .color-tile.wrong { animation: wiggle 0.4s ease; opacity: 0.4; }
+
+    /* Sequence display */
+    .seq-display {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        min-height: 70px;
+        align-items: center;
+    }
+
+    .seq-item {
+        font-size: 2.5rem;
+        animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+    }
+
+    .seq-item.hidden { color: transparent; background: rgba(255,255,255,0.2); width: 50px; height: 50px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; }
+    .seq-item.hidden::after { content: "?"; color: #fff; font-size: 1.5rem; }
+
+    /* Confetti Layer */
+    #confetti-layer {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .confetti-piece {
+        position: absolute;
+        top: -20px;
+        width: 12px; height: 12px;
+        border-radius: 3px;
+        animation: confettiDrop 1.5s ease-in forwards;
+    }
+
+    /* Star burst overlay */
+    .star-burst {
+        position: fixed;
+        top: 50%; left: 50%;
+        font-size: 4rem;
+        pointer-events: none;
+        z-index: 9998;
+        animation: starBurst 0.8s ease-out forwards;
+    }
+
+    /* Rest screen */
+    .rest-msg {
+        font-family: 'Trebuchet MS', 'Avenir Next', 'Segoe UI', sans-serif;
+        font-size: 2rem;
+        color: #fff;
+        text-align: center;
+        text-shadow: none;
+    }
+
+    .rest-icon {
+        font-size: 5rem;
+        animation: float 2s ease-in-out infinite;
+    }
+
+    /* Zoo BG */
+    .bg-zoo { background: linear-gradient(180deg, #87CEEB 0%, #90EE90 60%, #2d8a4e 100%); }
+    /* Sweets BG */
+    .bg-sweets { background: linear-gradient(180deg, #fce4ec 0%, #f8bbd0 40%, #f48fb1 100%); }
+    /* Space BG */
+    .bg-space { background: linear-gradient(180deg, #0d0d2b 0%, #1a1a4e 50%, #2d1b69 100%); }
+    /* Underwater BG */
+    .bg-underwater { background: linear-gradient(180deg, #006994 0%, #004466 50%, #002233 100%); }
+    /* Dinosaurs BG */
+    .bg-dino { background: linear-gradient(180deg, #ff8a65 0%, #a1887f 50%, #6d4c41 100%); }
+
+    /* Sound toggle */
+    .sound-toggle {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        background: rgba(255,250,243,0.85);
+        border: none;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        font-size: 1.3rem;
+        cursor: pointer;
+        z-index: 100;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 8px 16px rgba(95, 67, 32, 0.14);
+    }
+</style>
+
+</head>
+<body>
+
+<div id="app">
+    <!-- HOME -->
+    <div id="view-home" class="view active">
+        <div class="gate-icons">🦁🍭🚀🐠🦕</div>
+        <div class="gate-kicker">Sterling Play</div>
+        <div class="gate-arch">Doodle Trails</div>
+        <div class="gate-sub">Choose a friendly path and play at your own pace.</div>
+        <button class="play-btn" onclick="App.enterPark()">Start Adventure</button>
+    </div>
+
+<!-- MAP -->
+<div id="view-map" class="view">
+    <div class="gate-kicker">Sterling Play</div>
+    <div class="map-title">Pick a Trail</div>
+    <div class="map-grid" id="map-grid"></div>
+    <button class="back-home-btn" onclick="App.goHome()">🏠</button>
+</div>
+
+<!-- ZOO GAME -->
+<div id="view-zoo" class="view game-view bg-zoo"></div>
+
+<!-- SWEETS GAME -->
+<div id="view-sweets" class="view game-view bg-sweets"></div>
+
+<!-- SPACE GAME -->
+<div id="view-space" class="view game-view bg-space"></div>
+
+<!-- UNDERWATER GAME -->
+<div id="view-underwater" class="view game-view bg-underwater"></div>
+
+<!-- DINO GAME -->
+<div id="view-dino" class="view game-view bg-dino"></div>
+
+</div>
+
+<div id="confetti-layer"></div>
+<button class="sound-toggle" id="sound-toggle" onclick="App.toggleSound()">🔊</button>
+
+<script>
+// ============================================================
+// VOICE ENGINE (Web Speech API)
+// ============================================================
+const Voice = (function() {
+    let enabled = true;
+    let synth = window.speechSynthesis;
+
+    function say(text, delay) {
+        if (!enabled || !synth) return;
+        let d = delay || 0;
+        setTimeout(() => {
+            synth.cancel();
+            let utt = new SpeechSynthesisUtterance(text);
+            utt.rate = 0.85;
+            utt.pitch = 1.3;
+            utt.volume = 0.8;
+            // Try to pick a friendly voice
+            let voices = synth.getVoices();
+            let preferred = voices.find(v => v.name.includes('Samantha')) ||
+                            voices.find(v => v.name.includes('Karen')) ||
+                            voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
+                            voices.find(v => v.lang.startsWith('en'));
+            if (preferred) utt.voice = preferred;
+            synth.speak(utt);
+        }, d);
+    }
+
+    function toggle() { enabled = !enabled; return enabled; }
+    function isEnabled() { return enabled; }
+
+    // Preload voices (some browsers need this)
+    if (synth) {
+        synth.getVoices();
+        synth.onvoiceschanged = () => synth.getVoices();
+    }
+
+    return { say, toggle, isEnabled };
+})();
+
+// ============================================================
+// AUDIO ENGINE (SFX only - simple & reliable)
+// ============================================================
+const SFX = (function() {
+    let ctx = null;
+
+    function init() {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+    }
+
+    function tone(freq, dur, vol, type) {
+        if (!ctx) return;
+        let osc = ctx.createOscillator();
+        let gain = ctx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol || 0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur);
+    }
+
+    function correct() {
+        init();
+        tone(523, 0.12, 0.06);
+        setTimeout(() => tone(659, 0.12, 0.06), 100);
+        setTimeout(() => tone(784, 0.2, 0.06), 200);
+    }
+
+    function wrong() {
+        init();
+        tone(200, 0.3, 0.05, 'triangle');
+    }
+
+    function tap() {
+        init();
+        tone(440, 0.05, 0.03);
+    }
+
+    function fanfare() {
+        init();
+        [523, 659, 784, 1047].forEach((f, i) => {
+            setTimeout(() => tone(f, 0.3, 0.05), i * 150);
+        });
+    }
+
+    return { init, correct, wrong, tap, fanfare };
+})();
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function confetti() {
+    let layer = document.getElementById('confetti-layer');
+    let colors = ['#ff6b8a', '#ffd93d', '#6bcb77', '#4d96ff', '#ff922b', '#cc5de8', '#20c997'];
+    for (let i = 0; i < 30; i++) {
+        let piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.5 + 's';
+        piece.style.animationDuration = (1 + Math.random()) + 's';
+        piece.style.width = (8 + Math.random() * 10) + 'px';
+        piece.style.height = (8 + Math.random() * 10) + 'px';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+        layer.appendChild(piece);
+        setTimeout(() => piece.remove(), 2000);
+    }
+}
+
+function starBurst() {
+    let stars = ['⭐', '🌟', '✨'];
+    for (let i = 0; i < 5; i++) {
+        let s = document.createElement('div');
+        s.className = 'star-burst';
+        s.innerText = stars[Math.floor(Math.random() * stars.length)];
+        s.style.marginLeft = (Math.random() * 200 - 100) + 'px';
+        s.style.marginTop = (Math.random() * 200 - 100) + 'px';
+        s.style.animationDelay = (i * 0.1) + 's';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1000);
+    }
+}
+
+// ============================================================
+// APP CONTROLLER
+// ============================================================
+const App = (function() {
+    let levels = { zoo: 1, sweets: 1, space: 1, underwater: 1, dino: 1 };
+    const MAX_LEVEL = 10;
+
+    const rides = [
+        { id: 'zoo', icon: '🦁', name: 'Who Lives Here?', desc: 'Find the animals!', color: '#4caf50' },
+        { id: 'sweets', icon: '🍭', name: 'Sweet Search', desc: 'Find the treats!', color: '#e91e63' },
+        { id: 'space', icon: '🚀', name: 'Star Sequence', desc: 'Remember the stars!', color: '#7c4dff' },
+        { id: 'underwater', icon: '🐠', name: 'Ocean Colors', desc: 'Match the colors!', color: '#00bcd4' },
+        { id: 'dino', icon: '🦕', name: 'Dino Patterns', desc: 'What comes next?', color: '#ff7043' }
+    ];
+
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + id).classList.add('active');
+    }
+
+    function goHome() {
+        SFX.tap();
+        showView('home');
+    }
+
+    function enterPark() {
+        SFX.init();
+        SFX.fanfare();
+        Voice.say("Welcome to Doodle Land!", 0);
+        showView('map');
+        buildMap();
+    }
+
+    function buildMap() {
+        let grid = document.getElementById('map-grid');
+        grid.innerHTML = '';
+        rides.forEach(r => {
+            let card = document.createElement('div');
+            card.className = 'ride-card';
+            card.style.setProperty('--ride-color', r.color);
+            card.innerHTML = `
+                <div class="ride-icon">${r.icon}</div>
+                <div>
+                    <div class="ride-name">${r.name}</div>
+                    <div class="ride-desc">${r.desc}</div>
+                    <div class="ride-level" style="color:${r.color}">Level ${levels[r.id]} / ${MAX_LEVEL}</div>
+                </div>
+            `;
+            card.onclick = () => launchGame(r.id);
+            grid.appendChild(card);
+        });
+    }
+
+    function launchGame(id) {
+        SFX.tap();
+        showView(id);
+        if (id === 'zoo') ZooGame.start();
+        else if (id === 'sweets') SweetsGame.start();
+        else if (id === 'space') SpaceGame.start();
+        else if (id === 'underwater') UnderwaterGame.start();
+        else if (id === 'dino') DinoGame.start();
+    }
+
+    function levelUp(gameId) {
+        if (levels[gameId] < MAX_LEVEL) levels[gameId]++;
+    }
+
+    function getLevel(gameId) { return levels[gameId]; }
+    function getMaxLevel() { return MAX_LEVEL; }
+
+    function backToMap() {
+        SFX.tap();
+        showView('map');
+        buildMap();
+    }
+
+    function winLevel(gameId) {
+        SFX.correct();
+        confetti();
+        starBurst();
+        levelUp(gameId);
+    }
+
+    function loseRound() {
+        SFX.wrong();
+    }
+
+    function finishGame(gameId, gameName) {
+        SFX.fanfare();
+        confetti();
+        Voice.say("Amazing! You finished " + gameName + "!", 0);
+        let view = document.getElementById('view-' + gameId);
+        view.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:20px;">
+                <div class="rest-icon">🎉</div>
+                <div class="rest-msg">You did it!</div>
+                <div style="font-size:1.2rem;color:rgba(255,255,255,0.8);text-align:center;">All levels complete!</div>
+                <button class="play-btn" style="font-size:1.3rem;padding:15px 40px;margin-top:10px;" onclick="App.backToMap()">Back to Park</button>
+            </div>
+        `;
+    }
+
+    function toggleSound() {
+        let on = Voice.toggle();
+        document.getElementById('sound-toggle').innerText = on ? '🔊' : '🔇';
+    }
+
+    return { goHome, enterPark, backToMap, showView, launchGame, winLevel, loseRound, finishGame, getLevel, getMaxLevel, toggleSound, buildMap };
+})();
+
+// ============================================================
+// SHARED: Build game HUD
+// ============================================================
+function buildHUD(container, gameId, level, maxLevel, barColor) {
+    let pct = ((level - 1) / maxLevel) * 100;
+    let hud = document.createElement('div');
+    hud.className = 'game-hud';
+    hud.innerHTML = `
+        <button class="hud-back" onclick="App.backToMap()">🗺️</button>
+        <div class="hud-bar-wrap"><div class="hud-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+        <div class="hud-level">${level}/${maxLevel}</div>
+    `;
+    container.appendChild(hud);
+}
+
+// ============================================================
+// GAME 1: ZOO - "Who Lives Here?"
+// ============================================================
+const ZooGame = (function() {
+    const habitats = [
+        { scene: '🌊', name: 'water', prompt: 'Who lives in the water?',
+          correct: ['🐟', '🐬', '🐙', '🐳', '🦈', '🐊'],
+          wrong:   ['🐘', '🦁', '🐒', '🐓', '🦅', '🐻'] },
+        { scene: '🌳', name: 'trees', prompt: 'Who lives in the trees?',
+          correct: ['🐒', '🦜', '🐿️', '🦥', '🦎', '🐛'],
+          wrong:   ['🐟', '🐬', '🐘', '🦈', '🐧', '🐫'] },
+        { scene: '🏜️', name: 'desert', prompt: 'Who lives in the desert?',
+          correct: ['🐫', '🦂', '🦎', '🐍'],
+          wrong:   ['🐟', '🐬', '🐧', '🐒', '🦜', '🐘'] },
+        { scene: '❄️', name: 'snow', prompt: 'Who lives in the snow?',
+          correct: ['🐧', '🐻‍❄️', '🦭', '🐺'],
+          wrong:   ['🐒', '🦜', '🐫', '🦂', '🐍', '🦁'] },
+        { scene: '🌿', name: 'jungle', prompt: 'Who lives in the jungle?',
+          correct: ['🦁', '🐘', '🦒', '🦓', '🐆', '🦍'],
+          wrong:   ['🐧', '🐻‍❄️', '🐟', '🦂', '🐫', '🦭'] },
+    ];
+
+    let needed = 0;
+    let inputLocked = false;
+
+    function start() {
+        let lvl = App.getLevel('zoo');
+        if (lvl > App.getMaxLevel()) return App.finishGame('zoo', 'Who Lives Here');
+        render(lvl);
+    }
+
+    function render(lvl) {
+        inputLocked = false;
+        let view = document.getElementById('view-zoo');
+        view.innerHTML = '';
+        buildHUD(view, 'zoo', lvl, App.getMaxLevel(), '#4caf50');
+
+        let hab = habitats[Math.floor(Math.random() * habitats.length)];
+        Voice.say(hab.prompt, 300);
+
+        // Prompt
+        let prompt = document.createElement('div');
+        prompt.className = 'game-prompt';
+        prompt.innerHTML = `<span class="prompt-icon">${hab.scene}</span><span class="prompt-text">${hab.prompt}</span>`;
+        view.appendChild(prompt);
+
+        // Build tile pool
+        let correctPool = shuffle([...hab.correct]);
+        let wrongPool = shuffle([...hab.wrong]);
+        let numCorrect = Math.min(2, correctPool.length);
+        let numWrong = Math.min(2, wrongPool.length);
+        if (lvl >= 5) { numCorrect = Math.min(3, correctPool.length); numWrong = Math.min(3, wrongPool.length); }
+        needed = numCorrect;
+
+        let tiles = shuffle([...correctPool.slice(0, numCorrect), ...wrongPool.slice(0, numWrong)]);
+        let cols = tiles.length <= 4 ? 2 : 3;
+
+        let grid = document.createElement('div');
+        grid.className = 'game-grid';
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        view.appendChild(grid);
+
+        tiles.forEach(emoji => {
+            let btn = document.createElement('button');
+            btn.className = 'game-tile';
+            btn.innerText = emoji;
+            btn.onclick = () => handleTap(btn, emoji, hab.correct, grid);
+            grid.appendChild(btn);
+        });
+    }
+
+    function handleTap(btn, emoji, correctList, grid) {
+        if (inputLocked || btn.classList.contains('correct') || btn.classList.contains('disabled')) return;
+
+        if (correctList.includes(emoji)) {
+            btn.classList.add('correct');
+            SFX.correct();
+            needed--;
+            if (needed <= 0) {
+                inputLocked = true;
+                disableAll(grid);
+                App.winLevel('zoo');
+                Voice.say(randomPraise(), 0);
+                setTimeout(() => start(), 1200);
+            }
+        } else {
+            btn.classList.add('wrong');
+            App.loseRound();
+            Voice.say(randomEncourage(), 0);
+            setTimeout(() => { btn.classList.remove('wrong'); btn.classList.add('disabled'); }, 500);
+        }
+    }
+
+    return { start };
+})();
+
+// ============================================================
+// GAME 2: SWEETS - "Sweet Search"
+// ============================================================
+const SweetsGame = (function() {
+    const allSweets = ['🍦', '🧁', '🍩', '🍪', '🍭', '🍬', '🍫', '🍰', '🎂', '🍡'];
+    let needed = 0;
+    let target = '';
+    let inputLocked = false;
+
+    function start() {
+        let lvl = App.getLevel('sweets');
+        if (lvl > App.getMaxLevel()) return App.finishGame('sweets', 'Sweet Search');
+        render(lvl);
+    }
+
+    function render(lvl) {
+        inputLocked = false;
+        let view = document.getElementById('view-sweets');
+        view.innerHTML = '';
+        buildHUD(view, 'sweets', lvl, App.getMaxLevel(), '#e91e63');
+
+        target = allSweets[Math.floor(Math.random() * allSweets.length)];
+        let gridSize = lvl <= 3 ? 4 : (lvl <= 6 ? 6 : 9);
+        let cols = lvl <= 3 ? 2 : 3;
+        needed = Math.min(2 + Math.floor(lvl / 4), 4);
+
+        Voice.say("Find all the " + emojiName(target) + "!", 300);
+
+        let prompt = document.createElement('div');
+        prompt.className = 'game-prompt';
+        prompt.innerHTML = `<span class="prompt-icon">${target}</span><span class="prompt-text">Find them all!</span>`;
+        view.appendChild(prompt);
+
+        // Build cells
+        let cells = Array(gridSize).fill(null);
+        let placed = 0;
+        while (placed < needed) {
+            let idx = Math.floor(Math.random() * gridSize);
+            if (!cells[idx]) { cells[idx] = target; placed++; }
+        }
+        for (let i = 0; i < gridSize; i++) {
+            if (!cells[i]) {
+                let decoy;
+                do { decoy = allSweets[Math.floor(Math.random() * allSweets.length)]; } while (decoy === target);
+                cells[i] = decoy;
+            }
+        }
+
+        let grid = document.createElement('div');
+        grid.className = 'game-grid';
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        view.appendChild(grid);
+
+        cells.forEach(emoji => {
+            let btn = document.createElement('button');
+            btn.className = 'game-tile';
+            btn.innerText = emoji;
+            btn.onclick = () => handleTap(btn, emoji, grid);
+            grid.appendChild(btn);
+        });
+    }
+
+    function handleTap(btn, emoji, grid) {
+        if (inputLocked || btn.classList.contains('correct') || btn.classList.contains('disabled')) return;
+
+        if (emoji === target) {
+            btn.classList.add('correct');
+            SFX.correct();
+            needed--;
+            if (needed <= 0) {
+                inputLocked = true;
+                disableAll(grid);
+                confetti();
+                Voice.say(randomPraise(), 0);
+                App.winLevel('sweets');
+                setTimeout(() => start(), 1200);
+            }
+        } else {
+            btn.classList.add('wrong');
+            App.loseRound();
+            Voice.say(randomEncourage(), 0);
+            setTimeout(() => { btn.classList.remove('wrong'); btn.classList.add('disabled'); }, 500);
+        }
+    }
+
+    return { start };
+})();
+
+// ============================================================
+// GAME 3: SPACE - "Star Sequence"
+// ============================================================
+const SpaceGame = (function() {
+    const spaceIcons = ['🚀', '⭐', '🌙', '🪐', '👽', '🛸', '☄️', '🌍'];
+    let sequence = [];
+    let userIdx = 0;
+    let inputLocked = true;
+
+    function start() {
+        let lvl = App.getLevel('space');
+        if (lvl > App.getMaxLevel()) return App.finishGame('space', 'Star Sequence');
+        render(lvl);
+    }
+
+    function render(lvl) {
+        inputLocked = true;
+        userIdx = 0;
+        let view = document.getElementById('view-space');
+        view.innerHTML = '';
+        buildHUD(view, 'space', lvl, App.getMaxLevel(), '#7c4dff');
+
+        let seqLen = Math.min(2 + Math.floor(lvl / 3), 5);
+        // Prevent duplicate emojis in sequence so each button tap is unambiguous
+        let availableIcons = shuffle([...spaceIcons]);
+        sequence = availableIcons.slice(0, Math.min(seqLen, availableIcons.length));
+
+        Voice.say("Watch the pattern!", 300);
+
+        // Display area
+        let display = document.createElement('div');
+        display.className = 'game-prompt';
+        display.id = 'space-display';
+        display.innerHTML = '<div class="seq-display" id="seq-items"></div><div class="prompt-text" id="seq-msg">Watch!</div>';
+        view.appendChild(display);
+
+        // Show sequence
+        let seqContainer = document.getElementById('seq-items');
+        sequence.forEach((s, i) => {
+            setTimeout(() => {
+                let span = document.createElement('span');
+                span.className = 'seq-item';
+                span.innerText = s;
+                seqContainer.appendChild(span);
+                SFX.tap();
+            }, i * 700);
+        });
+
+        // Build answer buttons: guarantee all sequence items present, fill rest with distractors
+        let grid = document.createElement('div');
+        grid.className = 'game-grid';
+        grid.id = 'space-grid';
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        view.appendChild(grid);
+
+        let uniqueSeq = [...new Set(sequence)];
+        let distractors = spaceIcons.filter(icon => !uniqueSeq.includes(icon));
+        let numDistractors = Math.max(0, 6 - uniqueSeq.length);
+        let options = shuffle([...uniqueSeq, ...shuffle(distractors).slice(0, numDistractors)]);
+
+        options.forEach(emoji => {
+            let btn = document.createElement('button');
+            btn.className = 'game-tile';
+            btn.innerText = emoji;
+            btn.style.opacity = '0.3';
+            btn.style.pointerEvents = 'none';
+            btn.onclick = () => handleTap(btn, emoji);
+            grid.appendChild(btn);
+        });
+
+        // Hide after delay, enable input
+        let hideDelay = 1000 + seqLen * 700;
+        setTimeout(() => {
+            seqContainer.innerHTML = '';
+            for (let i = 0; i < seqLen; i++) {
+                let q = document.createElement('span');
+                q.className = 'seq-item hidden';
+                seqContainer.appendChild(q);
+            }
+            document.getElementById('seq-msg').innerText = 'Your turn!';
+            Voice.say("Your turn! Repeat it!", 0);
+            inputLocked = false;
+            let btns = document.querySelectorAll('#space-grid .game-tile');
+            btns.forEach(b => { b.style.opacity = '1'; b.style.pointerEvents = 'auto'; });
+        }, hideDelay);
+    }
+
+    function handleTap(btn, emoji) {
+        if (inputLocked) return;
+        SFX.tap();
+
+        if (emoji === sequence[userIdx]) {
+            // Reveal in display
+            let hidden = document.querySelectorAll('#seq-items .hidden');
+            if (hidden[0]) {
+                hidden[0].classList.remove('hidden');
+                hidden[0].innerText = emoji;
+            }
+            userIdx++;
+            if (userIdx >= sequence.length) {
+                inputLocked = true;
+                App.winLevel('space');
+                confetti();
+                Voice.say(randomPraise(), 0);
+                SFX.correct();
+                setTimeout(() => start(), 1400);
+            }
+        } else {
+            App.loseRound();
+            btn.classList.add('wrong');
+            Voice.say(randomEncourage(), 0);
+            setTimeout(() => btn.classList.remove('wrong'), 500);
+        }
+    }
+
+    return { start };
+})();
+
+// ============================================================
+// GAME 4: UNDERWATER - "Ocean Colors"
+// ============================================================
+const UnderwaterGame = (function() {
+    const colors = [
+        { name: 'red', hex: '#ef4444', icon: '🔴' },
+        { name: 'blue', hex: '#3b82f6', icon: '🔵' },
+        { name: 'green', hex: '#22c55e', icon: '🟢' },
+        { name: 'yellow', hex: '#eab308', icon: '🟡' },
+        { name: 'purple', hex: '#a855f6', icon: '🟣' },
+        { name: 'orange', hex: '#f97316', icon: '🟠' },
+    ];
+
+    const seaCreatures = ['🐟', '🐬', '🐙', '🦀', '🐠', '🦑', '🐡', '🦈', '🐳', '🦐'];
+    let inputLocked = false;
+    let targetColor = null;
+
+    function start() {
+        let lvl = App.getLevel('underwater');
+        if (lvl > App.getMaxLevel()) return App.finishGame('underwater', 'Ocean Colors');
+        render(lvl);
+    }
+
+    function render(lvl) {
+        inputLocked = false;
+        let view = document.getElementById('view-underwater');
+        view.innerHTML = '';
+        buildHUD(view, 'underwater', lvl, App.getMaxLevel(), '#00bcd4');
+
+        targetColor = colors[Math.floor(Math.random() * colors.length)];
+        let creature = seaCreatures[Math.floor(Math.random() * seaCreatures.length)];
+
+        Voice.say("Tap the " + targetColor.name + " bubble!", 300);
+
+        let prompt = document.createElement('div');
+        prompt.className = 'game-prompt';
+        prompt.innerHTML = `<span class="prompt-icon">${creature}</span><span class="prompt-text">Tap the <span style="color:${targetColor.hex};font-weight:700;">${targetColor.name}</span> bubble!</span>`;
+        view.appendChild(prompt);
+
+        let numOptions = lvl <= 3 ? 3 : (lvl <= 6 ? 4 : 5);
+        // Guarantee target is always present: start with target, fill rest with unique others
+        let others = shuffle(colors.filter(c => c.name !== targetColor.name));
+        let options = shuffle([targetColor, ...others.slice(0, numOptions - 1)]);
+
+        let grid = document.createElement('div');
+        grid.className = 'game-grid';
+        grid.style.gridTemplateColumns = numOptions <= 3 ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)';
+        grid.style.gap = '20px';
+        view.appendChild(grid);
+
+        options.forEach(c => {
+            let btn = document.createElement('button');
+            btn.className = 'game-tile color-tile';
+            btn.style.background = c.hex;
+            btn.style.fontSize = '0';
+            btn.onclick = () => handleTap(btn, c, grid);
+            grid.appendChild(btn);
+        });
+    }
+
+    function handleTap(btn, color, grid) {
+        if (inputLocked || btn.classList.contains('correct') || btn.classList.contains('disabled')) return;
+
+        if (color.name === targetColor.name) {
+            inputLocked = true;
+            btn.classList.add('correct');
+            App.winLevel('underwater');
+            confetti();
+            SFX.correct();
+            Voice.say(randomPraise(), 0);
+            disableAll(grid);
+            setTimeout(() => start(), 1200);
+        } else {
+            btn.classList.add('wrong');
+            App.loseRound();
+            Voice.say("Try again!", 0);
+            setTimeout(() => { btn.classList.remove('wrong'); btn.classList.add('disabled'); }, 500);
+        }
+    }
+
+    return { start };
+})();
+
+// ============================================================
+// GAME 5: DINO - "Dino Patterns"
+// ============================================================
+const DinoGame = (function() {
+    const dinos = ['🦕', '🦖', '🐣', '🥚', '🌋', '🦴', '🌿', '🪨'];
+    let correct = '';
+    let inputLocked = false;
+
+    function start() {
+        let lvl = App.getLevel('dino');
+        if (lvl > App.getMaxLevel()) return App.finishGame('dino', 'Dino Patterns');
+        render(lvl);
+    }
+
+    function render(lvl) {
+        inputLocked = false;
+        let view = document.getElementById('view-dino');
+        view.innerHTML = '';
+        buildHUD(view, 'dino', lvl, App.getMaxLevel(), '#ff7043');
+
+        let a = dinos[Math.floor(Math.random() * dinos.length)];
+        let b;
+        do { b = dinos[Math.floor(Math.random() * dinos.length)]; } while (b === a);
+
+        let patterns;
+        let type = Math.floor(Math.random() * 3);
+        if (lvl <= 3) type = 0; // Keep it simple early
+
+        if (type === 0) {
+            // ABAB -> next is A
+            patterns = [a, b, a, b, a];
+        } else if (type === 1) {
+            // AABB -> next is A (start of next pair)
+            patterns = [a, a, b, b, a];
+        } else {
+            // ABBA -> next is A (start of next cycle)
+            patterns = [a, b, b, a, a];
+        }
+
+        // Show all but last; last is the answer
+        let displaySeq = patterns.slice(0, patterns.length - 1);
+        correct = patterns[patterns.length - 1];
+
+        Voice.say("What comes next?", 300);
+
+        let prompt = document.createElement('div');
+        prompt.className = 'game-prompt';
+        let seqHTML = displaySeq.map(s => `<span class="seq-item">${s}</span>`).join('');
+        seqHTML += `<span class="seq-item hidden"></span>`;
+        prompt.innerHTML = `<div class="seq-display">${seqHTML}</div><div class="prompt-text">What comes next?</div>`;
+        view.appendChild(prompt);
+
+        // Build options: always include correct answer, distractors exclude both a and b to avoid confusion
+        let numOpts = lvl <= 4 ? 2 : 3;
+        let distractors = dinos.filter(d => d !== a && d !== b);
+        let opts = [correct];
+        // Always include the "other" pattern emoji as a plausible wrong answer
+        let otherEmoji = correct === a ? b : a;
+        if (!opts.includes(otherEmoji)) opts.push(otherEmoji);
+        // Fill remaining slots from unrelated dinos
+        while (opts.length < numOpts) {
+            let r = distractors[Math.floor(Math.random() * distractors.length)];
+            if (!opts.includes(r)) opts.push(r);
+        }
+        opts = opts.slice(0, numOpts);
+        opts = shuffle(opts);
+
+        let grid = document.createElement('div');
+        grid.className = 'game-grid';
+        grid.style.gridTemplateColumns = `repeat(${numOpts}, 1fr)`;
+        view.appendChild(grid);
+
+        opts.forEach(emoji => {
+            let btn = document.createElement('button');
+            btn.className = 'game-tile';
+            btn.innerText = emoji;
+            btn.onclick = () => handleTap(btn, emoji, grid);
+            grid.appendChild(btn);
+        });
+    }
+
+    function handleTap(btn, emoji, grid) {
+        if (inputLocked || btn.classList.contains('correct') || btn.classList.contains('disabled')) return;
+
+        if (emoji === correct) {
+            inputLocked = true;
+            btn.classList.add('correct');
+            App.winLevel('dino');
+            confetti();
+            SFX.correct();
+            Voice.say(randomPraise(), 0);
+
+            // Fill in the blank
+            let hidden = document.querySelector('.seq-item.hidden');
+            if (hidden) { hidden.classList.remove('hidden'); hidden.innerText = emoji; }
+
+            disableAll(grid);
+            setTimeout(() => start(), 1200);
+        } else {
+            btn.classList.add('wrong');
+            App.loseRound();
+            Voice.say(randomEncourage(), 0);
+            setTimeout(() => { btn.classList.remove('wrong'); btn.classList.add('disabled'); }, 500);
+        }
+    }
+
+    return { start };
+})();
+
+// ============================================================
+// HELPERS
+// ============================================================
+function shuffle(arr) {
+    let a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function disableAll(grid) {
+    grid.querySelectorAll('.game-tile, .color-tile').forEach(b => b.style.pointerEvents = 'none');
+}
+
+function randomPraise() {
+    const p = ["Great job!", "You did it!", "Awesome!", "Yay!", "Super star!", "Amazing!", "Wonderful!", "You're so smart!", "Hooray!", "Fantastic!"];
+    return p[Math.floor(Math.random() * p.length)];
+}
+
+function randomEncourage() {
+    const e = ["Try again!", "Almost!", "So close!", "Keep going!", "You got this!", "Oops, try another!"];
+    return e[Math.floor(Math.random() * e.length)];
+}
+
+function emojiName(emoji) {
+    const names = {
+        '🍦': 'ice cream', '🧁': 'cupcakes', '🍩': 'donuts', '🍪': 'cookies',
+        '🍭': 'lollipops', '🍬': 'candy', '🍫': 'chocolate', '🍰': 'cake',
+        '🎂': 'birthday cake', '🍡': 'dango'
+    };
+    return names[emoji] || 'treats';
+}
+</script>
+
+</body>
+</html>

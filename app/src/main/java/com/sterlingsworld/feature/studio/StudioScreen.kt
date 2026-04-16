@@ -33,10 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sterlingsworld.core.media.StudioAvailability
 import com.sterlingsworld.core.ui.theme.Accent
 import com.sterlingsworld.core.ui.theme.Background
 import com.sterlingsworld.core.ui.theme.Border
@@ -58,8 +60,15 @@ fun StudioScreen() {
             .fillMaxSize()
             .background(Background),
     ) {
-        // Now-playing transport bar
-        if (state.currentTrackId != null || state.isPlaying) {
+        // Availability banner — shown when audio assets are not yet ready
+        when (state.availability) {
+            StudioAvailability.WAITING_FOR_ASSETS -> AudioStatusBanner("Music loading...")
+            StudioAvailability.UNAVAILABLE -> AudioStatusBanner("Music unavailable in this build")
+            StudioAvailability.READY -> Unit
+        }
+
+        // Now-playing transport bar — only shown when audio is ready and actually playing
+        if (state.availability == StudioAvailability.READY && (state.currentTrackId != null || state.isPlaying)) {
             NowPlayingBar(
                 isPlaying = state.isPlaying,
                 currentTrackId = state.currentTrackId,
@@ -81,11 +90,27 @@ fun StudioScreen() {
                     album = state.albums[index],
                     currentTrackId = state.currentTrackId,
                     isPlaying = state.isPlaying,
+                    enabled = state.availability == StudioAvailability.READY,
                     onTrackSelected = vm::playTrack,
                     onAlbumPlay = vm::playAlbum,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AudioStatusBanner(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextMuted,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
     }
 }
 
@@ -144,13 +169,17 @@ private fun AlbumCard(
     album: Album,
     currentTrackId: String?,
     isPlaying: Boolean,
+    enabled: Boolean,
     onTrackSelected: (Track) -> Unit,
     onAlbumPlay: (Album) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val cardAlpha = if (enabled) 1f else 0.5f
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(cardAlpha),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SterlingBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -167,14 +196,17 @@ private fun AlbumCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = album.title, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
                     Text(
-                        text = "${album.tracks.size} tracks  ·  ${album.artist}",
+                        text = "${album.tracks.size} tracks - ${album.artist}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextMuted,
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { onAlbumPlay(album) }) {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = "Play album", tint = Primary)
+                    IconButton(
+                        onClick = { onAlbumPlay(album) },
+                        enabled = enabled,
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "Play album", tint = if (enabled) Primary else TextMuted)
                     }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
@@ -194,6 +226,7 @@ private fun AlbumCard(
                         position = index + 1,
                         isCurrentTrack = track.id == currentTrackId,
                         isPlaying = isPlaying && track.id == currentTrackId,
+                        enabled = enabled,
                         onClick = { onTrackSelected(track) },
                     )
                     if (index < album.tracks.lastIndex) {
@@ -214,13 +247,14 @@ private fun TrackRow(
     position: Int,
     isCurrentTrack: Boolean,
     isPlaying: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val textColor = if (isCurrentTrack) Primary else TextPrimary
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .background(if (isCurrentTrack) Accent.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HoldPlease Healthcare</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+body{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+background:#0a0015;
+color:#e0d0ff;
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+overflow-x:hidden;
+user-select:none;
+-webkit-user-select:none;
+}
+
+/* CRT Scanlines */
+body::after{
+content:'';
+position:fixed;
+inset:0;
+background:repeating-linear-gradient(
+0deg,
+transparent,
+transparent 2px,
+rgba(0,0,0,0.12) 2px,
+rgba(0,0,0,0.12) 4px
+);
+pointer-events:none;
+z-index:9999;
+}
+
+/* CRT vignette */
+body::before{
+content:'';
+position:fixed;
+inset:0;
+background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.6) 100%);
+pointer-events:none;
+z-index:9998;
+}
+
+.app{
+position:relative;
+z-index:1;
+width:100%;
+max-width:520px;
+min-height:100vh;
+padding:16px 14px 30px;
+display:flex;
+flex-direction:column;
+}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;animation:fadeIn 0.5s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── BOOT SCREEN ── */
+.boot{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center}
+.boot-text{
+font-size:clamp(1.4rem,5vw,2rem);
+color:#33ff33;
+text-shadow:0 0 10px rgba(51,255,51,0.6),0 0 40px rgba(51,255,51,0.2);
+letter-spacing:2px;
+line-height:1.6;
+}
+.boot-sub{font-size:1rem;color:#227722;letter-spacing:1px}
+.init-btn{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:1.2rem;
+background:transparent;
+border:2px solid #33ff33;
+color:#33ff33;
+padding:14px 32px;
+border-radius:2px;
+cursor:pointer;
+letter-spacing:3px;
+transition:all 0.2s;
+margin-top:10px;
+}
+.init-btn:hover{background:rgba(51,255,51,0.1);box-shadow:0 0 20px rgba(51,255,51,0.3)}
+.init-btn:active{transform:scale(0.96)}
+.blink{animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ── TOP BAR ── */
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:8px 12px;
+background:#120020;
+border:1px solid #2a1848;
+border-radius:4px;
+margin-bottom:10px;
+}
+.top-title{
+font-size:0.85rem;
+color:#ff66cc;
+letter-spacing:2px;
+text-shadow:0 0 6px rgba(255,102,204,0.4);
+}
+.top-right{display:flex;gap:8px;align-items:center}
+.access-badge{
+font-size:0.8rem;
+color:#00eeff;
+background:rgba(0,238,255,0.08);
+border:1px solid rgba(0,238,255,0.2);
+padding:2px 10px;
+border-radius:2px;
+letter-spacing:1px;
+}
+.mute-btn,.reboot-btn{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:0.8rem;
+background:transparent;
+border:1px solid #3a2858;
+color:#8060a0;
+padding:4px 10px;
+border-radius:2px;
+cursor:pointer;
+transition:all 0.15s;
+}
+.mute-btn:hover,.reboot-btn:hover{border-color:#ff66cc;color:#ff66cc}
+.reboot-btn{border-color:#ff3366;color:#ff3366}
+.reboot-btn:hover{background:rgba(255,51,102,0.1)}
+
+/* ── GAME AREA ── */
+.game-area{
+flex:1;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+/* Scene box */
+.scene{
+background:#120020;
+border:1px solid #2a1848;
+border-radius:6px;
+padding:14px;
+min-height:180px;
+position:relative;
+overflow:hidden;
+transition:border-color 0.3s;
+}
+.scene.correct-flash{border-color:#33ff88;box-shadow:0 0 20px rgba(51,255,136,0.15)}
+.scene.wrong-shake{animation:shakeBox 0.4s ease}
+@keyframes shakeBox{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.narrator{
+font-size:1rem;
+color:#00eeff;
+text-shadow:0 0 4px rgba(0,238,255,0.3);
+margin-bottom:10px;
+line-height:1.5;
+padding-left:16px;
+border-left:3px solid #00eeff;
+}
+.narrator::before{content:'> '}
+
+.dialogue{
+display:flex;
+gap:12px;
+align-items:flex-start;
+margin-bottom:10px;
+}
+.dialogue-text{
+font-size:1.05rem;
+color:#ffcc66;
+line-height:1.5;
+flex:1;
+padding:8px 12px;
+background:rgba(255,204,102,0.04);
+border:1px solid rgba(255,204,102,0.15);
+border-radius:4px;
+}
+.dialogue-text::before{content:'\275D '}
+.dialogue-text::after{content:' \275E'}
+
+.prompt{
+font-size:1.1rem;
+color:#ff66cc;
+text-shadow:0 0 4px rgba(255,102,204,0.3);
+text-align:center;
+padding:8px;
+letter-spacing:1px;
+}
+
+.concept-tag{
+display:inline-block;
+font-size:0.8rem;
+color:#0a0015;
+background:#00eeff;
+padding:2px 8px;
+border-radius:2px;
+letter-spacing:1px;
+margin-bottom:8px;
+}
+
+/* ── CHARACTERS ── */
+.char-sterling{
+display:flex;
+flex-direction:column;
+align-items:center;
+min-width:50px;
+flex-shrink:0;
+}
+/* Spoon head */
+.spoon-head{
+width:36px;
+height:44px;
+background:linear-gradient(135deg,#d0d0d0,#a0a0a0);
+border-radius:50%;
+border:2px solid #888;
+position:relative;
+}
+.spoon-eye{
+width:4px;height:5px;background:#333;border-radius:50%;position:absolute;top:16px;
+}
+.spoon-eye.l{left:10px}
+.spoon-eye.r{right:10px}
+.spoon-mouth{
+width:10px;height:3px;border-bottom:2px solid #555;border-radius:0 0 50% 50%;
+position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+}
+/* Body */
+.spoon-body{
+width:20px;height:22px;background:#ff6699;border-radius:3px;margin-top:-2px;
+border:1px solid #cc4477;position:relative;
+}
+/* Shorts */
+.spoon-shorts{
+width:22px;height:10px;background:#4466cc;border-radius:0 0 3px 3px;
+border:1px solid #3355aa;margin-top:-1px;
+}
+/* Limbs */
+.spoon-limbs{display:flex;justify-content:space-between;width:36px;margin-top:-18px}
+.spoon-arm{width:3px;height:18px;background:#b0b0b0;border-radius:2px}
+.spoon-legs{display:flex;justify-content:center;gap:6px;margin-top:0}
+.spoon-leg{width:3px;height:16px;background:#b0b0b0;border-radius:2px}
+/* Cane */
+.spoon-cane{
+width:3px;height:24px;background:#8B4513;border-radius:1px;
+margin-top:-20px;margin-left:36px;position:relative;
+}
+.spoon-cane::before{
+content:'';position:absolute;top:-2px;left:-4px;
+width:10px;height:6px;border:2px solid #8B4513;border-bottom:none;border-radius:6px 6px 0 0;
+background:transparent;
+}
+.char-label{font-size:0.65rem;color:#aaa;margin-top:4px;letter-spacing:1px}
+
+/* Neurologist */
+.char-neuro{
+display:flex;flex-direction:column;align-items:center;min-width:50px;flex-shrink:0;
+}
+.neuro-head{
+width:28px;height:30px;background:#f0c8a0;border-radius:50%;border:2px solid #d0a080;
+position:relative;
+}
+.neuro-eye{width:3px;height:4px;background:#333;border-radius:50%;position:absolute;top:11px}
+.neuro-eye.l{left:7px}
+.neuro-eye.r{right:7px}
+.neuro-hair{
+width:30px;height:10px;background:#442200;border-radius:10px 10px 0 0;
+margin-bottom:-4px;
+}
+.neuro-coat{
+width:26px;height:28px;background:#ffffff;border-radius:3px;margin-top:-2px;
+border:1px solid #cccccc;position:relative;
+}
+.neuro-coat::after{
+content:'';position:absolute;top:2px;left:50%;transform:translateX(-50%);
+width:10px;height:4px;background:#33aa55;border-radius:1px;
+}
+.neuro-legs{display:flex;gap:6px;justify-content:center}
+.neuro-leg{width:3px;height:14px;background:#333;border-radius:2px}
+
+/* ── CHOICES ── */
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:clamp(0.95rem,3vw,1.1rem);
+padding:14px 16px;
+border:2px solid #3a2858;
+background:#0f001a;
+color:#ccbbee;
+border-radius:4px;
+cursor:pointer;
+transition:all 0.2s;
+text-align:left;
+line-height:1.4;
+min-height:52px;
+position:relative;
+}
+.choice-btn:hover{border-color:#ff66cc;color:#ff99dd;background:#180028}
+.choice-btn:active{transform:scale(0.98)}
+.choice-btn:disabled{opacity:0.4;cursor:default;transform:none}
+.choice-btn.correct{border-color:#33ff88;color:#33ff88;background:rgba(51,255,136,0.06)}
+.choice-btn.wrong{border-color:#ff3366;color:#ff3366;background:rgba(255,51,102,0.06)}
+
+/* Feedback */
+.feedback{
+font-size:1rem;
+padding:10px 14px;
+border-radius:4px;
+line-height:1.5;
+animation:fadeIn 0.3s ease;
+margin-top:4px;
+}
+.feedback.err{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2);color:#ff6688}
+.feedback.ok{background:rgba(51,255,136,0.08);border:1px solid rgba(51,255,136,0.2);color:#66ffaa}
+
+.next-btn{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:1.1rem;
+background:linear-gradient(135deg,#ff66cc,#cc33ff);
+border:none;
+color:#fff;
+padding:12px 28px;
+border-radius:4px;
+cursor:pointer;
+letter-spacing:2px;
+margin-top:6px;
+align-self:center;
+transition:all 0.2s;
+box-shadow:0 3px 12px rgba(255,102,204,0.25);
+}
+.next-btn:hover{box-shadow:0 5px 20px rgba(255,102,204,0.4);transform:translateY(-2px)}
+.next-btn:active{transform:scale(0.96)}
+
+/* ── COMMAND HISTORY ── */
+.cmd-history{
+background:#08000f;
+border:1px solid #1a1030;
+border-radius:4px;
+padding:10px 12px;
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:0.85rem;
+color:#6a5a80;
+min-height:40px;
+max-height:100px;
+overflow-y:auto;
+}
+.cmd-line{margin-bottom:3px;line-height:1.4}
+.cmd-num{color:#3a2858}
+.cmd-code{color:#33ff88}
+.cmd-cursor{
+display:inline-block;
+width:8px;height:14px;
+background:#33ff88;
+animation:blink 0.8s step-end infinite;
+vertical-align:text-bottom;
+margin-left:4px;
+}
+
+/* ── LOADING TRANSITION ── */
+.loading-overlay{
+position:fixed;inset:0;
+background:#0a0015;
+display:flex;align-items:center;justify-content:center;
+z-index:100;
+transition:opacity 0.3s;
+}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-text{
+font-size:1.2rem;
+color:#00eeff;
+text-shadow:0 0 8px rgba(0,238,255,0.4);
+letter-spacing:3px;
+}
+.loading-dots::after{content:'';animation:dots 1.5s step-end infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* ── VICTORY ── */
+.victory{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.victory-title{
+font-size:clamp(1.4rem,5vw,2rem);
+color:#ffcc00;
+text-shadow:0 0 14px rgba(255,204,0,0.5),0 3px 0 #996600;
+letter-spacing:3px;
+}
+.victory-sub{font-size:1.1rem;color:#aa88cc;line-height:1.8}
+.victory-sub span{color:#ffcc66}
+.victory-code{
+background:#08000f;
+border:1px solid #2a1848;
+border-radius:4px;
+padding:12px 16px;
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:0.9rem;
+color:#33ff88;
+text-align:left;
+line-height:1.8;
+width:100%;
+max-width:360px;
+}
+
+/* Boot sequence animation */
+.boot-seq{
+font-family:'Courier New','Consolas','Lucida Console',monospace;
+font-size:0.9rem;
+color:#00eeff;
+text-align:left;
+line-height:1.8;
+width:100%;
+max-width:360px;
+}
+.boot-seq .ok{color:#33ff88}
+.boot-seq .warn{color:#ffcc00}
+
+@media(max-width:400px){
+.app{padding:10px 10px 24px}
+.scene{padding:10px;min-height:150px}
+.dialogue{gap:8px}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ BOOT SCREEN ═══ -->
+
+  <div class="screen active" id="scr-boot">
+    <div class="boot">
+      <div class="boot-text">PLEASE TRY THIS<br>AT HOME</div>
+      <div class="boot-sub">HoldPlease Healthcare v3.14</div>
+      <div class="boot-sub">An educational coding adventure</div>
+      <button class="init-btn" id="init-btn">[ Initialize System ]<span class="blink">_</span></button>
+    </div>
+  </div>
+
+  <!-- ═══ GAME SCREEN ═══ -->
+
+  <div class="screen" id="scr-game">
+    <div class="top-bar">
+      <div class="top-title">HOLDPLEASE HEALTHCARE</div>
+      <div class="top-right">
+        <div class="access-badge" id="access-badge">1 / 3</div>
+        <button class="mute-btn" id="mute-btn">&#x1F50A;</button>
+        <button class="reboot-btn" id="reboot-btn">REBOOT</button>
+      </div>
+    </div>
+
+```
+<div class="game-area" id="game-area">
+  <!-- Filled dynamically -->
+</div>
+
+<div class="cmd-history" id="cmd-history">
+  <div style="color:#3a2858">// your code will appear here<span class="cmd-cursor"></span></div>
+</div>
+```
+
+  </div>
+
+  <!-- ═══ VICTORY SCREEN ═══ -->
+
+  <div class="screen" id="scr-victory">
+    <div class="victory" id="victory-content">
+    </div>
+  </div>
+
+  <!-- ═══ LOADING OVERLAY ═══ -->
+
+  <div class="loading-overlay hidden" id="loading">
+    <div class="loading-text">LOADING MODULE<span class="loading-dots"></span></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  /* ═══════════════════════════════════
+     AUDIO ENGINE (8-bit Web Audio)
+     ═══════════════════════════════════ */
+  var audioCtx=null;
+  var masterGain=null;
+  var muted=false;
+  var audioStarted=false;
+  var nextNoteTime=0;
+  var schedulerTimer=null;
+
+  // Melody: simple vaporwave arpeggio in C minor pentatonic
+  var NOTES=[261.6,293.7,311.1,349.2,392.0,466.2,523.3,587.3];
+  var MELODY=[0,2,4,5,4,2,0,3,5,7,5,3,0,4,7,5,2,4,5,3,0,2,4,7,5,4,2,0];
+  var melodyIdx=0;
+  var BPM=140;
+  var NOTE_LEN=60/BPM;
+
+  function initAudio(){
+    if(audioStarted)return;
+    audioStarted=true;
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.gain.value=0.08;
+    masterGain.connect(audioCtx.destination);
+    nextNoteTime=audioCtx.currentTime+0.1;
+    scheduler();
+  }
+
+  function playNote(freq,time,dur){
+    // Square wave
+    var osc=audioCtx.createOscillator();
+    osc.type='square';
+    osc.frequency.value=freq;
+
+    var env=audioCtx.createGain();
+    env.gain.setValueAtTime(0.3,time);
+    env.gain.exponentialRampToValueAtTime(0.01,time+dur*0.8);
+
+    osc.connect(env);
+    env.connect(masterGain);
+    osc.start(time);
+    osc.stop(time+dur);
+
+    // Sub bass (every 4th note)
+    if(melodyIdx%4===0){
+      var bass=audioCtx.createOscillator();
+      bass.type='triangle';
+      bass.frequency.value=freq/4;
+      var bassEnv=audioCtx.createGain();
+      bassEnv.gain.setValueAtTime(0.5,time);
+      bassEnv.gain.exponentialRampToValueAtTime(0.01,time+dur*1.5);
+      bass.connect(bassEnv);
+      bassEnv.connect(masterGain);
+      bass.start(time);
+      bass.stop(time+dur*2);
+    }
+  }
+
+  function scheduler(){
+    while(nextNoteTime<audioCtx.currentTime+0.1){
+      var note=MELODY[melodyIdx%MELODY.length];
+      playNote(NOTES[note],nextNoteTime,NOTE_LEN*0.7);
+      nextNoteTime+=NOTE_LEN;
+      melodyIdx++;
+    }
+    schedulerTimer=setTimeout(scheduler,25);
+  }
+
+  function toggleMute(){
+    if(!masterGain)return;
+    muted=!muted;
+    masterGain.gain.value=muted?0:0.08;
+    document.getElementById('mute-btn').textContent=muted?'\uD83D\uDD07':'\uD83D\uDD0A';
+  }
+
+  function playSfx(type){
+    if(!audioCtx||muted)return;
+    var osc=audioCtx.createOscillator();
+    var g=audioCtx.createGain();
+    osc.connect(g);g.connect(audioCtx.destination);
+    g.gain.value=0.06;
+    if(type==='correct'){
+      osc.type='square';
+      osc.frequency.setValueAtTime(523,audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659,audioCtx.currentTime+0.08);
+      osc.frequency.setValueAtTime(784,audioCtx.currentTime+0.16);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.35);
+      osc.start();osc.stop(audioCtx.currentTime+0.35);
+    }else{
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(200,audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80,audioCtx.currentTime+0.3);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
+      osc.start();osc.stop(audioCtx.currentTime+0.3);
+    }
+  }
+
+  /* ═══════════════════════════════════
+     GAME DATA
+     ═══════════════════════════════════ */
+  var LEVELS=[
+    {
+      concept:'BOOLEANS',
+      conceptDesc:'A boolean is like a light switch: it can only be TRUE (on) or FALSE (off).',
+      narrator:'Patient 849 is stuck in the waiting room. The medical firewall is blocking the door.',
+      sterling:'I\'ve been waiting for hours! I just need to see the doctor. Can you turn this firewall off?',
+      prompt:'How do we turn off the firewall?',
+      showNeuro:false,
+      choices:[
+        {code:'firewall.active = true;',correct:false,fb:'Error: Setting it to \'true\' made the fire twice as big! Try turning it *off*.'},
+        {code:'firewall.color = "blue";',correct:false,fb:'Error: Blue fire is still fire! We need to change its active status, not its color.'},
+        {code:'firewall.active = false;',correct:true,fb:'Success. Firewall deactivated. The door is open.'}
+      ]
+    },
+    {
+      concept:'STRINGS',
+      conceptDesc:'A string is text inside quotes. Computers need quotes to know something is a word, not a number.',
+      narrator:'Error. Patient file corrupted. Identity unknown.',
+      sterling:'The system wiped my file! Tell the machine my name is Sterling so I can get my appointment.',
+      prompt:'How do we save Sterling\'s name in the system?',
+      showNeuro:false,
+      choices:[
+        {code:'patientName = 500;',correct:false,fb:'Error: I am a spoon, not a number! Use quotes to write a word.'},
+        {code:'patientName = "Sterling";',correct:true,fb:'Success. Patient \'Sterling\' recognized. Proceeding down the hall.'},
+        {code:'patientName = false;',correct:false,fb:'Error: You just told the system I don\'t exist! Try typing my actual name.'}
+      ]
+    },
+    {
+      concept:'FUNCTIONS',
+      conceptDesc:'A function is a set of instructions with a name. Adding () at the end is like pressing "GO".',
+      narrator:'Arrived at exam room. The human neurologist is currently in \'Standby Mode.\'',
+      sterling:'Finally made it! But the doctor is just staring at the wall. Can you run his exam program so we can get this over with?',
+      prompt:'How do we tell the neurologist to start the exam?',
+      showNeuro:true,
+      choices:[
+        {code:'neurologist.sleep();',correct:false,fb:'Error: He is snoring now! We need him to work, not sleep.'},
+        {code:'neurologist.hide();',correct:false,fb:'Error: He just ducked under the desk! Bring him back and start the appointment.'},
+        {code:'neurologist.startExam();',correct:true,fb:'Success. The doctor is ready to see you.'}
+      ]
+    }
+  ];
+
+  /* ═══════════════════════════════════
+     STATE
+     ═══════════════════════════════════ */
+  var currentLevel=0;
+  var cmdHistory=[];
+  var busy=false;
+
+  /* ═══════════════════════════════════
+     UI HELPERS
+     ═══════════════════════════════════ */
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+    document.getElementById(id).classList.add('active');
+  }
+
+  function showLoading(callback){
+    var el=document.getElementById('loading');
+    el.classList.remove('hidden');
+    setTimeout(function(){
+      el.classList.add('hidden');
+      if(callback)callback();
+    },1200);
+  }
+
+  function buildSterling(){
+    return '<div class="char-sterling">'
+      +'<div class="spoon-head"><div class="spoon-eye l"></div><div class="spoon-eye r"></div><div class="spoon-mouth"></div></div>'
+      +'<div class="spoon-body"></div>'
+      +'<div class="spoon-shorts"></div>'
+      +'<div class="spoon-limbs"><div class="spoon-arm"></div><div class="spoon-arm"></div></div>'
+      +'<div class="spoon-legs"><div class="spoon-leg"></div><div class="spoon-leg"></div></div>'
+      +'<div class="spoon-cane"></div>'
+      +'<div class="char-label">STERLING</div>'
+      +'</div>';
+  }
+
+  function buildNeuro(){
+    return '<div class="char-neuro">'
+      +'<div class="neuro-hair"></div>'
+      +'<div class="neuro-head"><div class="neuro-eye l"></div><div class="neuro-eye r"></div></div>'
+      +'<div class="neuro-coat"></div>'
+      +'<div class="neuro-legs"><div class="neuro-leg"></div><div class="neuro-leg"></div></div>'
+      +'<div class="char-label">DR. CHEN</div>'
+      +'</div>';
+  }
+
+  function updateCmdHistory(){
+    var el=document.getElementById('cmd-history');
+    var html='';
+    for(var i=0;i<cmdHistory.length;i++){
+      html+='<div class="cmd-line"><span class="cmd-num">'+(i+1)+'.</span> <span class="cmd-code">'+cmdHistory[i]+'</span></div>';
+    }
+    if(cmdHistory.length<3){
+      html+='<div class="cmd-line"><span class="cmd-num">'+(cmdHistory.length+1)+'.</span> <span class="cmd-cursor"></span></div>';
+    }
+    el.innerHTML=html;
+    el.scrollTop=el.scrollHeight;
+  }
+
+  function updateAccessBadge(){
+    document.getElementById('access-badge').textContent=(currentLevel+1)+' / 3';
+  }
+
+  /* ═══════════════════════════════════
+     RENDER LEVEL
+     ═══════════════════════════════════ */
+  function renderLevel(){
+    var lv=LEVELS[currentLevel];
+    var area=document.getElementById('game-area');
+    updateAccessBadge();
+
+    var charHtml='<div class="dialogue">'
+      +buildSterling()
+      +'<div class="dialogue-text">'+lv.sterling+'</div>';
+    if(lv.showNeuro)charHtml+=buildNeuro();
+    charHtml+='</div>';
+
+    var choicesHtml='<div class="choices" id="choices">';
+    for(var i=0;i<lv.choices.length;i++){
+      choicesHtml+='<button class="choice-btn" data-idx="'+i+'"><code>'+lv.choices[i].code+'</code></button>';
+    }
+    choicesHtml+='</div>';
+
+    area.innerHTML=
+      '<div class="scene" id="scene">'
+        +'<div class="concept-tag">CONCEPT: '+lv.concept+'</div>'
+        +'<div style="font-size:0.9rem;color:#aa88cc;margin-bottom:10px;line-height:1.4">&#x1F4A1; '+lv.conceptDesc+'</div>'
+        +'<div class="narrator">'+lv.narrator+'</div>'
+        +charHtml
+        +'<div class="prompt">'+lv.prompt+'</div>'
+      +'</div>'
+      +choicesHtml
+      +'<div id="feedback-area"></div>';
+
+    // Bind choices
+    document.querySelectorAll('.choice-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        handleChoice(parseInt(btn.dataset.idx));
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════
+     HANDLE CHOICE
+     ═══════════════════════════════════ */
+  function handleChoice(idx){
+    if(busy)return;
+    busy=true;
+
+    var lv=LEVELS[currentLevel];
+    var choice=lv.choices[idx];
+    var btns=document.querySelectorAll('.choice-btn');
+    var scene=document.getElementById('scene');
+    var fbArea=document.getElementById('feedback-area');
+
+    // Disable all buttons
+    btns.forEach(function(b){b.disabled=true;});
+
+    if(choice.correct){
+      playSfx('correct');
+      btns[idx].classList.add('correct');
+      scene.classList.add('correct-flash');
+      setTimeout(function(){scene.classList.remove('correct-flash');},600);
+
+      cmdHistory.push(choice.code);
+      updateCmdHistory();
+
+      fbArea.innerHTML='<div class="feedback ok">&#x2705; '+choice.fb+'</div>'
+        +'<button class="next-btn" id="next-btn">'+(currentLevel<2?'NEXT MODULE &#x2192;':'COMPLETE &#x2192;')+'</button>';
+
+      document.getElementById('next-btn').addEventListener('click',function(){
+        currentLevel++;
+        if(currentLevel>=LEVELS.length){
+          showLoading(showVictory);
+        }else{
+          showLoading(function(){
+            renderLevel();
+            busy=false;
+          });
+        }
+      });
+    }else{
+      playSfx('wrong');
+      btns[idx].classList.add('wrong');
+      scene.classList.add('wrong-shake');
+      setTimeout(function(){scene.classList.remove('wrong-shake');},400);
+
+      fbArea.innerHTML='<div class="feedback err">&#x274C; '+choice.fb+'</div>';
+
+      // Re-enable after cooldown (except the wrong one)
+      setTimeout(function(){
+        btns.forEach(function(b,i){
+          if(i!==idx)b.disabled=false;
+        });
+        busy=false;
+      },400);
+    }
+  }
+
+  /* ═══════════════════════════════════
+     VICTORY SCREEN
+     ═══════════════════════════════════ */
+  function showVictory(){
+    showScreen('scr-victory');
+    var vc=document.getElementById('victory-content');
+
+    // Boot sequence first
+    vc.innerHTML='<div class="boot-seq" id="boot-seq"></div>';
+    var lines=[
+      {t:'Verifying patient records... ',c:'ok',d:300},
+      {t:'<span class="ok">[OK]</span>',c:'',d:500},
+      {t:'Running diagnostic scan... ',c:'ok',d:300},
+      {t:'<span class="ok">[COMPLETE]</span>',c:'',d:500},
+      {t:'Exam results: <span class="ok">ALL CLEAR</span>',c:'',d:600},
+      {t:'',c:'',d:400},
+      {t:'<span class="warn">SYSTEM OVERRIDE COMPLETE</span>',c:'',d:800},
+      {t:'<span class="ok">PATIENT 849 CLEARED FOR DISCHARGE</span>',c:'',d:600}
+    ];
+
+    var bootEl=document.getElementById('boot-seq');
+    var lineIdx=0;
+    var totalDelay=0;
+
+    function addLine(){
+      if(lineIdx>=lines.length){
+        setTimeout(showFinalVictory,600);
+        return;
+      }
+      var line=lines[lineIdx];
+      totalDelay+=line.d;
+      setTimeout(function(){
+        bootEl.innerHTML+=line.t+'<br>';
+      },totalDelay);
+      lineIdx++;
+      setTimeout(addLine,50);
+    }
+    addLine();
+  }
+
+  function showFinalVictory(){
+    var vc=document.getElementById('victory-content');
+    vc.innerHTML=
+      '<div style="font-size:3rem">&#x1F3C6;</div>'
+      +'<div class="victory-title">EXAM COMPLETE</div>'
+      +'<div class="victory-sub">'
+        +'<div class="narrator" style="text-align:center;border:none;padding:0">Coding logic verified. All systems nominal.</div>'
+      +'</div>'
+      +'<div class="dialogue" style="justify-content:center">'
+        +buildSterling()
+        +'<div class="dialogue-text">We did it! Thanks for hacking the system for me. You\'re a real programmer now!</div>'
+      +'</div>'
+      +'<div class="victory-sub">You wrote <span>3 lines of real code</span> today!<br>Here\'s your program:</div>'
+      +'<div class="victory-code">'
+        +'<span style="color:#6a5a80">// patient849_fix.js</span><br>'
+        +'<span style="color:#00eeff">1.</span> '+cmdHistory[0]+'<br>'
+        +'<span style="color:#00eeff">2.</span> '+cmdHistory[1]+'<br>'
+        +'<span style="color:#00eeff">3.</span> '+cmdHistory[2]
+      +'</div>'
+      +'<div class="victory-sub">&#x1F4A1; You learned:<br>'
+        +'<span>Booleans</span> (true/false switches)<br>'
+        +'<span>Strings</span> (text in quotes)<br>'
+        +'<span>Functions</span> (running commands)</div>'
+      +'<button class="init-btn" id="replay-btn" style="border-color:#ff66cc;color:#ff66cc">[ Reboot System ]</button>';
+
+    document.getElementById('replay-btn').addEventListener('click',reboot);
+  }
+
+  /* ═══════════════════════════════════
+     REBOOT
+     ═══════════════════════════════════ */
+  function reboot(){
+    currentLevel=0;
+    cmdHistory=[];
+    busy=false;
+    updateCmdHistory();
+    showScreen('scr-game');
+    renderLevel();
+  }
+
+  /* ═══════════════════════════════════
+     INIT
+     ═══════════════════════════════════ */
+  document.getElementById('init-btn').addEventListener('click',function(){
+    initAudio();
+    showScreen('scr-game');
+    updateCmdHistory();
+    renderLevel();
+  });
+
+  document.getElementById('mute-btn').addEventListener('click',toggleMute);
+
+  document.getElementById('reboot-btn').addEventListener('click',function(){
+    reboot();
+  });
+})();
+</script>
+
+</body>
+</html>
