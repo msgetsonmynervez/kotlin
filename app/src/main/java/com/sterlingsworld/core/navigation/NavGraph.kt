@@ -46,6 +46,7 @@ import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
 import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
 import com.sterlingsworld.feature.lumistarquest.LumisStarQuestScreen
 import com.sterlingsworld.feature.nostalgia.NostalgiaScreen
+import com.sterlingsworld.feature.game.suites.relaxation.RelaxationSuiteHost
 import com.sterlingsworld.feature.relaxationretreat.RelaxationRetreatScreen
 import com.sterlingsworld.feature.settings.SettingsScreen
 import com.sterlingsworld.feature.spoongauntlet.GauntletScreen
@@ -117,7 +118,7 @@ fun MeetSterlingNavGraph(
                     "symptom-striker" -> { onComplete -> SymptomStrikerGame(onDone = onComplete) }
                     "kidz-doodle-land" -> { onComplete -> WebViewGame(assetFolder = "Kidz-doodle_land", onDone = onComplete) }
                     "kidz-linebreaker" -> { onComplete -> WebViewGame(assetFolder = "Kidz-linebreaker", onDone = onComplete) }
-                    "relaxation-retreat" -> { onComplete -> WebViewGame(assetFolder = "relaxation-retreat", onDone = onComplete) }
+                    "relaxation-retreat" -> { _ -> RelaxationSuiteHost() }
                     "spoon-gauntlet" -> { onComplete -> WebViewGame(assetFolder = "spoon-gauntlet", onDone = onComplete) }
                     "lumis-star-quest" -> { onComplete -> WebViewGame(assetFolder = "Lumis_star_quest", onDone = onComplete) }
                     "nostalgia" -> { onComplete -> WebViewGame(assetFolder = "Nostalgia", onDone = onComplete) }
@@ -297,6 +298,7 @@ fun MeetSterlingNavGraph(
         composable(Screen.TechnicalDifficulties.route) {
             TechnicalDifficultiesScreen()
         }
+
     }
 }
 

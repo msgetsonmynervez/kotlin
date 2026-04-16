@@ -9,7 +9,7 @@ import com.sterlingsworld.domain.model.GameZone
 
 object GameCatalog {
 
-    private val shipReadyGameIds = setOf("lucky-paws", "ghost", "cognitive-creamery", "symptom-striker")
+    private val shipReadyGameIds = setOf("lucky-paws", "ghost", "cognitive-creamery", "symptom-striker", "relaxation-retreat")
 
     val all: List<GameDefinition> = listOf(
         GameDefinition(
