@@ -30,7 +30,11 @@ import com.sterlingsworld.data.catalog.GameLaunchCatalog
 import com.sterlingsworld.data.catalog.GameLaunchSpec
 import com.sterlingsworld.domain.model.GameDefinition
 import com.sterlingsworld.domain.model.GameResult
+import com.sterlingsworld.feature.accessquest.AccessQuestScreen
 import com.sterlingsworld.feature.aol.AolScreen
+import com.sterlingsworld.feature.powerglide.PowerGlideGrandPrixScreen
+import com.sterlingsworld.feature.snailsjourney.SnailsJourneyScreen
+import com.sterlingsworld.feature.wheeliespoonrush.WheelieSpoonRushScreen
 import com.sterlingsworld.feature.arcade.GrandArcadeIndoorScreen
 import com.sterlingsworld.feature.game.games.webview.WebViewGame
 import com.sterlingsworld.feature.creamery.CreameryScreen
@@ -225,6 +229,22 @@ fun MeetSterlingNavGraph(
 
         composable(Screen.RelaxationRetreat.route) {
             RelaxationRetreatScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("relaxation-retreat")) })
+        }
+
+        composable(Screen.AccessQuest.route) {
+            AccessQuestScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("access-quest")) })
+        }
+
+        composable(Screen.PowerGlideGrandPrix.route) {
+            PowerGlideGrandPrixScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("access-racer")) })
+        }
+
+        composable(Screen.SnailsJourney.route) {
+            SnailsJourneyScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("snails-journey")) })
+        }
+
+        composable(Screen.WheelieSpoonRush.route) {
+            WheelieSpoonRushScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("wheelie-spoon-rush")) })
         }
 
         composable(Screen.KidzHub.route) {

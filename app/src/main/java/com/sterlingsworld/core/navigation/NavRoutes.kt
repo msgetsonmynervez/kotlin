@@ -48,6 +48,11 @@ sealed class Screen(val route: String) {
 
     object Aol : Screen("aol")
 
+    object AccessQuest : Screen("access_quest")
+    object PowerGlideGrandPrix : Screen("power_glide_grand_prix")
+    object SnailsJourney : Screen("snails_journey")
+    object WheelieSpoonRush : Screen("wheelie_spoon_rush")
+
     object StudioPlayer : Screen("studio_player")
 
     object TechnicalDifficulties : Screen("technical_difficulties")

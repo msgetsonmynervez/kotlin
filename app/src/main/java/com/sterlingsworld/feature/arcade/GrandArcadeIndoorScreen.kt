@@ -37,9 +37,10 @@ private val arcadeGames = listOf(
     ArcadeEntry("symptom-striker", Screen.SymptomStriker.route, isLive = true),
     ArcadeEntry("cognitive-creamery", Screen.Creamery.route, isLive = true),
     ArcadeEntry(NativeGameRegistry.GAME_ID_SPOON_GAUNTLET, Screen.Gauntlet.route, isLive = true),
-    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_QUEST, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_QUEST), isLive = true),
-    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_RACER, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_RACER), isLive = true),
-    ArcadeEntry(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY), isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_QUEST, Screen.AccessQuest.route, isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_RACER, Screen.PowerGlideGrandPrix.route, isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY, Screen.SnailsJourney.route, isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_WHEELIE_SPOON_RUSH, Screen.WheelieSpoonRush.route, isLive = true),
     ArcadeEntry("relaxation-retreat", Screen.RelaxationRetreat.route, isLive = true),
     ArcadeEntry("aol", Screen.Aol.route, isLive = true),
 )

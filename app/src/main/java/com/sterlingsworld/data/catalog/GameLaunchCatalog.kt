@@ -24,6 +24,7 @@ object GameLaunchCatalog {
         NativeGameRegistry.GAME_ID_ACCESS_RACER,
         NativeGameRegistry.GAME_ID_SNAILS_JOURNEY,
         NativeGameRegistry.GAME_ID_SPOON_GAUNTLET,
+        NativeGameRegistry.GAME_ID_WHEELIE_SPOON_RUSH,
             -> GameLaunchSpec.Native(gameId)
 
         "kidz-doodle-land" -> GameLaunchSpec.WebView("Kidz-doodle_land")
