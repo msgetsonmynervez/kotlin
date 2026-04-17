@@ -1,15 +1,17 @@
 package com.luckypaws.platform
 
+import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.media.ToneGenerator
 import android.os.Build
-import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.speech.RecognitionListener
@@ -28,25 +30,9 @@ class AndroidInterfaceImpl(
     private val speechRecognizer: SpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity)
     private val vibrator: Vibrator = activity.getSystemService(Vibrator::class.java)
     private val toneGenerator: ToneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var ttsReady: Boolean = false
-
-    init {
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) = Unit
-            override fun onBeginningOfSpeech() = Unit
-            override fun onRmsChanged(rmsdB: Float) = Unit
-            override fun onBufferReceived(buffer: ByteArray?) = Unit
-            override fun onEndOfSpeech() = Unit
-            override fun onResults(results: Bundle?) = Unit
-            override fun onPartialResults(partialResults: Bundle?) = Unit
-            override fun onEvent(eventType: Int, params: Bundle?) = Unit
-
-            override fun onError(error: Int) {
-                Log.e("AndroidInterfaceImpl", "SpeechRecognizer error: $error")
-            }
-        })
-    }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -70,6 +56,11 @@ class AndroidInterfaceImpl(
     }
 
     override fun startListening() {
+        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("AndroidInterfaceImpl", "RECORD_AUDIO not granted; requesting and deferring startListening")
+            activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_CODE_RECORD_AUDIO)
+            return
+        }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
@@ -147,12 +138,13 @@ class AndroidInterfaceImpl(
         )
         track.write(buffer, 0, buffer.size)
         track.play()
-        try {
-            Thread.sleep(durationMs.toLong())
-        } catch (_: InterruptedException) {
-        }
-        track.stop()
-        track.release()
+        mainHandler.postDelayed({
+            try {
+                track.stop()
+            } catch (_: IllegalStateException) {
+            }
+            track.release()
+        }, durationMs.toLong())
     }
 
     fun setRecognitionListener(listener: RecognitionListener) {
@@ -164,5 +156,9 @@ class AndroidInterfaceImpl(
         tts.shutdown()
         speechRecognizer.destroy()
         toneGenerator.release()
+    }
+
+    companion object {
+        private const val REQ_CODE_RECORD_AUDIO = 0x4D59 // 'MY'
     }
 }

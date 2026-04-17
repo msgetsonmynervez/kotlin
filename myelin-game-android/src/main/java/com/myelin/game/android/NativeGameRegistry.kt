@@ -23,10 +23,13 @@ object NativeGameRegistry {
     )
 
     fun create(gameId: String?, platform: NativePlatformInterface): ApplicationListener = when (gameId) {
+        null -> MyelinProtocolGame()
         GAME_ID_ACCESS_QUEST -> AccessQuestGame(platform)
         GAME_ID_ACCESS_RACER -> AccessRacerGame(platform)
         GAME_ID_SNAILS_JOURNEY -> MyGdxGame(platform)
         GAME_ID_SPOON_GAUNTLET -> GameApp(platform)
-        else -> MyelinProtocolGame()
+        else -> throw IllegalArgumentException(
+            "Unknown gameId '$gameId'. Expected one of: $supportedGameIds, or null for the Myelin Protocol hub.",
+        )
     }
 }
