@@ -1,0 +1,3 @@
+rootProject.name = "access-quest"
+include("core")
+include("android")

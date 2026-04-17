@@ -1,0 +1,8 @@
+// Settings file declaring the two modules that make up the Wheelie Spoon Rush project.
+// The core module contains the shared game logic implemented in Kotlin and using
+// libGDX.  The android module is the primary packaging target and bundles
+// everything necessary to deploy the game on Android devices.  Additional
+// platforms such as iOS can be added later by adding more modules here.
+
+rootProject.name = 'wheelie-spoon-rush'
+include 'core', 'android'

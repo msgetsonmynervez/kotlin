@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.accessracer.game">
+
+    <!--
+        Manifest declaration for Access Racer.  This uses the built‑in
+        Android launcher icon (`sym_def_app_icon`) to avoid the need
+        for external image resources.  If you wish to provide your own
+        icons, add them under src/main/res/mipmap‑* and reference via
+        android:icon="@mipmap/ic_launcher".
+    -->
+    <application
+        android:label="AccessRacer"
+        android:icon="@android:drawable/sym_def_app_icon">
+
+        <activity
+            android:name=".AndroidLauncher"
+            android:label="AccessRacer"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

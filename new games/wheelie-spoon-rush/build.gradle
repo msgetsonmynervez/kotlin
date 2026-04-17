@@ -1,0 +1,29 @@
+// Root Gradle build configuration for Wheelie Spoon Rush.  This file declares
+// common repositories and classpath dependencies used by all modules in the
+// project.  The Android Gradle plugin and Kotlin plugin are added here so
+// submodules can apply them as needed.  Versions are centralized via
+// ext.kotlinVersion.
+
+buildscript {
+    ext.kotlinVersion = '1.9.22'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.0.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Optional clean task to allow `./gradlew clean` to remove build output.
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
