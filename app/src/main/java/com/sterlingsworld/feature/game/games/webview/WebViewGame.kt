@@ -2,6 +2,7 @@ package com.sterlingsworld.feature.game.games.webview
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -11,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.sterlingsworld.domain.model.GameResult
+
+private const val TAG = "WebViewGame"
+private val SAFE_ASSET_FOLDER = Regex("^[A-Za-z0-9_-]+$")
 
 /**
  * Loads an HTML game from assets and embeds it in the game shell.
@@ -25,12 +29,17 @@ fun WebViewGame(
     assetFolder: String,
     onDone: (GameResult) -> Unit,
 ) {
+    if (!SAFE_ASSET_FOLDER.matches(assetFolder)) {
+        Log.w(TAG, "Rejected assetFolder '$assetFolder' (must match $SAFE_ASSET_FOLDER)")
+        return
+    }
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
                 settings.javaScriptEnabled = true
-                settings.allowFileAccess = true
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
                 settings.allowFileAccessFromFileURLs = false
                 settings.allowUniversalAccessFromFileURLs = false
                 webViewClient = object : WebViewClient() {

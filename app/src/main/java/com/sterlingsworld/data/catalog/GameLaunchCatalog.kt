@@ -1,5 +1,6 @@
 package com.sterlingsworld.data.catalog
 
+import android.util.Log
 import com.myelin.game.android.NativeGameRegistry
 
 sealed interface GameLaunchSpec {
@@ -11,6 +12,8 @@ sealed interface GameLaunchSpec {
 }
 
 object GameLaunchCatalog {
+    private const val TAG = "GameLaunchCatalog"
+
     fun forGame(gameId: String): GameLaunchSpec = when (gameId) {
         "cognitive-creamery",
         "ghost",
@@ -31,6 +34,9 @@ object GameLaunchCatalog {
         "lumis-star-quest" -> GameLaunchSpec.WebView("Lumis_star_quest")
         "nostalgia" -> GameLaunchSpec.WebView("Nostalgia")
         "aol" -> GameLaunchSpec.WebView("AOL")
-        else -> GameLaunchSpec.Unsupported
+        else -> {
+            Log.w(TAG, "Unsupported gameId: '$gameId'")
+            GameLaunchSpec.Unsupported
+        }
     }
 }
