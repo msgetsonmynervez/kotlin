@@ -250,9 +250,10 @@ class CognitiveCreameryViewModel : ViewModel() {
 
     fun buildResult(): GameResult {
         val state = _uiState.value
+        val perfectSequenceRun = !state.isBrainFreeze && state.sequence.correctRounds == ROUND_LENGTHS.size
         val stars = when {
             state.isBrainFreeze -> 1
-            state.sessionScore >= 5 -> 3
+            perfectSequenceRun -> 3
             state.sessionScore >= 2 -> 2
             else -> 1
         }
@@ -261,7 +262,7 @@ class CognitiveCreameryViewModel : ViewModel() {
             score = state.sessionScore,
             stars = stars,
             durationMs = 0L,
-            perfect = !state.isBrainFreeze && state.sequence.correctRounds == ROUND_LENGTHS.size,
+            perfect = perfectSequenceRun,
         )
     }
 

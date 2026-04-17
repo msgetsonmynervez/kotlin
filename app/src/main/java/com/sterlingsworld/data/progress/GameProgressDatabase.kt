@@ -20,7 +20,7 @@ abstract class GameProgressDatabase : RoomDatabase() {
                     GameProgressDatabase::class.java,
                     "game_progress.db",
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { INSTANCE = it }
             }

@@ -10,6 +10,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -19,10 +21,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.myelin.game.android.MyelinProtocolActivity
 import com.sterlingsworld.core.ui.theme.Surface
 import com.sterlingsworld.core.ui.theme.TextMuted
 import com.sterlingsworld.core.ui.theme.TextPrimary
 import com.sterlingsworld.data.catalog.GameCatalog
+import com.sterlingsworld.data.catalog.GameLaunchCatalog
+import com.sterlingsworld.data.catalog.GameLaunchSpec
 import com.sterlingsworld.domain.model.GameDefinition
 import com.sterlingsworld.domain.model.GameResult
 import com.sterlingsworld.feature.aol.AolScreen
@@ -32,10 +37,7 @@ import com.sterlingsworld.feature.creamery.CreameryScreen
 import com.sterlingsworld.feature.doodle.DoodleScreen
 import com.sterlingsworld.feature.error.TechnicalDifficultiesScreen
 import com.sterlingsworld.feature.game.completion.CompletionScreen
-import com.sterlingsworld.feature.game.games.cognitivecreamery.CognitiveCreameryGame
-import com.sterlingsworld.feature.game.games.ghost.GhostGame
-import com.sterlingsworld.feature.game.games.luckypaws.LuckyPawsGame
-import com.sterlingsworld.feature.game.games.symptomstriker.SymptomStrikerGame
+import com.sterlingsworld.feature.game.EmbeddedGameRegistry
 import com.sterlingsworld.feature.game.shell.GameShellScreen
 import com.sterlingsworld.feature.kidz.KidzGamesScreen
 import com.sterlingsworld.feature.kidz.KidzGameshellScreen
@@ -71,6 +73,9 @@ fun MeetSterlingNavGraph(
                     navController.navigate(Screen.Park.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
+                },
+                onStartMyelinProtocol = { context ->
+                    context.startActivity(MyelinProtocolActivity.intent(context))
                 },
             )
         }
@@ -111,19 +116,23 @@ fun MeetSterlingNavGraph(
             val game = GameCatalog.byId(gameId)
 
             val gameContent: @Composable (onComplete: (GameResult) -> Unit) -> Unit =
-                when (game?.id) {
-                    "cognitive-creamery" -> { onComplete -> CognitiveCreameryGame(onDone = onComplete) }
-                    "ghost" -> { onComplete -> GhostGame(onDone = onComplete) }
-                    "lucky-paws" -> { onComplete -> LuckyPawsGame(onDone = onComplete) }
-                    "symptom-striker" -> { onComplete -> SymptomStrikerGame(onDone = onComplete) }
-                    "kidz-doodle-land" -> { onComplete -> WebViewGame(assetFolder = "Kidz-doodle_land", onDone = onComplete) }
-                    "kidz-linebreaker" -> { onComplete -> WebViewGame(assetFolder = "Kidz-linebreaker", onDone = onComplete) }
-                    "relaxation-retreat" -> { _ -> RelaxationSuiteHost() }
-                    "spoon-gauntlet" -> { onComplete -> WebViewGame(assetFolder = "spoon-gauntlet", onDone = onComplete) }
-                    "lumis-star-quest" -> { onComplete -> WebViewGame(assetFolder = "Lumis_star_quest", onDone = onComplete) }
-                    "nostalgia" -> { onComplete -> WebViewGame(assetFolder = "Nostalgia", onDone = onComplete) }
-                    "aol" -> { onComplete -> WebViewGame(assetFolder = "AOL", onDone = onComplete) }
-                    else -> { _ -> InertGameContent(game = game) }
+                when (val launchSpec = GameLaunchCatalog.forGame(gameId)) {
+                    is GameLaunchSpec.Native -> {
+                        { _ ->
+                            NativeGameLauncher(
+                                gameId = launchSpec.gameId,
+                                onLaunched = { navController.popBackStack() },
+                            )
+                        }
+                    }
+                    is GameLaunchSpec.EmbeddedCompose -> { onComplete ->
+                        EmbeddedGameRegistry.Render(gameId = gameId, onDone = onComplete)
+                    }
+                    is GameLaunchSpec.WebView -> { onComplete ->
+                        WebViewGame(assetFolder = launchSpec.assetFolder, onDone = onComplete)
+                    }
+                    GameLaunchSpec.RelaxationSuite -> { _ -> RelaxationSuiteHost() }
+                    GameLaunchSpec.Unsupported -> { _ -> InertGameContent(game = game) }
                 }
 
             GameShellScreen(
@@ -299,6 +308,32 @@ fun MeetSterlingNavGraph(
             TechnicalDifficultiesScreen()
         }
 
+    }
+}
+
+@Composable
+private fun NativeGameLauncher(
+    gameId: String,
+    onLaunched: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    LaunchedEffect(gameId, context) {
+        context.startActivity(MyelinProtocolActivity.intent(context, gameId))
+        onLaunched()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Surface),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "Launching game...",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextPrimary,
+        )
     }
 }
 

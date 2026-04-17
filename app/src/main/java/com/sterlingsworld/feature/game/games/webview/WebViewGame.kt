@@ -3,6 +3,7 @@ package com.sterlingsworld.feature.game.games.webview
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,8 +30,15 @@ fun WebViewGame(
         factory = { context ->
             WebView(context).apply {
                 settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                webViewClient = WebViewClient()
+                settings.allowFileAccess = true
+                settings.allowFileAccessFromFileURLs = false
+                settings.allowUniversalAccessFromFileURLs = false
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView,
+                        request: WebResourceRequest,
+                    ): Boolean = request.url.scheme != "file"
+                }
                 addJavascriptInterface(GameBridge(onDone), "Android")
                 loadUrl("file:///android_asset/games/$assetFolder/index.html")
             }

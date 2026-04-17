@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MeetSterling"
-include(":app", ":studio-audio")
+include(":app", ":studio-audio", ":myelin-game-core", ":myelin-game-android")

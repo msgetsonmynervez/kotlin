@@ -24,18 +24,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
+import com.sterlingsworld.core.navigation.Screen
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 import com.sterlingsworld.core.ui.components.DashedCornerButton
+import com.myelin.game.android.NativeGameRegistry
+import com.sterlingsworld.data.catalog.GameCatalog
 
-private data class ArcadeEntry(val label: String, val route: String, val isLive: Boolean)
+private data class ArcadeEntry(val gameId: String, val route: String, val isLive: Boolean)
 
 private val arcadeGames = listOf(
-    ArcadeEntry("Lucky Paws",         "lucky_paws",         isLive = true),
-    ArcadeEntry("Symptom Striker",    "symptom_striker",    isLive = true),
-    ArcadeEntry("Creamery",           "creamery",           isLive = true),
-    ArcadeEntry("Gauntlet",           "gauntlet",           isLive = true),
-    ArcadeEntry("Relaxation Retreat", "relaxation_retreat", isLive = true),
-    ArcadeEntry("AOL",                "aol",                isLive = true),
+    ArcadeEntry("lucky-paws", Screen.LuckyPaws.route, isLive = true),
+    ArcadeEntry("symptom-striker", Screen.SymptomStriker.route, isLive = true),
+    ArcadeEntry("cognitive-creamery", Screen.Creamery.route, isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_SPOON_GAUNTLET, Screen.Gauntlet.route, isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_QUEST, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_QUEST), isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_ACCESS_RACER, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_RACER), isLive = true),
+    ArcadeEntry(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY, Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY), isLive = true),
+    ArcadeEntry("relaxation-retreat", Screen.RelaxationRetreat.route, isLive = true),
+    ArcadeEntry("aol", Screen.Aol.route, isLive = true),
 )
 
 @Composable
@@ -58,6 +64,7 @@ fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}, onBack: () ->
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             arcadeGames.forEach { entry ->
+                val label = GameCatalog.byId(entry.gameId)?.title ?: entry.gameId
                 val borderColor = if (entry.isLive)
                     Color(0xFF4285F4)
                 else
@@ -81,10 +88,10 @@ fun GrandArcadeIndoorScreen(onGameSelected: (String) -> Unit = {}, onBack: () ->
                     contentAlignment = Alignment.Center,
                 ) {
                     if (entry.isLive) {
-                        Text(entry.label, color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(label, color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     } else {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(entry.label, color = textColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(label, color = textColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                             Text("Coming Soon", color = Color.White.copy(alpha = 0.30f), fontSize = 11.sp)
                         }
                     }

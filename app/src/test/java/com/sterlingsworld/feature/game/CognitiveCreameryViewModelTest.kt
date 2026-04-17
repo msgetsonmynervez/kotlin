@@ -1,6 +1,7 @@
 package com.sterlingsworld.feature.game
 
 import com.sterlingsworld.feature.game.games.cognitivecreamery.ALL_FLAVORS
+import com.sterlingsworld.feature.game.games.cognitivecreamery.CreameryActivity
 import com.sterlingsworld.feature.game.games.cognitivecreamery.CognitiveCreameryViewModel
 import com.sterlingsworld.feature.game.games.cognitivecreamery.CreameryPhase
 import com.sterlingsworld.feature.game.games.cognitivecreamery.ROUND_LENGTHS
@@ -15,26 +16,26 @@ class CognitiveCreameryViewModelTest {
 
     @Test
     fun `initial phase is STUDY`() {
-        val vm = CognitiveCreameryViewModel()
-        assertEquals(CreameryPhase.STUDY, vm.uiState.value.phase)
+        val vm = sequenceVm()
+        assertEquals(CreameryPhase.STUDY, vm.uiState.value.sequence.phase)
     }
 
     @Test
     fun `initial round is 0`() {
         val vm = CognitiveCreameryViewModel()
-        assertEquals(0, vm.uiState.value.currentRound)
+        assertEquals(0, vm.uiState.value.sequence.currentRound)
     }
 
     @Test
     fun `initial target sequence has length matching round 0`() {
         val vm = CognitiveCreameryViewModel()
-        assertEquals(ROUND_LENGTHS[0], vm.uiState.value.targetSequence.size)
+        assertEquals(ROUND_LENGTHS[0], vm.uiState.value.sequence.targetSequence.size)
     }
 
     @Test
     fun `initial target sequence contains only valid flavors`() {
         val vm = CognitiveCreameryViewModel()
-        vm.uiState.value.targetSequence.forEach { flavor ->
+        vm.uiState.value.sequence.targetSequence.forEach { flavor ->
             assertTrue("$flavor is not a valid flavor", flavor in ALL_FLAVORS)
         }
     }
@@ -42,73 +43,73 @@ class CognitiveCreameryViewModelTest {
     @Test
     fun `initial target sequence has no duplicates`() {
         val vm = CognitiveCreameryViewModel()
-        val seq = vm.uiState.value.targetSequence
+        val seq = vm.uiState.value.sequence.targetSequence
         assertEquals(seq.size, seq.toSet().size)
     }
 
     @Test
     fun `initial player sequence is empty`() {
         val vm = CognitiveCreameryViewModel()
-        assertTrue(vm.uiState.value.playerSequence.isEmpty())
+        assertTrue(vm.uiState.value.sequence.playerSequence.isEmpty())
     }
 
     @Test
     fun `total rounds equals ROUND_LENGTHS size`() {
         val vm = CognitiveCreameryViewModel()
-        assertEquals(ROUND_LENGTHS.size, vm.uiState.value.totalRounds)
+        assertEquals(ROUND_LENGTHS.size, vm.uiState.value.sequence.totalRounds)
     }
 
     // ── STUDY → INPUT transition ───────────────────────────────────────────────
 
     @Test
     fun `onReady transitions from STUDY to INPUT`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        assertEquals(CreameryPhase.INPUT, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.INPUT, vm.uiState.value.sequence.phase)
     }
 
     @Test
     fun `onReady populates available tokens with all 5 flavors`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        assertEquals(ALL_FLAVORS.size, vm.uiState.value.availableTokens.size)
-        assertEquals(ALL_FLAVORS.toSet(), vm.uiState.value.availableTokens.toSet())
+        assertEquals(ALL_FLAVORS.size, vm.uiState.value.sequence.availableTokens.size)
+        assertEquals(ALL_FLAVORS.toSet(), vm.uiState.value.sequence.availableTokens.toSet())
     }
 
     @Test
     fun `onReady clears player sequence`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        assertTrue(vm.uiState.value.playerSequence.isEmpty())
+        assertTrue(vm.uiState.value.sequence.playerSequence.isEmpty())
     }
 
     @Test
     fun `onReady is a no-op when not in STUDY phase`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        assertEquals(CreameryPhase.INPUT, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.INPUT, vm.uiState.value.sequence.phase)
         vm.onReady() // second call should do nothing
-        assertEquals(CreameryPhase.INPUT, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.INPUT, vm.uiState.value.sequence.phase)
     }
 
     // ── token selection ────────────────────────────────────────────────────────
 
     @Test
     fun `onTokenTapped appends token to player sequence`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        val token = vm.uiState.value.availableTokens.first()
+        val token = vm.uiState.value.sequence.availableTokens.first()
         vm.onTokenTapped(token)
-        assertEquals(listOf(token), vm.uiState.value.playerSequence)
+        assertEquals(listOf(token), vm.uiState.value.sequence.playerSequence)
     }
 
     @Test
     fun `onTokenTapped removes token from available tokens`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        val token = vm.uiState.value.availableTokens.first()
+        val token = vm.uiState.value.sequence.availableTokens.first()
         vm.onTokenTapped(token)
-        assertFalse(token in vm.uiState.value.availableTokens)
+        assertFalse(token in vm.uiState.value.sequence.availableTokens)
     }
 
     @Test
@@ -117,48 +118,48 @@ class CognitiveCreameryViewModelTest {
         // still in STUDY phase
         val token = ALL_FLAVORS.first()
         vm.onTokenTapped(token)
-        assertTrue(vm.uiState.value.playerSequence.isEmpty())
+        assertTrue(vm.uiState.value.sequence.playerSequence.isEmpty())
     }
 
     @Test
     fun `onTokenTapped is ignored when sequence is already full`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         // fill exactly the required number of slots
-        val needed = vm.uiState.value.targetSequence.size
+        val needed = vm.uiState.value.sequence.targetSequence.size
         repeat(needed) {
-            val token = vm.uiState.value.availableTokens.first()
+            val token = vm.uiState.value.sequence.availableTokens.first()
             vm.onTokenTapped(token)
         }
-        val sizeBeforeExtra = vm.uiState.value.playerSequence.size
+        val sizeBeforeExtra = vm.uiState.value.sequence.playerSequence.size
         // try to add one more
-        vm.uiState.value.availableTokens.firstOrNull()?.let { extra ->
+        vm.uiState.value.sequence.availableTokens.firstOrNull()?.let { extra ->
             vm.onTokenTapped(extra)
         }
-        assertEquals(sizeBeforeExtra, vm.uiState.value.playerSequence.size)
+        assertEquals(sizeBeforeExtra, vm.uiState.value.sequence.playerSequence.size)
     }
 
     // ── undo ──────────────────────────────────────────────────────────────────
 
     @Test
     fun `onUndo removes last player token and returns it to available`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        val token = vm.uiState.value.availableTokens.first()
+        val token = vm.uiState.value.sequence.availableTokens.first()
         vm.onTokenTapped(token)
         vm.onUndo()
-        assertTrue(vm.uiState.value.playerSequence.isEmpty())
-        assertTrue(token in vm.uiState.value.availableTokens)
+        assertTrue(vm.uiState.value.sequence.playerSequence.isEmpty())
+        assertTrue(token in vm.uiState.value.sequence.availableTokens)
     }
 
     @Test
     fun `onUndo is a no-op when player sequence is empty`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        val availableBefore = vm.uiState.value.availableTokens.toList()
+        val availableBefore = vm.uiState.value.sequence.availableTokens.toList()
         vm.onUndo()
-        assertEquals(availableBefore.toSet(), vm.uiState.value.availableTokens.toSet())
-        assertTrue(vm.uiState.value.playerSequence.isEmpty())
+        assertEquals(availableBefore.toSet(), vm.uiState.value.sequence.availableTokens.toSet())
+        assertTrue(vm.uiState.value.sequence.playerSequence.isEmpty())
     }
 
     @Test
@@ -166,92 +167,92 @@ class CognitiveCreameryViewModelTest {
         val vm = CognitiveCreameryViewModel()
         // STUDY phase — undo should do nothing
         vm.onUndo()
-        assertEquals(CreameryPhase.STUDY, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.STUDY, vm.uiState.value.sequence.phase)
     }
 
     // ── check ─────────────────────────────────────────────────────────────────
 
     @Test
     fun `onCheck is ignored when player sequence is not full`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
-        vm.onTokenTapped(vm.uiState.value.availableTokens.first())
+        vm.onTokenTapped(vm.uiState.value.sequence.availableTokens.first())
         vm.onCheck()
-        assertEquals(CreameryPhase.INPUT, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.INPUT, vm.uiState.value.sequence.phase)
     }
 
     @Test
     fun `correct sequence on non-final round transitions to ROUND_RESULT`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         // submit the correct sequence for round 0
         submitCorrectSequence(vm)
-        assertEquals(CreameryPhase.ROUND_RESULT, vm.uiState.value.phase)
-        assertTrue(vm.uiState.value.lastRoundCorrect)
+        assertEquals(CreameryPhase.ROUND_RESULT, vm.uiState.value.sequence.phase)
+        assertTrue(vm.uiState.value.sequence.lastRoundCorrect)
     }
 
     @Test
     fun `incorrect sequence on non-final round transitions to ROUND_RESULT`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitWrongSequence(vm)
-        assertEquals(CreameryPhase.ROUND_RESULT, vm.uiState.value.phase)
-        assertFalse(vm.uiState.value.lastRoundCorrect)
+        assertEquals(CreameryPhase.ROUND_RESULT, vm.uiState.value.sequence.phase)
+        assertFalse(vm.uiState.value.sequence.lastRoundCorrect)
     }
 
     @Test
     fun `correct sequence increments correctRounds`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitCorrectSequence(vm)
-        assertEquals(1, vm.uiState.value.correctRounds)
+        assertEquals(1, vm.uiState.value.sequence.correctRounds)
     }
 
     @Test
     fun `incorrect sequence does not increment correctRounds`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitWrongSequence(vm)
-        assertEquals(0, vm.uiState.value.correctRounds)
+        assertEquals(0, vm.uiState.value.sequence.correctRounds)
     }
 
     // ── round progression ─────────────────────────────────────────────────────
 
     @Test
     fun `onNextRound advances to next round in STUDY phase`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitCorrectSequence(vm)
         vm.onNextRound()
-        assertEquals(1, vm.uiState.value.currentRound)
-        assertEquals(CreameryPhase.STUDY, vm.uiState.value.phase)
+        assertEquals(1, vm.uiState.value.sequence.currentRound)
+        assertEquals(CreameryPhase.STUDY, vm.uiState.value.sequence.phase)
     }
 
     @Test
     fun `round 1 target sequence has length matching round lengths index 1`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitCorrectSequence(vm)
         vm.onNextRound()
-        assertEquals(ROUND_LENGTHS[1], vm.uiState.value.targetSequence.size)
+        assertEquals(ROUND_LENGTHS[1], vm.uiState.value.sequence.targetSequence.size)
     }
 
     @Test
     fun `onNextRound is a no-op when not in ROUND_RESULT phase`() {
         val vm = CognitiveCreameryViewModel()
         vm.onNextRound() // still in STUDY
-        assertEquals(0, vm.uiState.value.currentRound)
-        assertEquals(CreameryPhase.STUDY, vm.uiState.value.phase)
+        assertEquals(0, vm.uiState.value.sequence.currentRound)
+        assertEquals(CreameryPhase.STUDY, vm.uiState.value.sequence.phase)
     }
 
     @Test
     fun `correctRounds carries across round boundary`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady()
         submitCorrectSequence(vm)
-        val correctAfterR0 = vm.uiState.value.correctRounds
+        val correctAfterR0 = vm.uiState.value.sequence.correctRounds
         vm.onNextRound()
-        assertEquals(correctAfterR0, vm.uiState.value.correctRounds)
+        assertEquals(correctAfterR0, vm.uiState.value.sequence.correctRounds)
     }
 
     // ── final round → RUN_COMPLETE ────────────────────────────────────────────
@@ -259,7 +260,7 @@ class CognitiveCreameryViewModelTest {
     @Test
     fun `completing the final round transitions to RUN_COMPLETE`() {
         val vm = playAllRounds(correctAll = false)
-        assertEquals(CreameryPhase.RUN_COMPLETE, vm.uiState.value.phase)
+        assertEquals(CreameryPhase.RUN_COMPLETE, vm.uiState.value.sequence.phase)
     }
 
     @Test
@@ -278,7 +279,7 @@ class CognitiveCreameryViewModelTest {
 
     @Test
     fun `two correct rounds produces 2 stars`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         // Round 0: correct
         vm.onReady(); submitCorrectSequence(vm); vm.onNextRound()
         // Round 1: correct
@@ -291,7 +292,7 @@ class CognitiveCreameryViewModelTest {
 
     @Test
     fun `zero correct rounds produces 1 star`() {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         vm.onReady(); submitWrongSequence(vm); vm.onNextRound()
         vm.onReady(); submitWrongSequence(vm); vm.onNextRound()
         vm.onReady(); submitWrongSequence(vm)
@@ -308,7 +309,7 @@ class CognitiveCreameryViewModelTest {
 
     @Test
     fun `buildRound produces correct phase and round index`() {
-        val state = CognitiveCreameryViewModel.buildRound(1, correctRounds = 2)
+        val state = CognitiveCreameryViewModel.buildSequenceRound(1, correctRounds = 2)
         assertEquals(1, state.currentRound)
         assertEquals(CreameryPhase.STUDY, state.phase)
         assertEquals(2, state.correctRounds)
@@ -317,7 +318,7 @@ class CognitiveCreameryViewModelTest {
     @Test
     fun `buildRound sequence length matches ROUND_LENGTHS entry`() {
         ROUND_LENGTHS.forEachIndexed { index, length ->
-            val state = CognitiveCreameryViewModel.buildRound(index, correctRounds = 0)
+            val state = CognitiveCreameryViewModel.buildSequenceRound(index, correctRounds = 0)
             assertEquals(length, state.targetSequence.size)
         }
     }
@@ -329,7 +330,7 @@ class CognitiveCreameryViewModelTest {
      * Requires [vm] to already be in INPUT phase.
      */
     private fun submitCorrectSequence(vm: CognitiveCreameryViewModel) {
-        val target = vm.uiState.value.targetSequence
+        val target = vm.uiState.value.sequence.targetSequence
         target.forEach { flavor -> vm.onTokenTapped(flavor) }
         vm.onCheck()
     }
@@ -340,8 +341,8 @@ class CognitiveCreameryViewModelTest {
      * Falls back to reversing the target if the shuffled order happens to match.
      */
     private fun submitWrongSequence(vm: CognitiveCreameryViewModel) {
-        val target = vm.uiState.value.targetSequence
-        val available = vm.uiState.value.availableTokens.toMutableList()
+        val target = vm.uiState.value.sequence.targetSequence
+        val available = vm.uiState.value.sequence.availableTokens.toMutableList()
         // Build a sequence that differs from target
         val wrong = if (available.take(target.size) != target) {
             available.take(target.size)
@@ -356,7 +357,7 @@ class CognitiveCreameryViewModelTest {
      * Plays all 3 rounds either all-correct or all-wrong, ending at RUN_COMPLETE.
      */
     private fun playAllRounds(correctAll: Boolean): CognitiveCreameryViewModel {
-        val vm = CognitiveCreameryViewModel()
+        val vm = sequenceVm()
         repeat(ROUND_LENGTHS.size) { index ->
             vm.onReady()
             if (correctAll) submitCorrectSequence(vm) else submitWrongSequence(vm)
@@ -364,4 +365,9 @@ class CognitiveCreameryViewModelTest {
         }
         return vm
     }
+
+    private fun sequenceVm(): CognitiveCreameryViewModel =
+        CognitiveCreameryViewModel().apply {
+            navigateTo(CreameryActivity.SEQUENCE)
+        }
 }

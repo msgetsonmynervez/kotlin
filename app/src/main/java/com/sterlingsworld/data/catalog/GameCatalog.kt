@@ -1,5 +1,6 @@
 package com.sterlingsworld.data.catalog
 
+import com.myelin.game.android.NativeGameRegistry
 import com.sterlingsworld.domain.model.GameDefinition
 import com.sterlingsworld.domain.model.GameDifficulty
 import com.sterlingsworld.domain.model.GameSection
@@ -8,9 +9,6 @@ import com.sterlingsworld.domain.model.GameType
 import com.sterlingsworld.domain.model.GameZone
 
 object GameCatalog {
-
-    private val shipReadyGameIds = setOf("lucky-paws", "ghost", "cognitive-creamery", "symptom-striker", "relaxation-retreat")
-
     val all: List<GameDefinition> = listOf(
         GameDefinition(
             id = "cognitive-creamery",
@@ -25,6 +23,7 @@ object GameCatalog {
             estimatedDurationSec = 90,
             partyEligible = true,
             accentLabel = "Mind & Focus",
+            shipReady = true,
         ),
         GameDefinition(
             id = "relaxation-retreat",
@@ -39,9 +38,10 @@ object GameCatalog {
             estimatedDurationSec = 120,
             partyEligible = true,
             accentLabel = "Calm",
+            shipReady = true,
         ),
         GameDefinition(
-            id = "spoon-gauntlet",
+            id = NativeGameRegistry.GAME_ID_SPOON_GAUNTLET,
             title = "Spoon Gauntlet",
             section = GameSection.GAMES,
             zone = GameZone.ARCADE,
@@ -53,6 +53,7 @@ object GameCatalog {
             estimatedDurationSec = 180,
             partyEligible = false,
             accentLabel = "Story",
+            shipReady = true,
         ),
         GameDefinition(
             id = "symptom-striker",
@@ -67,6 +68,7 @@ object GameCatalog {
             estimatedDurationSec = 150,
             partyEligible = false,
             accentLabel = "Battle",
+            shipReady = true,
         ),
         GameDefinition(
             id = "lucky-paws",
@@ -81,6 +83,7 @@ object GameCatalog {
             estimatedDurationSec = 75,
             partyEligible = true,
             accentLabel = "Rewards",
+            shipReady = true,
         ),
         GameDefinition(
             id = "ghost",
@@ -95,6 +98,7 @@ object GameCatalog {
             estimatedDurationSec = 90,
             partyEligible = false,
             accentLabel = "Terminal",
+            shipReady = true,
         ),
         GameDefinition(
             id = "aol",
@@ -109,6 +113,51 @@ object GameCatalog {
             estimatedDurationSec = 150,
             partyEligible = false,
             accentLabel = "Battle",
+        ),
+        GameDefinition(
+            id = NativeGameRegistry.GAME_ID_ACCESS_QUEST,
+            title = "Access Quest",
+            section = GameSection.GAMES,
+            zone = GameZone.ARCADE,
+            suite = GameSuite.MINI_GAME,
+            description = "A mobility-forward route challenge focused on pacing, hazards, and checkpoint recovery.",
+            objective = "Manage fatigue, navigate hazard zones, and reach the goal without burning out your run.",
+            gameTypes = listOf(GameType.ARCADE, GameType.STRATEGY, GameType.FOCUS),
+            difficulty = GameDifficulty.STANDARD,
+            estimatedDurationSec = 120,
+            partyEligible = true,
+            accentLabel = "Mobility",
+            shipReady = true,
+        ),
+        GameDefinition(
+            id = NativeGameRegistry.GAME_ID_ACCESS_RACER,
+            title = "Access Racer",
+            section = GameSection.GAMES,
+            zone = GameZone.ARCADE,
+            suite = GameSuite.ARCADE,
+            description = "A readable top-down racer built around assistive-ride flair and large touch controls.",
+            objective = "Pick a ride, keep the line clean, and stack laps without losing control on the corners.",
+            gameTypes = listOf(GameType.ARCADE, GameType.FOCUS),
+            difficulty = GameDifficulty.STANDARD,
+            estimatedDurationSec = 90,
+            partyEligible = true,
+            accentLabel = "Racing",
+            shipReady = true,
+        ),
+        GameDefinition(
+            id = NativeGameRegistry.GAME_ID_SNAILS_JOURNEY,
+            title = "Snail's Journey",
+            section = GameSection.GAMES,
+            zone = GameZone.ARCADE,
+            suite = GameSuite.MINI_GAME,
+            description = "A gentle side-scrolling stroll where timing rest stops matters more than speedrunning.",
+            objective = "Guide the snail safely past obstacles, refill energy wisely, and finish the level intact.",
+            gameTypes = listOf(GameType.CALM, GameType.FOCUS, GameType.KIDS),
+            difficulty = GameDifficulty.RELAXED,
+            estimatedDurationSec = 90,
+            partyEligible = true,
+            accentLabel = "Cozy",
+            shipReady = true,
         ),
         // Kidz zone games
         GameDefinition(
@@ -173,5 +222,5 @@ object GameCatalog {
 
     fun bySection(section: GameSection): List<GameDefinition> = all.filter { it.section == section }
 
-    fun isShipReady(gameId: String): Boolean = gameId in shipReadyGameIds
+    fun isShipReady(gameId: String): Boolean = byId(gameId)?.shipReady == true
 }

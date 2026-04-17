@@ -11,13 +11,13 @@ import org.junit.Test
 class GameCatalogTest {
 
     @Test
-    fun `catalog contains 11 games total`() {
-        assertEquals(11, GameCatalog.all.size)
+    fun `catalog contains 14 games total`() {
+        assertEquals(14, GameCatalog.all.size)
     }
 
     @Test
-    fun `arcade section has 7 games`() {
-        assertEquals(7, GameCatalog.bySection(GameSection.GAMES).size)
+    fun `arcade section has 10 games`() {
+        assertEquals(10, GameCatalog.bySection(GameSection.GAMES).size)
     }
 
     @Test
@@ -68,22 +68,32 @@ class GameCatalogTest {
     }
 
     @Test
-    fun `lucky paws ghost cognitive creamery and symptom striker are ship ready`() {
+    fun `native and flagship arcade games are ship ready`() {
         assertTrue(GameCatalog.isShipReady("lucky-paws"))
         assertTrue(GameCatalog.isShipReady("ghost"))
         assertTrue(GameCatalog.isShipReady("cognitive-creamery"))
         assertTrue(GameCatalog.isShipReady("symptom-striker"))
+        assertTrue(GameCatalog.isShipReady("relaxation-retreat"))
+        assertTrue(GameCatalog.isShipReady("access-quest"))
+        assertTrue(GameCatalog.isShipReady("access-racer"))
+        assertTrue(GameCatalog.isShipReady("snails-journey"))
+        assertTrue(GameCatalog.isShipReady("spoon-gauntlet"))
         assertFalse(GameCatalog.isShipReady("kidz-doodle-land"))
     }
 
     @Test
-    fun `exactly four games are ship-ready across the full catalog`() {
+    fun `exactly nine games are ship-ready across the full catalog`() {
         val shipReady = GameCatalog.all.filter { GameCatalog.isShipReady(it.id) }
-        assertEquals(4, shipReady.size)
+        assertEquals(9, shipReady.size)
         assertTrue(shipReady.any { it.id == "lucky-paws" })
         assertTrue(shipReady.any { it.id == "ghost" })
         assertTrue(shipReady.any { it.id == "cognitive-creamery" })
         assertTrue(shipReady.any { it.id == "symptom-striker" })
+        assertTrue(shipReady.any { it.id == "relaxation-retreat" })
+        assertTrue(shipReady.any { it.id == "access-quest" })
+        assertTrue(shipReady.any { it.id == "access-racer" })
+        assertTrue(shipReady.any { it.id == "snails-journey" })
+        assertTrue(shipReady.any { it.id == "spoon-gauntlet" })
     }
 
     @Test

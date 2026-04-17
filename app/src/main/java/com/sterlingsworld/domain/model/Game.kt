@@ -19,6 +19,7 @@ data class GameDefinition(
     val estimatedDurationSec: Int,
     val partyEligible: Boolean,
     val accentLabel: String,
+    val shipReady: Boolean = false,
 )
 
 data class GameResult(

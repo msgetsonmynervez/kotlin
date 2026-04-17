@@ -1,28 +1,31 @@
 package com.sterlingsworld.feature.welcome
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
+import com.sterlingsworld.core.ui.components.ActionButton
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 
 @Composable
-fun WelcomeScreen(onEnterPark: () -> Unit = {}) {
+fun WelcomeScreen(
+    onEnterPark: () -> Unit = {},
+    onStartMyelinProtocol: (Context) -> Unit = {},
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_welcome_entrance),
@@ -35,16 +38,21 @@ fun WelcomeScreen(onEnterPark: () -> Unit = {}) {
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
         )
-        Box(
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 120.dp)
-                .clip(RoundedCornerShape(32.dp))
-                .background(Color(0xCC000000))
-                .clickable(onClick = onEnterPark)
-                .padding(horizontal = 72.dp, vertical = 20.dp),
+                .padding(bottom = 88.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Enter", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            ActionButton(
+                label = "Start Myelin Protocol",
+                onClick = { onStartMyelinProtocol(context) },
+            )
+            ActionButton(
+                label = "Enter",
+                onClick = onEnterPark,
+            )
         }
     }
 }
