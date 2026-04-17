@@ -36,6 +36,10 @@ private val arcadeGames = listOf(
     ArcadeEntry("Gauntlet",           "gauntlet",           isLive = true),
     ArcadeEntry("Relaxation Retreat", "relaxation_retreat", isLive = true),
     ArcadeEntry("AOL",                "aol",                isLive = true),
+    ArcadeEntry("Access Quest",       "access_quest",       isLive = false),
+    ArcadeEntry("Wheelie Spoon Rush", "wheelie_spoon_rush", isLive = false),
+    ArcadeEntry("MS Racer",           "ms_racer",           isLive = false),
+    ArcadeEntry("Snail's Journey",    "snails_journey",     isLive = false),
 )
 
 @Composable
