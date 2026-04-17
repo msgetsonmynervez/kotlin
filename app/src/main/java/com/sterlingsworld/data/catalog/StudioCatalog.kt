@@ -7,11 +7,12 @@ import com.sterlingsworld.domain.model.Track
  * Authoritative Studio content registry.
  *
  * Asset paths are relative to the Android `assets/` directory root.
- * The four active albums total 126 tracks:
+ * The five active albums total 135 tracks:
  *   - Sterling Main Library:       tracks 01–48  (48 tracks)
  *   - Dark Side of the Spoon:      tracks 49–63  (15 tracks)
  *   - Groove:                      tracks 64–96  (33 tracks)
  *   - Neural Garden:               ng01a/b–ng15a/b (30 tracks)
+ *   - Standup:                     st01–st09 (9 tracks)
  */
 object StudioCatalog {
 
@@ -21,6 +22,7 @@ object StudioCatalog {
             darkSideOfTheSpoon(),
             groove(),
             neuralGarden(),
+            standup(),
         )
     }
 
@@ -112,6 +114,40 @@ object StudioCatalog {
             title = "Groove",
             artist = "Sterling Sound Team",
             description = "Rhythm-forward album built around bright movement, casual bounce, and easy daytime energy.",
+            tracks = tracks,
+        )
+    }
+
+    // ── Standup ───────────────────────────────────────────────────────────────
+
+    private fun standup(): Album {
+        val titles = listOf(
+            "Bladder",
+            "Doing well",
+            "Fatigue",
+            "Full time job",
+            "Helpful",
+            "Invisible",
+            "Uncertainty",
+            "Unhelpful",
+            "You look great",
+        )
+        val tracks = titles.mapIndexed { index, title ->
+            val padded = (index + 1).toString().padStart(2, '0')
+            val filename = "$title.mp3"
+            Track(
+                id = "st$padded",
+                title = title,
+                assetPath = "audio/music/standup/$filename",
+                trackNumber = index + 1,
+                albumId = "standup",
+            )
+        }
+        return Album(
+            id = "standup",
+            title = "Standup",
+            artist = "Sterling",
+            description = "A standup comedy album about the real, unfiltered experience of living with MS.",
             tracks = tracks,
         )
     }
