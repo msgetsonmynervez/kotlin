@@ -46,12 +46,12 @@ fun WelcomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ActionButton(
-                label = "Start Myelin Protocol",
-                onClick = { onStartMyelinProtocol(context) },
-            )
-            ActionButton(
                 label = "Enter",
                 onClick = onEnterPark,
+            )
+            ActionButton(
+                label = "Native Games",
+                onClick = { onStartMyelinProtocol(context) },
             )
         }
     }
