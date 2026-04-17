@@ -5,9 +5,9 @@ import com.badlogic.gdx.Preferences
 
 /**
  * Centralised utility for persisting small pieces of data such as high scores,
- * completion flags and settings.  libGDX wraps platform‑specific storage
+ * completion flags and settings.  libGDX wraps platform-specific storage
  * mechanisms with the [Preferences] API so games can call [flush] once to
- * persist changes.  See the libGDX documentation for details【859772538648162†L15-L50】.
+ * persist changes.
  */
 object SaveManager {
     private const val PREFS_NAME = "wheelie_spoon_rush"
