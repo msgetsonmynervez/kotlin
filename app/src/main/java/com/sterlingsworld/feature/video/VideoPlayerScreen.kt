@@ -20,6 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -43,6 +46,7 @@ fun VideoPlayerScreen(
 
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(videoId, source) {
         if (video != null) {
@@ -53,8 +57,19 @@ fun VideoPlayerScreen(
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { player.release() }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> player.pause()
+                Lifecycle.Event.ON_RESUME -> player.play()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            player.release()
+        }
     }
 
     Box(

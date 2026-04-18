@@ -177,10 +177,6 @@ private class FakeGameProgressDao : GameProgressDao {
         entities.value = entities.value + (entity.gameId to entity)
     }
 
-    override suspend fun update(entity: GameProgressEntity) {
-        entities.value = entities.value + (entity.gameId to entity)
-    }
-
     override suspend fun deleteAll() {
         entities.value = emptyMap()
     }

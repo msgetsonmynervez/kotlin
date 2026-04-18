@@ -20,12 +20,12 @@ class GameProgressRepository(private val dao: GameProgressDao) {
             playCount = current.playCount + 1,
             lastPlayedAt = Instant.now().toString(),
         )
-        upsert(updated)
+        dao.insert(updated)
     }
 
     suspend fun recordRestart(gameId: String) {
         val current = getOrDefault(gameId)
-        upsert(current.copy(restartCount = current.restartCount + 1))
+        dao.insert(current.copy(restartCount = current.restartCount + 1))
     }
 
     suspend fun recordCompletion(gameId: String, result: GameResult) {
@@ -38,13 +38,8 @@ class GameProgressRepository(private val dao: GameProgressDao) {
             lastPlayedAt = now,
             lastCompletedAt = now,
         )
-        upsert(updated)
+        dao.insert(updated)
     }
 
     suspend fun deleteAll() = dao.deleteAll()
-
-    private suspend fun upsert(entity: GameProgressEntity) {
-        val existing = dao.getProgress(entity.gameId)
-        if (existing == null) dao.insert(entity) else dao.update(entity)
-    }
 }

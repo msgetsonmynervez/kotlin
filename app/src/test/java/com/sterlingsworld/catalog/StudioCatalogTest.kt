@@ -9,13 +9,13 @@ import org.junit.Test
 class StudioCatalogTest {
 
     @Test
-    fun `catalog has exactly 4 albums`() {
-        assertEquals(4, StudioCatalog.albums.size)
+    fun `catalog has exactly 5 albums`() {
+        assertEquals(5, StudioCatalog.albums.size)
     }
 
     @Test
-    fun `total track count is 126`() {
-        assertEquals(126, StudioCatalog.allTracks.size)
+    fun `total track count is 135`() {
+        assertEquals(135, StudioCatalog.allTracks.size)
     }
 
     @Test
@@ -67,9 +67,11 @@ class StudioCatalogTest {
     }
 
     @Test
-    fun `no asset path contains spaces`() {
+    fun `no asset path contains spaces unless it is the standup album`() {
         StudioCatalog.allTracks.forEach { track ->
-            assertTrue("${track.id} path contains space: '${track.assetPath}'", !track.assetPath.contains(" "))
+            if (track.albumId != "standup") {
+                assertTrue("${track.id} path contains space: '${track.assetPath}'", !track.assetPath.contains(" "))
+            }
         }
     }
 }

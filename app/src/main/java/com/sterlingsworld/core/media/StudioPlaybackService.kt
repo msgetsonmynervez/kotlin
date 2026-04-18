@@ -13,9 +13,15 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.sterlingsworld.R
 import com.sterlingsworld.data.catalog.StudioCatalog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * StudioPlaybackService — foreground Media3 MediaSessionService for Studio audio playback.
@@ -38,6 +44,7 @@ class StudioPlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
     private lateinit var player: ExoPlayer
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
@@ -54,48 +61,51 @@ class StudioPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
-        val locator = StudioAudioLocator(this)
-        val (resolvedTracks, availability) = locator.resolveAll()
+        mediaSession = MediaSession.Builder(this, player).build()
 
-        _audioAvailability.value = availability
-
-        if (availability == StudioAvailability.READY || availability == StudioAvailability.WAITING_FOR_ASSETS) {
-            // Build queue from whichever tracks resolved (all of them when READY,
-            // a subset if somehow partially available).
-            val resolvedById = resolvedTracks.toMap()
-            val mediaItems = StudioCatalog.allTracks.mapNotNull { track ->
-                val uri = resolvedById[track.id] ?: return@mapNotNull null
-                MediaItem.Builder()
-                    .setMediaId(track.id)
-                    .setUri(uri)
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setTitle(track.title)
-                            .setAlbumTitle(
-                                StudioCatalog.albumById(track.albumId)?.title ?: track.albumId
-                            )
-                            .setArtist("Sterling Sound Team")
-                            .setTrackNumber(track.trackNumber)
-                            .build()
-                    )
-                    .build()
+        serviceScope.launch {
+            val (resolvedTracks, availability) = withContext(Dispatchers.IO) {
+                val locator = StudioAudioLocator(this@StudioPlaybackService)
+                locator.resolveAll()
             }
 
-            if (mediaItems.isNotEmpty()) {
-                player.setMediaItems(mediaItems)
-                player.prepare()
+            _audioAvailability.value = availability
+
+            if (availability == StudioAvailability.READY || availability == StudioAvailability.WAITING_FOR_ASSETS) {
+                // Build queue from whichever tracks resolved (all of them when READY,
+                // a subset if somehow partially available).
+                val resolvedById = resolvedTracks.toMap()
+                val mediaItems = StudioCatalog.allTracks.mapNotNull { track ->
+                    val uri = resolvedById[track.id] ?: return@mapNotNull null
+                    MediaItem.Builder()
+                        .setMediaId(track.id)
+                        .setUri(uri)
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(track.title)
+                                .setAlbumTitle(
+                                    StudioCatalog.albumById(track.albumId)?.title ?: track.albumId
+                                )
+                                .setArtist("Sterling Sound Team")
+                                .setTrackNumber(track.trackNumber)
+                                .build()
+                        )
+                        .build()
+                }
+
+                if (mediaItems.isNotEmpty()) {
+                    player.setMediaItems(mediaItems)
+                    player.prepare()
+                }
             }
         }
-        // If UNAVAILABLE: player is built but no queue is set. The service stays alive
-        // so the MediaController can bind. Playback actions will be ignored by the player.
-
-        mediaSession = MediaSession.Builder(this, player).build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
         mediaSession
 
     override fun onDestroy() {
+        serviceScope.cancel()
         mediaSession?.run {
             player.release()
             release()

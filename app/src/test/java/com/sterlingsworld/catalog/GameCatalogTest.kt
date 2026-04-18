@@ -11,13 +11,13 @@ import org.junit.Test
 class GameCatalogTest {
 
     @Test
-    fun `catalog contains 11 games total`() {
-        assertEquals(11, GameCatalog.all.size)
+    fun `catalog contains 15 games total`() {
+        assertEquals(15, GameCatalog.all.size)
     }
 
     @Test
-    fun `arcade section has 7 games`() {
-        assertEquals(7, GameCatalog.bySection(GameSection.GAMES).size)
+    fun `arcade section has 11 games`() {
+        assertEquals(11, GameCatalog.bySection(GameSection.GAMES).size)
     }
 
     @Test
@@ -77,13 +77,14 @@ class GameCatalogTest {
     }
 
     @Test
-    fun `exactly four games are ship-ready across the full catalog`() {
+    fun `exactly five games are ship-ready across the full catalog`() {
         val shipReady = GameCatalog.all.filter { GameCatalog.isShipReady(it.id) }
-        assertEquals(4, shipReady.size)
+        assertEquals(5, shipReady.size)
         assertTrue(shipReady.any { it.id == "lucky-paws" })
         assertTrue(shipReady.any { it.id == "ghost" })
         assertTrue(shipReady.any { it.id == "cognitive-creamery" })
         assertTrue(shipReady.any { it.id == "symptom-striker" })
+        assertTrue(shipReady.any { it.id == "relaxation-retreat" })
     }
 
     @Test
