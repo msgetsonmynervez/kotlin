@@ -21,6 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sterlingsworld.MeetSterlingApplication
 import com.sterlingsworld.core.ui.theme.Background
@@ -46,9 +49,10 @@ fun GameShellScreen(
     )
     val uiState by vm.uiState.collectAsState()
     val game = GameCatalog.byId(gameId)
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(vm) {
-        vm.events.collect { event ->
+    LaunchedEffect(vm, lifecycleOwner) {
+        vm.events.flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED).collect { event ->
             when (event) {
                 GameShellEvent.Exit -> onExit()
                 GameShellEvent.Restart -> onRestart()

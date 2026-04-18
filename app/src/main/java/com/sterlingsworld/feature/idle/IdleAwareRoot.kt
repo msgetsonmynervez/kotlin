@@ -1,6 +1,5 @@
 package com.sterlingsworld.feature.idle
 
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -10,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
 
@@ -36,12 +36,13 @@ fun IdleAwareRoot(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(PointerEventPass.Initial)
                         lastTouchTime = System.currentTimeMillis()
                         if (idleVisible) idleVisible = false
-                    },
-                )
+                    }
+                }
             },
     ) {
         content()

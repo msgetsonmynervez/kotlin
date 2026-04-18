@@ -19,11 +19,8 @@ interface GameProgressDao {
     @Query("SELECT * FROM game_progress WHERE gameId = :gameId")
     suspend fun getProgress(gameId: String): GameProgressEntity?
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: GameProgressEntity)
-
-    @Update
-    suspend fun update(entity: GameProgressEntity)
 
     @Query("DELETE FROM game_progress")
     suspend fun deleteAll()

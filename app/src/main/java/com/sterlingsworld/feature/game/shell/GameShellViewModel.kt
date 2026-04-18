@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sterlingsworld.data.progress.GameProgressRepository
 import com.sterlingsworld.domain.model.GameResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,7 +38,10 @@ class GameShellViewModel(
     private val _uiState = MutableStateFlow(GameShellUiState(gameId = gameId))
     val uiState: StateFlow<GameShellUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<GameShellEvent>()
+    private val _events = MutableSharedFlow<GameShellEvent>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val events: SharedFlow<GameShellEvent> = _events.asSharedFlow()
 
     init {
