@@ -11,13 +11,13 @@ import org.junit.Test
 class GameCatalogTest {
 
     @Test
-    fun `catalog contains 14 games total`() {
-        assertEquals(14, GameCatalog.all.size)
+    fun `catalog contains 15 games total`() {
+        assertEquals(15, GameCatalog.all.size)
     }
 
     @Test
-    fun `arcade section has 9 games`() {
-        assertEquals(9, GameCatalog.bySection(GameSection.GAMES).size)
+    fun `arcade section has 10 games`() {
+        assertEquals(10, GameCatalog.bySection(GameSection.GAMES).size)
     }
 
     @Test
@@ -70,7 +70,8 @@ class GameCatalogTest {
     @Test
     fun `current production games are ship ready`() {
         assertTrue(GameCatalog.isShipReady("aol"))
-        assertTrue(GameCatalog.isShipReady("lucky-paws"))
+        assertTrue(GameCatalog.isShipReady("aol-native"))
+        assertFalse(GameCatalog.isShipReady("lucky-paws"))
         assertTrue(GameCatalog.isShipReady("ghost"))
         assertTrue(GameCatalog.isShipReady("cognitive-creamery"))
         assertTrue(GameCatalog.isShipReady("symptom-striker"))
@@ -87,7 +88,7 @@ class GameCatalogTest {
         val shipReady = GameCatalog.all.filter { GameCatalog.isShipReady(it.id) }
         assertEquals(7, shipReady.size)
         assertTrue(shipReady.any { it.id == "aol" })
-        assertTrue(shipReady.any { it.id == "lucky-paws" })
+        assertTrue(shipReady.any { it.id == "aol-native" })
         assertTrue(shipReady.any { it.id == "ghost" })
         assertTrue(shipReady.any { it.id == "cognitive-creamery" })
         assertTrue(shipReady.any { it.id == "symptom-striker" })
