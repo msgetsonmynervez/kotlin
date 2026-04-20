@@ -1,6 +1,12 @@
 package com.sterlingsworld.core.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Map
@@ -8,7 +14,6 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -16,20 +21,18 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.sterlingsworld.core.ui.components.BathroomMapButton
 import com.sterlingsworld.core.ui.theme.Accent
-import com.sterlingsworld.core.ui.theme.Primary
-import com.sterlingsworld.core.util.openNearbyBathroomMap
 
 private data class AppTab(val label: String, val icon: ImageVector, val route: String)
 
@@ -83,45 +86,60 @@ private fun sectionRouteFor(route: String?): String? = when {
     else -> null
 }
 
+private fun shouldShowScaffoldBathroomButton(route: String?): Boolean = when {
+    routeMatches(route, Screen.Arcade.route) -> true
+    routeMatches(route, Screen.Cinema.route) -> true
+    routeMatches(route, Screen.Studio.route) -> true
+    routeMatches(route, Screen.Map.route) -> true
+    else -> false
+}
+
 fun shouldShowBottomNav(route: String?): Boolean =
     sectionRouteFor(route) != null || routeMatches(route, Screen.Settings.route)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(
     navController: NavHostController,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomNav = shouldShowBottomNav(currentRoute)
     val currentSectionRoute = sectionRouteFor(currentRoute)
+    val showScaffoldBathroomButton = shouldShowScaffoldBathroomButton(currentRoute)
 
     val currentTab = appTabs.firstOrNull { it.route == currentSectionRoute }
 
     Scaffold(
         topBar = {
             if (currentTab != null) {
-                TopAppBar(
-                    title = { Text(currentTab.label) },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = BottomBarContainer,
-                        titleContentColor = BottomBarSelected,
-                    ),
-                    actions = {
-                        IconButton(onClick = { openNearbyBathroomMap(context) }) {
-                            Text("WC", color = BottomBarSelected)
-                        }
-                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                            Icon(
-                                imageVector = Icons.Filled.Settings,
-                                contentDescription = "Settings",
-                                tint = BottomBarSelected,
-                            )
-                        }
-                    },
-                )
+                Row(
+                    modifier = androidx.compose.ui.Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = currentTab.label,
+                        color = BottomBarSelected,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = androidx.compose.ui.Modifier.weight(1f),
+                    )
+                    if (showScaffoldBathroomButton) {
+                        BathroomMapButton(
+                            modifier = androidx.compose.ui.Modifier.widthIn(min = 152.dp),
+                            label = "Bathroom Finder",
+                        )
+                        Spacer(modifier = androidx.compose.ui.Modifier.width(8.dp))
+                    }
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Settings",
+                            tint = BottomBarSelected,
+                        )
+                    }
+                }
             }
         },
         bottomBar = {

@@ -19,6 +19,8 @@ class AppPreferencesRepository(private val context: Context) {
         val WELCOME_LAST_SEEN_DATE   = stringPreferencesKey("welcome_last_seen_date")
         val WELCOME_LAST_MSG_INDEX   = intPreferencesKey("welcome_last_message_index")
         val SOUND_ENABLED            = booleanPreferencesKey("sound_enabled")
+        val VOICEOVER_ENABLED        = booleanPreferencesKey("voiceover_enabled")
+        val HAPTIC_ENABLED           = booleanPreferencesKey("haptic_enabled")
     }
 
     // ── Welcome gating ────────────────────────────────────────────────────────
@@ -43,6 +45,20 @@ class AppPreferencesRepository(private val context: Context) {
 
     suspend fun setSoundEnabled(enabled: Boolean) {
         context.dataStore.edit { it[Keys.SOUND_ENABLED] = enabled }
+    }
+
+    val voiceoverEnabled: Flow<Boolean> = context.dataStore.data
+        .map { it[Keys.VOICEOVER_ENABLED] ?: false }
+
+    suspend fun setVoiceoverEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.VOICEOVER_ENABLED] = enabled }
+    }
+
+    val hapticEnabled: Flow<Boolean> = context.dataStore.data
+        .map { it[Keys.HAPTIC_ENABLED] ?: true }
+
+    suspend fun setHapticEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.HAPTIC_ENABLED] = enabled }
     }
 
     // ── Reset ────────────────────────────────────────────────────────────────

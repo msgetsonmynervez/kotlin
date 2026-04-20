@@ -21,8 +21,28 @@ class SettingsViewModel(
         initialValue = true,
     )
 
+    val voiceoverEnabled: StateFlow<Boolean> = prefs.voiceoverEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = false,
+    )
+
+    val hapticEnabled: StateFlow<Boolean> = prefs.hapticEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = true,
+    )
+
     fun setSoundEnabled(enabled: Boolean) {
         viewModelScope.launch { prefs.setSoundEnabled(enabled) }
+    }
+
+    fun setVoiceoverEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setVoiceoverEnabled(enabled) }
+    }
+
+    fun setHapticEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setHapticEnabled(enabled) }
     }
 
     /**

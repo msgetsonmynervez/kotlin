@@ -4,8 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,23 +21,31 @@ import com.sterlingsworld.core.ui.theme.Accent
 import com.sterlingsworld.core.util.openNearbyBathroomMap
 
 @Composable
-fun BathroomMapButton(modifier: Modifier = Modifier) {
+fun BathroomMapButton(
+    modifier: Modifier = Modifier,
+    label: String = "Bathroom Finder",
+) {
     val context = LocalContext.current
 
     Box(
         modifier = modifier
-            .size(54.dp)
-            .clip(CircleShape)
+            .widthIn(min = 152.dp)
+            .clip(RoundedCornerShape(20.dp))
             .background(Color(0xF0141414))
-            .border(width = 1.5.dp, color = Accent.copy(alpha = 0.7f), shape = CircleShape)
+            .border(
+                width = 1.5.dp,
+                color = Accent.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(20.dp),
+            )
+            .padding(horizontal = 14.dp, vertical = 10.dp)
             .clickable { openNearbyBathroomMap(context) },
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "WC",
+            text = label,
             color = Accent,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
         )
     }
 }
