@@ -9,9 +9,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,13 +17,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sterlingsworld.R
+import com.sterlingsworld.core.di.LocalAppContainer
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 import com.sterlingsworld.core.ui.components.DashedCornerButton
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit = {}) {
-    var soundEnabled by remember { mutableStateOf(true) }
+    val container = LocalAppContainer.current
+    val vm: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(
+            prefs = container.preferencesRepository,
+            progress = container.gameProgressRepository,
+        ),
+    )
+    val soundEnabled by vm.soundEnabled.collectAsStateWithLifecycle()
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_guest_relations),
@@ -52,7 +60,7 @@ fun SettingsScreen(onBack: () -> Unit = {}) {
                 .padding(top = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Switch(checked = soundEnabled, onCheckedChange = { soundEnabled = it })
+            Switch(checked = soundEnabled, onCheckedChange = vm::setSoundEnabled)
             Text("Sound", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
         }
     }

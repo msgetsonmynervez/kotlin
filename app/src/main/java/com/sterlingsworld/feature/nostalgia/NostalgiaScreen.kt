@@ -1,12 +1,13 @@
 package com.sterlingsworld.feature.nostalgia
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,19 +15,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sterlingsworld.core.ui.components.BathroomMapButton
-
+import com.sterlingsworld.R
+import com.sterlingsworld.core.ui.components.ArtworkTapTarget
 @Composable
 fun NostalgiaScreen(onPlay: () -> Unit = {}) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF020A02)),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        BathroomMapButton(
+        Image(
+            painter = painterResource(id = R.drawable.bg_nostalgia),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        com.sterlingsworld.core.ui.components.BathroomMapButton(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
@@ -56,16 +63,12 @@ fun NostalgiaScreen(onPlay: () -> Unit = {}) {
                 .padding(bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
+            ArtworkTapTarget(
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color(0xFF0A3A0A))
-                    .clickable { onPlay() }
-                    .padding(horizontal = 64.dp, vertical = 14.dp),
-            ) {
-                Text("Play", color = Color(0xFF33FF33), fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            }
+                    .padding(bottom = 10.dp)
+                    .size(width = 340.dp, height = 300.dp),
+                onTap = onPlay,
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

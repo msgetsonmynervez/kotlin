@@ -1,34 +1,42 @@
 package com.sterlingsworld.data.catalog
 
 import com.sterlingsworld.domain.model.Album
+import com.sterlingsworld.domain.model.AlbumAvailability
 import com.sterlingsworld.domain.model.Track
 
 /**
  * Authoritative Studio content registry.
  *
- * Asset paths are relative to the Android `assets/` directory root.
- * The four active albums total 126 tracks:
- *   - Sterling Main Library:       tracks 01–48  (48 tracks)
- *   - Dark Side of the Spoon:      tracks 49–63  (15 tracks)
- *   - Groove:                      tracks 64–96  (33 tracks)
- *   - Neural Garden:               ng01a/b–ng15a/b (30 tracks)
+ * Asset paths are relative to the Android assets directory root.
+ *
+ * Current release policy:
+ * - Available now: Dark Side of the Spoon, Stand Up, Neural Garden
+ * - Download later: Groove, Sterling Main Library
  */
 object StudioCatalog {
 
     val albums: List<Album> by lazy {
         listOf(
-            sterlingMainLibrary(),
             darkSideOfTheSpoon(),
-            groove(),
+            standUp(),
             neuralGarden(),
+            groove(),
+            sterlingMainLibrary(),
         )
     }
 
+    val availableAlbums: List<Album> by lazy {
+        albums.filter { it.availability == AlbumAvailability.AVAILABLE_NOW }
+    }
+
+    val downloadableAlbums: List<Album> by lazy {
+        albums.filter { it.availability == AlbumAvailability.DOWNLOAD_LATER }
+    }
+
     val allTracks: List<Track> by lazy { albums.flatMap { it.tracks } }
+    val playableTracks: List<Track> by lazy { availableAlbums.flatMap { it.tracks } }
 
     fun albumById(id: String): Album? = albums.firstOrNull { it.id == id }
-
-    // ── Sterling Main Library ─────────────────────────────────────────────────
 
     private fun sterlingMainLibrary(): Album {
         val tracks = (1..48).map { n ->
@@ -45,12 +53,11 @@ object StudioCatalog {
             id = "sterling-main",
             title = "Sterling Main Library",
             artist = "Sterling Sound Team",
-            description = "Current release-scoped offline music library for Studio playback.",
+            description = "Expanded library pack queued for a later download release.",
             tracks = tracks,
+            availability = AlbumAvailability.DOWNLOAD_LATER,
         )
     }
-
-    // ── Dark Side of the Spoon ────────────────────────────────────────────────
 
     private fun darkSideOfTheSpoon(): Album {
         val titles = listOf(
@@ -80,7 +87,48 @@ object StudioCatalog {
         )
     }
 
-    // ── Groove ────────────────────────────────────────────────────────────────
+    private fun standUp(): Album {
+        val titles = listOf(
+            "Bladder",
+            "Doing Well",
+            "Fatigue",
+            "Full Time Job",
+            "Helpful",
+            "Invisible",
+            "Sex Life",
+            "Uncertainty",
+            "Unhelpful",
+            "You Look Great",
+        )
+        val assetFiles = listOf(
+            "Bladder.mp3",
+            "Doing well .mp3",
+            "Fatigue .mp3",
+            "Full time job .mp3",
+            "Helpful .mp3",
+            "Invisible .mp3",
+            "Sex life.mp3",
+            "Uncertainty .mp3",
+            "Unhelpful .mp3",
+            "You look great .mp3",
+        )
+        val tracks = titles.zip(assetFiles).mapIndexed { index, (title, assetFile) ->
+            Track(
+                id = "stand-up-${(index + 1).toString().padStart(2, '0')}",
+                title = title,
+                assetPath = "audio/music/stand_up/$assetFile",
+                trackNumber = index + 1,
+                albumId = "stand-up",
+            )
+        }
+        return Album(
+            id = "stand-up",
+            title = "Stand Up",
+            artist = "Sterling Sound Team",
+            description = "Comedy-forward spoken-word set built around the absurdities and exhaustion of chronic illness life.",
+            tracks = tracks,
+        )
+    }
 
     private fun groove(): Album {
         val titles = listOf(
@@ -97,7 +145,6 @@ object StudioCatalog {
         val tracks = titles.mapIndexed { index, title ->
             val n = 64 + index
             val padded = n.toString().padStart(2, '0')
-            // Tracks 66–82 live in a groove subdirectory in the RN source; mirror that here.
             val subdir = if (n in 66..82) "groove/" else ""
             Track(
                 id = "groove-$padded",
@@ -111,12 +158,11 @@ object StudioCatalog {
             id = "groove",
             title = "Groove",
             artist = "Sterling Sound Team",
-            description = "Rhythm-forward album built around bright movement, casual bounce, and easy daytime energy.",
+            description = "Rhythm-forward album queued as an additional downloadable pack.",
             tracks = tracks,
+            availability = AlbumAvailability.DOWNLOAD_LATER,
         )
     }
-
-    // ── Neural Garden ─────────────────────────────────────────────────────────
 
     private fun neuralGarden(): Album {
         val titlePairs = listOf(

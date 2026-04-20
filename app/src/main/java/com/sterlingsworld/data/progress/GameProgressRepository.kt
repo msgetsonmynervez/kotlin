@@ -11,40 +11,17 @@ class GameProgressRepository(private val dao: GameProgressDao) {
 
     fun observeAll(): Flow<List<GameProgressEntity>> = dao.observeAll()
 
-    suspend fun getOrDefault(gameId: String): GameProgressEntity =
-        dao.getProgress(gameId) ?: GameProgressEntity(gameId = gameId)
-
     suspend fun recordSessionStart(gameId: String) {
-        val current = getOrDefault(gameId)
-        val updated = current.copy(
-            playCount = current.playCount + 1,
-            lastPlayedAt = Instant.now().toString(),
-        )
-        upsert(updated)
+        dao.atomicSessionStart(gameId, Instant.now().toString())
     }
 
     suspend fun recordRestart(gameId: String) {
-        val current = getOrDefault(gameId)
-        upsert(current.copy(restartCount = current.restartCount + 1))
+        dao.atomicRestart(gameId)
     }
 
     suspend fun recordCompletion(gameId: String, result: GameResult) {
-        val current = getOrDefault(gameId)
-        val now = Instant.now().toString()
-        val updated = current.copy(
-            completionCount = current.completionCount + 1,
-            bestScore = maxOf(current.bestScore, result.score),
-            bestStars = maxOf(current.bestStars, result.stars),
-            lastPlayedAt = now,
-            lastCompletedAt = now,
-        )
-        upsert(updated)
+        dao.atomicCompletion(gameId, result.score, result.stars, Instant.now().toString())
     }
 
     suspend fun deleteAll() = dao.deleteAll()
-
-    private suspend fun upsert(entity: GameProgressEntity) {
-        val existing = dao.getProgress(entity.gameId)
-        if (existing == null) dao.insert(entity) else dao.update(entity)
-    }
 }

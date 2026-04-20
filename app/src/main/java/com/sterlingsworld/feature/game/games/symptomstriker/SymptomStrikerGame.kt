@@ -1,5 +1,23 @@
 package com.sterlingsworld.feature.game.games.symptomstriker
 
+import android.media.AudioManager
+import android.media.ToneGenerator
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,35 +42,84 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sterlingsworld.core.ui.theme.Accent
-import com.sterlingsworld.core.ui.theme.ErrorColor
-import com.sterlingsworld.core.ui.theme.Overlay
-import com.sterlingsworld.core.ui.theme.Primary
-import com.sterlingsworld.core.ui.theme.Secondary
-import com.sterlingsworld.core.ui.theme.SuccessColor
-import com.sterlingsworld.core.ui.theme.Surface as AppSurface
-import com.sterlingsworld.core.ui.theme.SurfaceStrong
-import com.sterlingsworld.core.ui.theme.TextMuted
-import com.sterlingsworld.core.ui.theme.TextPrimary
+import com.sterlingsworld.R
 import com.sterlingsworld.domain.model.GameResult
+import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private val BattleTextPrimary = Color(0xFFF3EFE2)
+private val BattlePrimary = Color(0xFF2D6A4F)
+private val BattleSecondary = Color(0xFFC97B63)
+private val BattleAccent = Color(0xFFF4B942)
+private val BattleError = Color(0xFFB04A3A)
+private val BattleSuccess = Color(0xFF4D8C57)
+private val BattleOverlay = Color(0x8C173224)
+
+private data class CombatFeedback(
+    val id: Int,
+    val text: String,
+    val color: Color,
+    val alignment: Alignment,
+)
+
+private enum class SymptomStrikerSfx {
+    SELECT, IMPACT, HIT, FANFARE
+}
+
+private class SymptomStrikerSoundPlayer {
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 65)
+
+    fun play(effect: SymptomStrikerSfx) {
+        when (effect) {
+            SymptomStrikerSfx.SELECT -> toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 70)
+            SymptomStrikerSfx.IMPACT -> toneGenerator.startTone(ToneGenerator.TONE_CDMA_ABBR_INTERCEPT, 110)
+            SymptomStrikerSfx.HIT -> toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 100)
+            SymptomStrikerSfx.FANFARE -> toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 220)
+        }
+    }
+
+    fun release() {
+        toneGenerator.release()
+    }
+}
 
 @Composable
 fun SymptomStrikerGame(
@@ -59,12 +127,120 @@ fun SymptomStrikerGame(
     onDone: (GameResult) -> Unit,
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val overlayVisible = state.phase != BattlePhase.PLAYER_TURN
+    val soundPlayer = remember { SymptomStrikerSoundPlayer() }
+    val feedbacks = remember { mutableStateListOf<CombatFeedback>() }
+    var feedbackId by remember { mutableIntStateOf(0) }
+    var previousPlayerHp by remember { mutableIntStateOf(state.playerHp) }
+    var previousEnemyHp by remember { mutableIntStateOf(state.enemyHp) }
+    var previousPhase by remember { mutableStateOf(state.phase) }
+    var initialized by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose { soundPlayer.release() }
+    }
+
+    LaunchedEffect(state.playerHp, state.enemyHp, state.phase) {
+        if (!initialized) {
+            previousPlayerHp = state.playerHp
+            previousEnemyHp = state.enemyHp
+            previousPhase = state.phase
+            initialized = true
+            return@LaunchedEffect
+        }
+
+        when {
+            state.playerHp < previousPlayerHp -> {
+                val amount = previousPlayerHp - state.playerHp
+                feedbacks += CombatFeedback(
+                    id = feedbackId++,
+                    text = "-$amount",
+                    color = BattleError,
+                    alignment = Alignment.BottomCenter,
+                )
+                soundPlayer.play(SymptomStrikerSfx.IMPACT)
+            }
+            state.playerHp > previousPlayerHp -> {
+                val amount = state.playerHp - previousPlayerHp
+                feedbacks += CombatFeedback(
+                    id = feedbackId++,
+                    text = "+$amount",
+                    color = BattleSuccess,
+                    alignment = Alignment.BottomCenter,
+                )
+            }
+        }
+
+        when {
+            state.enemyHp < previousEnemyHp -> {
+                val amount = previousEnemyHp - state.enemyHp
+                feedbacks += CombatFeedback(
+                    id = feedbackId++,
+                    text = "-$amount",
+                    color = BattleError,
+                    alignment = Alignment.Center,
+                )
+                soundPlayer.play(SymptomStrikerSfx.HIT)
+            }
+            state.enemyHp > previousEnemyHp -> {
+                val amount = state.enemyHp - previousEnemyHp
+                feedbacks += CombatFeedback(
+                    id = feedbackId++,
+                    text = "+$amount",
+                    color = BattleSuccess,
+                    alignment = Alignment.Center,
+                )
+            }
+        }
+
+        if (state.phase == BattlePhase.ENCOUNTER_WIN && previousPhase != BattlePhase.ENCOUNTER_WIN) {
+            soundPlayer.play(SymptomStrikerSfx.FANFARE)
+        }
+
+        previousPlayerHp = state.playerHp
+        previousEnemyHp = state.enemyHp
+        previousPhase = state.phase
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Battle field — always rendered beneath overlays
-        BattleField(state = state, onMoveSelected = vm::onMoveSelected)
+        Image(
+            painter = painterResource(id = R.drawable.bg_symptom_striker),
+            contentDescription = "Symptom Striker battle background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (overlayVisible) Modifier.blur(8.dp) else Modifier),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xD9111B17),
+                            Color(0x9911171B),
+                            Color(0xE6141D1A),
+                        ),
+                    ),
+                ),
+        )
 
-        // Overlays on top
+        BattleField(
+            state = state,
+            overlayVisible = overlayVisible,
+            onMoveSelected = {
+                soundPlayer.play(SymptomStrikerSfx.SELECT)
+                vm.onMoveSelected(it)
+            },
+        )
+
+        feedbacks.forEach { feedback ->
+            FloatingCombatText(
+                feedback = feedback,
+                onFinished = { finishedId -> feedbacks.removeAll { it.id == finishedId } },
+            )
+        }
+
         when (state.phase) {
             BattlePhase.INTRO -> IntroOverlay(
                 state = state,
@@ -89,13 +265,13 @@ fun SymptomStrikerGame(
     }
 }
 
-// ── Battle field ─────────────────────────────────────────────────────────────
-
 @Composable
 private fun BattleField(
     state: SymptomStrikerUiState,
+    overlayVisible: Boolean,
     onMoveSelected: (String) -> Unit,
 ) {
+    val turnSignature = "${state.phase}:${state.playerHp}:${state.enemyHp}:${state.battleLog}"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -107,9 +283,22 @@ private fun BattleField(
         EnemyCard(state)
         PlayerStatusCard(state)
         StatusHud(state)
-        BattleLog(state)
-        MoveGrid(state, onMoveSelected)
-        Spacer(Modifier.height(8.dp))
+        AnimatedContent(
+            targetState = turnSignature,
+            transitionSpec = {
+                (fadeIn(animationSpec = keyframes { durationMillis = 220 }) + slideInVertically { it / 5 })
+                    .togetherWith(fadeOut(animationSpec = keyframes { durationMillis = 160 }) + slideOutVertically { -it / 8 })
+            },
+            label = "battle_turn_transition",
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                BattleLog(state)
+                MoveGrid(state, onMoveSelected)
+            }
+        }
+        if (overlayVisible) {
+            Spacer(Modifier.height(8.dp))
+        }
     }
 }
 
@@ -123,27 +312,31 @@ private fun EncounterHeader(state: SymptomStrikerUiState) {
         Text(
             text = state.encounterTitle,
             style = MaterialTheme.typography.titleSmall,
-            color = TextPrimary,
+            color = BattleTextPrimary,
             fontWeight = FontWeight.Bold,
         )
         Text(
             text = "${state.encounterIndex + 1} / ${state.totalEncounters}",
             style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
+            color = Color.White.copy(alpha = 0.75f),
         )
     }
 }
 
 @Composable
 private fun EnemyCard(state: SymptomStrikerUiState) {
+    val shake = rememberHpShake(state.enemyHp)
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceStrong),
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.58f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset { shake },
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -153,32 +346,26 @@ private fun EnemyCard(state: SymptomStrikerUiState) {
                 Text(
                     text = state.enemyName,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (state.enemyEnraged) ErrorColor else TextPrimary,
+                    color = if (state.enemyEnraged) Color(0xFFFFD0C7) else BattleTextPrimary,
                     fontWeight = FontWeight.Bold,
                 )
                 if (state.enemyEnraged) {
                     Text(
                         text = "\u26a0\ufe0f RAGE",
                         style = MaterialTheme.typography.labelSmall,
-                        color = ErrorColor,
+                        color = Color(0xFFFF6E40),
                         fontWeight = FontWeight.Bold,
                     )
                 }
             }
-            // Enemy sprite — monospace text art
-            Text(
-                text = state.enemySprite,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 20.sp,
-                color = if (state.enemyEnraged) ErrorColor else TextMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+            GlowingSprite(
+                sprite = state.enemySprite,
+                enraged = state.enemyEnraged,
             )
-            // Enemy HP bar
             HpBar(
                 current = state.enemyHp,
                 max = state.enemyMaxHp,
-                color = if (state.enemyEnraged) ErrorColor else Secondary,
+                color = if (state.enemyEnraged) Color(0xFFFF7043) else BattleSecondary,
                 label = "HP: ${state.enemyHp} / ${state.enemyMaxHp}",
             )
         }
@@ -186,31 +373,86 @@ private fun EnemyCard(state: SymptomStrikerUiState) {
 }
 
 @Composable
+private fun GlowingSprite(
+    sprite: String,
+    enraged: Boolean,
+) {
+    val pulse by rememberInfiniteTransition(label = "sprite_pulse").animateFloat(
+        initialValue = 0.75f,
+        targetValue = if (enraged) 1.2f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = if (enraged) 900 else 1800
+                1.0f at 0
+                1.15f at durationMillis / 2
+                if (enraged) 0.85f else 1.0f at durationMillis
+            },
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "glow_strength",
+    )
+    val glowColor = if (enraged) Color(0xFFFF7043) else Color(0xFF59E3FF)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val radius = size.minDimension * 0.45f
+                drawCircle(
+                    color = glowColor.copy(alpha = 0.18f * pulse),
+                    radius = radius,
+                    center = center,
+                )
+                drawCircle(
+                    color = glowColor.copy(alpha = 0.10f * pulse),
+                    radius = radius * 1.35f,
+                    center = center,
+                    style = Stroke(width = 4.dp.toPx()),
+                )
+            }
+            .padding(vertical = 8.dp),
+    ) {
+        Text(
+            text = sprite,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 20.sp,
+            color = if (enraged) Color(0xFFFFE0D4) else Color(0xFFE6FAFF),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .shadow(if (enraged) 18.dp else 10.dp, RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+        )
+    }
+}
+
+@Composable
 private fun PlayerStatusCard(state: SymptomStrikerUiState) {
+    val shake = rememberHpShake(state.playerHp)
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.52f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset { shake },
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Player HP
             HpBar(
                 current = state.playerHp,
                 max = state.playerMaxHp,
-                color = SuccessColor,
+            color = BattleSuccess,
                 label = "Your HP: ${state.playerHp} / ${state.playerMaxHp}",
             )
-            // Spoon dots
             SpoonRow(spoons = state.playerSpoons, maxSpoons = state.playerMaxSpoons)
-            // Push through warning if penalty triggered
             if (state.sessionSpoonPenalty > 0) {
                 Text(
                     text = "Overuse penalty: \u2212${state.sessionSpoonPenalty} max Spoons this session",
                     style = MaterialTheme.typography.labelSmall,
-                    color = ErrorColor,
+                    color = Color(0xFFFFAB91),
                 )
             }
         }
@@ -224,7 +466,7 @@ private fun StatusHud(state: SymptomStrikerUiState) {
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceStrong),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -236,12 +478,11 @@ private fun StatusHud(state: SymptomStrikerUiState) {
                     StatusBadge(key = key, turns = turns)
                 }
             }
-            // Tooltips for each active status so the player knows what to do
             state.status.active.forEach { (key, _) ->
                 Text(
                     text = "${key.badge} ${key.label}: ${key.tooltip} Counter: ${key.counteredBy}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    color = Color.White.copy(alpha = 0.72f),
                 )
             }
         }
@@ -252,13 +493,12 @@ private fun StatusHud(state: SymptomStrikerUiState) {
 private fun StatusBadge(key: StatusKey, turns: Int) {
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = Accent.copy(alpha = 0.25f),
-        modifier = Modifier.padding(0.dp),
+        color = BattleAccent.copy(alpha = 0.28f),
     ) {
         Text(
             text = "${key.badge} ${key.label} (${turns}t)",
             style = MaterialTheme.typography.labelMedium,
-            color = TextPrimary,
+            color = BattleTextPrimary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         )
@@ -268,18 +508,44 @@ private fun StatusBadge(key: StatusKey, turns: Int) {
 @Composable
 private fun BattleLog(state: SymptomStrikerUiState) {
     if (state.battleLog.isBlank()) return
+    val snippets = remember(state.battleLog) { buildLogSnippets(state.battleLog) }
+    var expanded by remember(state.battleLog) { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = state.battleLog,
-            style = MaterialTheme.typography.bodySmall,
-            color = TextMuted,
-            modifier = Modifier.padding(10.dp),
-            lineHeight = 18.sp,
-        )
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = if (expanded) state.battleLog else snippets.joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.8f),
+                lineHeight = 18.sp,
+            )
+            if (snippets.size > 3) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Text(
+                        text = if (expanded) "Hide full log" else "See full log",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = BattleAccent,
+                        modifier = Modifier
+                            .background(Color.Transparent)
+                            .padding(top = 2.dp),
+                    )
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Text(
+                            text = if (expanded) "\u25B2" else "\u25BC",
+                            color = BattleAccent,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -292,7 +558,6 @@ private fun MoveGrid(
     val regularMoves = state.moves.filter { it.id != "push_through" }
     val pushThrough = state.moves.find { it.id == "push_through" }
 
-    // Regular moves in 2-column grid
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -302,7 +567,7 @@ private fun MoveGrid(
         regularMoves.forEach { move ->
             val isBlocked = state.status.foggedMoveId == move.id
             val effectiveCost = if (move.type == MoveType.ATTACK && state.status.locked > 0) {
-                move.spoonCost + DEFAULT_BATTLE_CONFIG.lockedExtraSpoonCost
+                move.spoonCost + com.sterlingsworld.feature.game.games.symptomstriker.DEFAULT_BATTLE_CONFIG.lockedExtraSpoonCost
             } else {
                 move.spoonCost
             }
@@ -319,7 +584,6 @@ private fun MoveGrid(
         }
     }
 
-    // Push Through — full width, visually distinct
     if (pushThrough != null) {
         val pushThroughOverused = state.pushThroughUses >= state.pushThroughSafeUses
         OutlinedButton(
@@ -327,7 +591,7 @@ private fun MoveGrid(
             enabled = state.phase == BattlePhase.PLAYER_TURN,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = if (pushThroughOverused) ErrorColor else Secondary,
+                contentColor = if (pushThroughOverused) Color(0xFFFFAB91) else BattleSecondary,
             ),
             shape = RoundedCornerShape(12.dp),
         ) {
@@ -344,7 +608,7 @@ private fun MoveGrid(
                         "Costs HP \u2022 ${state.pushThroughUses}/${state.pushThroughSafeUses} safe uses"
                     },
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (pushThroughOverused) ErrorColor else TextMuted,
+                    color = if (pushThroughOverused) Color(0xFFFFAB91) else Color.White.copy(alpha = 0.72f),
                 )
             }
         }
@@ -368,10 +632,10 @@ private fun MoveButton(
         modifier = modifier.height(64.dp),
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = when {
-                blocked -> ErrorColor.copy(alpha = 0.15f)
-                move.type == MoveType.RECOVERY -> SuccessColor.copy(alpha = 0.15f)
-                move.type == MoveType.CURE -> Primary.copy(alpha = 0.15f)
-                else -> SurfaceStrong
+                blocked -> BattleError.copy(alpha = 0.28f)
+                move.type == MoveType.RECOVERY -> BattleSuccess.copy(alpha = 0.22f)
+                move.type == MoveType.CURE -> BattlePrimary.copy(alpha = 0.22f)
+                else -> Color.Black.copy(alpha = 0.48f)
             },
         ),
     ) {
@@ -383,14 +647,14 @@ private fun MoveButton(
                 text = if (blocked) "\uD83D\uDEAB ${move.label}" else move.label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (blocked) ErrorColor else TextPrimary,
+                color = if (blocked) Color(0xFFFFCCBC) else BattleTextPrimary,
                 textAlign = TextAlign.Center,
             )
             if (subLabel.isNotEmpty()) {
                 Text(
                     text = subLabel,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (blocked) ErrorColor else TextMuted,
+                    color = if (blocked) Color(0xFFFFCCBC) else Color.White.copy(alpha = 0.72f),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -398,58 +662,108 @@ private fun MoveButton(
     }
 }
 
-// ── Shared small widgets ──────────────────────────────────────────────────────
-
 @Composable
 private fun HpBar(current: Int, max: Int, color: Color, label: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.74f))
         LinearProgressIndicator(
             progress = { if (max > 0) current.toFloat() / max else 0f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(10.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .shadow(8.dp, RoundedCornerShape(6.dp))
+                .background(Color.Black.copy(alpha = 0.18f), RoundedCornerShape(6.dp)),
             color = color,
-            trackColor = color.copy(alpha = 0.2f),
+            trackColor = color.copy(alpha = 0.18f),
         )
     }
 }
 
 @Composable
 private fun SpoonRow(spoons: Int, maxSpoons: Int) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = "Spoons: $spoons / $maxSpoons",
             style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
+            color = Color.White.copy(alpha = 0.74f),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             repeat(maxSpoons) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .background(if (index < spoons) Accent else Accent.copy(alpha = 0.2f)),
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_spoon),
+                    contentDescription = null,
+                    tint = if (index < spoons) BattleAccent else BattleAccent.copy(alpha = 0.22f),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
     }
 }
 
-// ── Overlays ──────────────────────────────────────────────────────────────────
+@Composable
+private fun FloatingCombatText(
+    feedback: CombatFeedback,
+    onFinished: (Int) -> Unit,
+) {
+    val density = LocalDensity.current
+    val travel = remember { Animatable(0f) }
+    val alpha = remember { Animatable(1f) }
+
+    LaunchedEffect(feedback.id) {
+        launch {
+            travel.animateTo(
+                targetValue = -56f,
+                animationSpec = keyframes {
+                    durationMillis = 1000
+                    0f at 0 with LinearOutSlowInEasing
+                    -56f at 1000
+                },
+            )
+        }
+        alpha.animateTo(
+            targetValue = 0f,
+            animationSpec = keyframes {
+                durationMillis = 1000
+                1f at 0 with FastOutLinearInEasing
+                0f at 1000
+            },
+        )
+        onFinished(feedback.id)
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = feedback.alignment,
+    ) {
+        Text(
+            text = feedback.text,
+            color = feedback.color,
+            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = with(density) { travel.value.dp.roundToPx() },
+                    )
+                }
+                .alpha(alpha.value)
+                .shadow(10.dp),
+        )
+    }
+}
 
 @Composable
 private fun IntroOverlay(state: SymptomStrikerUiState, onBegin: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Overlay),
+            .background(BattleOverlay),
         contentAlignment = Alignment.Center,
     ) {
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceStrong),
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.68f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
@@ -462,20 +776,20 @@ private fun IntroOverlay(state: SymptomStrikerUiState, onBegin: () -> Unit) {
                 Text(
                     text = state.encounterTitle,
                     style = MaterialTheme.typography.titleLarge,
-                    color = Primary,
+                    color = BattleAccent,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = state.introText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
+                    color = BattleTextPrimary,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = state.symptomsDesc,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
+                    color = Color.White.copy(alpha = 0.72f),
                     textAlign = TextAlign.Center,
                 )
                 Button(
@@ -495,12 +809,12 @@ private fun EncounterWinOverlay(state: SymptomStrikerUiState, onNext: () -> Unit
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Overlay),
+            .background(BattleOverlay),
         contentAlignment = Alignment.Center,
     ) {
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceStrong),
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.68f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
@@ -513,19 +827,19 @@ private fun EncounterWinOverlay(state: SymptomStrikerUiState, onNext: () -> Unit
                 Text(
                     text = "\u2705 Gym Cleared!",
                     style = MaterialTheme.typography.titleLarge,
-                    color = SuccessColor,
+                    color = BattleSuccess,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = state.battleLog,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
+                    color = Color.White.copy(alpha = 0.72f),
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = "HP remaining: ${state.playerHp} / ${state.playerMaxHp}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextPrimary,
+                    color = BattleTextPrimary,
                 )
                 Button(
                     onClick = onNext,
@@ -548,12 +862,12 @@ private fun OutcomeOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Overlay),
+            .background(BattleOverlay),
         contentAlignment = Alignment.Center,
     ) {
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceStrong),
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.68f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
@@ -566,7 +880,7 @@ private fun OutcomeOverlay(
                 Text(
                     text = if (won) "\uD83C\uDFC6 Run Complete!" else "\u274C Fell Short",
                     style = MaterialTheme.typography.titleLarge,
-                    color = if (won) SuccessColor else ErrorColor,
+                    color = if (won) BattleSuccess else BattleError,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
@@ -576,14 +890,14 @@ private fun OutcomeOverlay(
                         "You ran out of HP at ${state.encounterTitle}. Gyms cleared: ${state.encountersCleared} / ${state.totalEncounters}."
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
+                    color = BattleTextPrimary,
                     textAlign = TextAlign.Center,
                 )
                 if (state.sessionSpoonPenalty > 0) {
                     Text(
                         text = "Push Through penalty: \u2212${state.sessionSpoonPenalty} max Spoon(s) used",
                         style = MaterialTheme.typography.labelSmall,
-                        color = ErrorColor,
+                        color = Color(0xFFFFAB91),
                     )
                 }
                 Button(
@@ -591,7 +905,7 @@ private fun OutcomeOverlay(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (won) SuccessColor else Primary,
+                        containerColor = if (won) BattleSuccess else BattlePrimary,
                     ),
                 ) {
                     Text(if (won) "Finish Run" else "End Run")
@@ -599,4 +913,43 @@ private fun OutcomeOverlay(
             }
         }
     }
+}
+
+@Composable
+private fun rememberHpShake(current: Int): IntOffset {
+    val x = remember { Animatable(0f) }
+    val y = remember { Animatable(0f) }
+    var previous by remember { mutableIntStateOf(current) }
+    val density = LocalDensity.current
+
+    LaunchedEffect(current) {
+        if (current >= previous) {
+            previous = current
+            return@LaunchedEffect
+        }
+        previous = current
+        val offsets = List(6) {
+            Pair(Random.nextInt(-7, 8).toFloat(), Random.nextInt(-5, 6).toFloat())
+        } + listOf(0f to 0f)
+        offsets.forEach { (dx, dy) ->
+            x.snapTo(dx)
+            y.snapTo(dy)
+            delay(24)
+        }
+        x.animateTo(0f)
+        y.animateTo(0f)
+    }
+
+    return IntOffset(
+        x = with(density) { x.value.dp.roundToPx() },
+        y = with(density) { y.value.dp.roundToPx() },
+    )
+}
+
+private fun buildLogSnippets(log: String): List<String> {
+    val parts = log
+        .split(Regex("(?<=[.!?])\\s+"))
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+    return if (parts.size <= 3) parts else parts.takeLast(3)
 }

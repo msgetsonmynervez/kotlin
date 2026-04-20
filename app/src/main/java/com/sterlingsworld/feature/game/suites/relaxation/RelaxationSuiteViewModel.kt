@@ -1,6 +1,7 @@
 package com.sterlingsworld.feature.game.suites.relaxation
 
 import androidx.lifecycle.ViewModel
+import com.sterlingsworld.domain.model.GameResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,6 +86,23 @@ class RelaxationSuiteViewModel : ViewModel() {
                 ),
             )
         }
+    }
+
+    fun buildResult(): GameResult {
+        val trivia = _uiState.value.trivia
+        val total = trivia.totalQuestions.coerceAtLeast(1)
+        val stars = when {
+            trivia.score >= total -> 3
+            trivia.score >= total - 1 -> 2
+            else -> 1
+        }
+        return GameResult(
+            completed = trivia.isComplete,
+            score = trivia.score,
+            stars = stars,
+            durationMs = 0L,
+            perfect = trivia.score >= total,
+        )
     }
 }
 

@@ -36,11 +36,15 @@ class LuckyPawsViewModelTest {
     }
 
     @Test
-    fun `buildResult returns full reward result`() {
-        val result = LuckyPawsViewModel().buildResult()
+    fun `buildResult reflects revealed reward state instead of perfect score`() {
+        val vm = LuckyPawsViewModel()
+        vm.onReveal()
+        val result = vm.buildResult()
 
         assertTrue(result.completed)
-        assertEquals(3, result.stars)
+        assertEquals(1, result.score)
+        assertEquals(1, result.stars)
+        assertFalse(result.perfect)
     }
 
     @Test

@@ -13,9 +13,6 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.sterlingsworld.R
 import com.sterlingsworld.data.catalog.StudioCatalog
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * StudioPlaybackService — foreground Media3 MediaSessionService for Studio audio playback.
@@ -57,13 +54,13 @@ class StudioPlaybackService : MediaSessionService() {
         val locator = StudioAudioLocator(this)
         val (resolvedTracks, availability) = locator.resolveAll()
 
-        _audioAvailability.value = availability
+        StudioMediaStateHolder.update(availability)
 
         if (availability == StudioAvailability.READY || availability == StudioAvailability.WAITING_FOR_ASSETS) {
             // Build queue from whichever tracks resolved (all of them when READY,
             // a subset if somehow partially available).
             val resolvedById = resolvedTracks.toMap()
-            val mediaItems = StudioCatalog.allTracks.mapNotNull { track ->
+            val mediaItems = StudioCatalog.playableTracks.mapNotNull { track ->
                 val uri = resolvedById[track.id] ?: return@mapNotNull null
                 MediaItem.Builder()
                     .setMediaId(track.id)
@@ -102,7 +99,7 @@ class StudioPlaybackService : MediaSessionService() {
             mediaSession = null
         }
         // Reset to WAITING so a future service start begins with the correct initial state.
-        _audioAvailability.value = StudioAvailability.WAITING_FOR_ASSETS
+        StudioMediaStateHolder.update(StudioAvailability.WAITING_FOR_ASSETS)
         super.onDestroy()
     }
 
@@ -122,16 +119,5 @@ class StudioPlaybackService : MediaSessionService() {
 
     companion object {
         const val CHANNEL_ID = "studio_playback"
-
-        private val _audioAvailability = MutableStateFlow(StudioAvailability.WAITING_FOR_ASSETS)
-
-        /**
-         * Current audio availability state, written by the service and collected by
-         * [com.sterlingsworld.feature.studio.StudioViewModel].
-         *
-         * Initialized to [StudioAvailability.WAITING_FOR_ASSETS] so the UI shows a
-         * loading/waiting state before the service has had a chance to probe assets.
-         */
-        val audioAvailability: StateFlow<StudioAvailability> = _audioAvailability.asStateFlow()
     }
 }

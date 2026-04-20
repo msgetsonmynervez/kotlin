@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 enum class GamePhase { PLAYING, PAUSED }
 
@@ -39,6 +40,8 @@ class GameShellViewModel(
 
     private val _events = MutableSharedFlow<GameShellEvent>()
     val events: SharedFlow<GameShellEvent> = _events.asSharedFlow()
+
+    private val completionRecorded = AtomicBoolean(false)
 
     init {
         launchInScope {
@@ -77,6 +80,7 @@ class GameShellViewModel(
     }
 
     fun onComplete(result: GameResult) {
+        if (!completionRecorded.compareAndSet(false, true)) return
         launchInScope {
             progressRepository.recordCompletion(uiState.value.gameId, result)
             _events.emit(GameShellEvent.Complete(result))

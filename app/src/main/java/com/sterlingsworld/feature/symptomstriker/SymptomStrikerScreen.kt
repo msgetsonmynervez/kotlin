@@ -1,24 +1,18 @@
 package com.sterlingsworld.feature.symptomstriker
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
+import com.sterlingsworld.core.ui.components.ArtworkTapTarget
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 
 @Composable
@@ -36,16 +30,13 @@ fun SymptomStrikerScreen(onPlay: () -> Unit = {}) {
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
         )
-        Box(
+        // Positioned over the "ENTER GAUNTLET" button drawn into the artwork at ~bottom 15%
+        ArtworkTapTarget(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 160.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xEE1A1A1A))
-                .clickable { onPlay() }
-                .padding(horizontal = 72.dp, vertical = 18.dp),
-        ) {
-            Text("Play", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        }
+                .padding(bottom = 56.dp)
+                .size(width = 340.dp, height = 300.dp),
+            onTap = onPlay,
+        )
     }
 }

@@ -11,7 +11,9 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.sterlingsworld.core.media.StudioAvailability
+import com.sterlingsworld.core.media.StudioMediaStateHolder
 import com.sterlingsworld.core.media.StudioPlaybackService
+
 import com.sterlingsworld.data.catalog.StudioCatalog
 import com.sterlingsworld.domain.model.Album
 import com.sterlingsworld.domain.model.Track
@@ -47,10 +49,10 @@ class StudioViewModel(private val context: Context) : ViewModel() {
     }
 
     init {
-        // Collect audio availability from the service companion state and reflect it
-        // in the UI state. This is the single seam between the service layer and the UI.
+        // Collect audio availability from the shared state holder (written by the service)
+        // and reflect it in the UI state.
         viewModelScope.launch {
-            StudioPlaybackService.audioAvailability.collect { availability ->
+            StudioMediaStateHolder.audioAvailability.collect { availability ->
                 _uiState.value = _uiState.value.copy(availability = availability)
             }
         }
@@ -82,7 +84,7 @@ class StudioViewModel(private val context: Context) : ViewModel() {
     fun playTrack(track: Track) {
         if (_uiState.value.availability != StudioAvailability.READY) return
         val ctrl = controller ?: return
-        val index = StudioCatalog.allTracks.indexOfFirst { it.id == track.id }
+        val index = StudioCatalog.playableTracks.indexOfFirst { it.id == track.id }
         if (index >= 0) {
             ctrl.seekToDefaultPosition(index)
             ctrl.play()
@@ -90,6 +92,7 @@ class StudioViewModel(private val context: Context) : ViewModel() {
     }
 
     fun playAlbum(album: Album) {
+        if (!StudioCatalog.availableAlbums.any { it.id == album.id }) return
         playTrack(album.tracks.firstOrNull() ?: return)
     }
 

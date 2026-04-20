@@ -2,12 +2,12 @@ package com.sterlingsworld.feature.creamery
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +20,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.offset
 import com.sterlingsworld.R
+import com.sterlingsworld.core.ui.components.ArtworkTapTarget
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 
 @Composable
@@ -38,22 +40,20 @@ fun CreameryScreen(onPlay: () -> Unit = {}) {
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
         )
+        // Play button overlaid on the "Start Quest" sign drawn in the center of the artwork
+        ArtworkTapTarget(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = 50.dp)
+                .size(width = 340.dp, height = 300.dp),
+            onTap = onPlay,
+        )
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0xEE26221F))
-                    .clickable { onPlay() }
-                    .padding(horizontal = 68.dp, vertical = 18.dp),
-            ) {
-                Text("Play", color = Color(0xFFC5B358), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

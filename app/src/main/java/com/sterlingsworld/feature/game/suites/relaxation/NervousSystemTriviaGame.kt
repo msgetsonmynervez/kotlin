@@ -41,12 +41,14 @@ fun NervousSystemTriviaGame(
     uiState: TriviaUiState,
     onSelectAnswer: (Int) -> Unit,
     onNext: () -> Unit,
+    onFinish: () -> Unit,
     onRestart: () -> Unit,
 ) {
     if (uiState.isComplete) {
         TriviaCompleteCard(
             score = uiState.score,
             total = uiState.totalQuestions,
+            onFinish = onFinish,
             onRestart = onRestart,
         )
         return
@@ -182,6 +184,7 @@ private fun AnswerButton(
 private fun TriviaCompleteCard(
     score: Int,
     total: Int,
+    onFinish: () -> Unit,
     onRestart: () -> Unit,
 ) {
     val emoji = when {
@@ -235,12 +238,21 @@ private fun TriviaCompleteCard(
         }
 
         Button(
-            onClick = onRestart,
+            onClick = onFinish,
             colors = ButtonDefaults.buttonColors(containerColor = TropicalTeal),
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Play Again", style = MaterialTheme.typography.labelLarge)
+            Text("Finish Retreat", style = MaterialTheme.typography.labelLarge)
+        }
+
+        Button(
+            onClick = onRestart,
+            colors = ButtonDefaults.buttonColors(containerColor = TropicalTealLight),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Play Again", style = MaterialTheme.typography.labelLarge, color = TropicalTeal)
         }
     }
 }

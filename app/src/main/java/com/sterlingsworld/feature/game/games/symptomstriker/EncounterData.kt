@@ -96,7 +96,7 @@ internal val MOVE_LIBRARY: Map<String, MoveDefinition> = mapOf(
 
 // ── Three-encounter vertical slice ───────────────────────────────────────────
 // Source: 8 gyms in the HTML. Sprint 6 ships gyms 1, 2, 3 as a polished vertical slice.
-// AOL and Lumi's Star Quest reuse the same BattleModel with their own encounter lists.
+// Lumi's Star Quest reuses the same BattleModel with its own encounter list.
 
 internal val SYMPTOM_STRIKER_ENCOUNTERS: List<EncounterDefinition> = listOf(
 

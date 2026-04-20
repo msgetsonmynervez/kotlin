@@ -7,15 +7,17 @@
 <title>BREAKOUT</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Courier New','Consolas','Lucida Console',monospace;background:#020a02;color:#33ff33;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;-webkit-user-select:none}
+body{font-family:'Press Start 2P','Inter','Courier New',monospace;background:transparent;color:#39FF14;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;-webkit-user-select:none}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(51,255,51,0.03),transparent 70%);pointer-events:none}
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.08) 1px,rgba(0,0,0,0.08) 3px);pointer-events:none;z-index:10}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.05) 1px,rgba(0,0,0,0.05) 3px);pointer-events:none;z-index:10}
 .wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;width:100%;max-width:440px}
-.title{font-size:clamp(1.6rem,5vw,2.2rem);color:#33ff33;text-shadow:0 0 8px rgba(51,255,51,0.5),0 0 30px rgba(51,255,51,0.15);letter-spacing:4px}
-.hud{display:flex;justify-content:space-between;width:100%;max-width:400px;padding:0 4px;font-size:1.1rem;letter-spacing:1px}
-.hud span{color:#88ff88;text-shadow:0 0 4px rgba(51,255,51,0.3)}
-.canvas-wrap{position:relative;border:2px solid #0a3a0a;border-radius:4px;overflow:hidden;box-shadow:0 0 20px rgba(51,255,51,0.04),inset 0 0 40px rgba(0,0,0,0.5)}
-canvas{display:block;background:#020a02}
+.title{font-size:clamp(1.2rem,4.4vw,1.9rem);color:#39FF14;text-shadow:0 0 8px rgba(57,255,20,0.55),0 0 30px rgba(57,255,20,0.18);letter-spacing:4px;text-align:center}
+.hud{display:flex;justify-content:space-between;gap:8px;width:100%;max-width:400px;padding:0 4px}
+.hud-box{flex:1;min-width:0;padding:10px 8px;border:1px solid rgba(57,255,20,0.28);border-radius:6px;background:rgba(3,10,6,0.88);box-shadow:inset 0 0 18px rgba(57,255,20,0.08),0 0 16px rgba(0,0,0,0.24);text-align:center}
+.hud-label{display:block;font-size:0.5rem;letter-spacing:2px;color:#7cff67;margin-bottom:8px}
+.hud-value{display:block;font-size:0.9rem;color:#d8ffd4;text-shadow:0 0 8px rgba(57,255,20,0.28)}
+.canvas-wrap{position:relative;border:2px solid #0a3a0a;border-radius:4px;overflow:hidden;box-shadow:0 0 25px rgba(51,255,51,0.2),inset 0 0 40px rgba(0,0,0,0.5)}
+canvas{display:block;background:#020a02;transition:transform 60ms linear}
 .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(2,10,2,0.9);z-index:3;gap:14px;padding:20px;transition:opacity 0.3s}
 .overlay.hidden{opacity:0;pointer-events:none}
 .ov-title{font-size:clamp(1.2rem,4vw,1.8rem);text-shadow:0 0 12px rgba(51,255,51,0.6);text-align:center;line-height:1.6}
@@ -23,20 +25,20 @@ canvas{display:block;background:#020a02}
 .ov-title.win{color:#ffff33;text-shadow:0 0 12px rgba(255,255,51,0.5)}
 .ov-sub{font-size:0.95rem;color:#227722;text-align:center;line-height:1.6}
 .ov-sub span{color:#33ff33}
-.go-btn{font-family:'Courier New','Consolas','Lucida Console',monospace;font-size:1.1rem;background:transparent;border:2px solid #33ff33;color:#33ff33;padding:10px 28px;border-radius:2px;cursor:pointer;letter-spacing:3px;transition:all 0.2s}
+.go-btn{font-family:'Press Start 2P','Inter','Courier New',monospace;font-size:0.85rem;background:transparent;border:2px solid #39FF14;color:#39FF14;padding:10px 24px;border-radius:2px;cursor:pointer;letter-spacing:3px;transition:all 0.2s}
 .go-btn:hover{background:rgba(51,255,51,0.1);box-shadow:0 0 16px rgba(51,255,51,0.3)}
 .go-btn:active{transform:scale(0.96)}
 .hint{font-size:0.85rem;color:#1a4a1a;letter-spacing:1px;text-align:center}
-@media(max-width:420px){.hud{font-size:0.95rem}}
+@media(max-width:420px){.hud-value{font-size:0.72rem}.hud-label{font-size:0.45rem}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="title">BREAKOUT</div>
   <div class="hud">
-    <div>SCORE <span id="score">0</span></div>
-    <div>LEVEL <span id="level">1</span></div>
-    <div>LIVES <span id="lives">3</span></div>
+    <div class="hud-box"><span class="hud-label">SCORE</span><span class="hud-value" id="score">0</span></div>
+    <div class="hud-box"><span class="hud-label">LEVEL</span><span class="hud-value" id="level">1</span></div>
+    <div class="hud-box"><span class="hud-label">LIVES</span><span class="hud-value" id="lives">3</span></div>
   </div>
   <div class="canvas-wrap">
     <canvas id="game"></canvas>
@@ -64,9 +66,13 @@ canvas{display:block;background:#020a02}
   var W,H;
   var BRICK_ROWS=5,BRICK_COLS=8,BRICK_H=16,BRICK_PAD=4,BRICK_TOP=40;
   var PADDLE_H=12,PADDLE_W=70,BALL_R=5;
-  var paddle,ball,bricks,score,lives,level,alive,launched,rafId;
-  var COLORS=['#33ff33','#66ff66','#22cc22','#00ff88','#88ffaa'];
-  var HIT_COLORS=['#ffff33','#ff8833','#ff3333'];
+  var paddle,ball,bricks,score,lives,level,alive,launched,rafId,lastFrame;
+  var COLORS=['#39FF14','#00F2FF','#FFE700','#FF3131'];
+  var HIT_COLORS=['#FFE700','#FF3131','#00F2FF'];
+  var particles=[];
+  var trail=[];
+  var shakeTime=0;
+  var targetPaddleX=0;
 
   function sizeCanvas(){
     var maxW=Math.min(400,window.innerWidth-32);
@@ -102,17 +108,22 @@ canvas{display:block;background:#020a02}
     launched=false;
     ball.x=paddle.x+PADDLE_W/2;
     ball.y=paddle.y-BALL_R-2;
-    var speed=3.5+level*0.3;
+    var speed=3.8+level*0.42;
     var angle=-Math.PI/4-(Math.random()*Math.PI/4);
     ball.dx=Math.cos(angle)*speed;
     ball.dy=Math.sin(angle)*speed;
+    trail.length=0;
   }
 
   function init(){
     sizeCanvas();
     paddle={x:W/2-PADDLE_W/2,y:H-30};
+    targetPaddleX=paddle.x;
     ball={x:0,y:0,dx:0,dy:0};
     score=0;lives=3;level=1;alive=true;
+    lastFrame=0;
+    particles=[];
+    trail=[];
     scoreEl.textContent='0';
     livesEl.textContent='3';
     levelEl.textContent='1';
@@ -126,9 +137,52 @@ canvas{display:block;background:#020a02}
     PADDLE_W=Math.max(40,70-level*3);
     buildBricks();
     resetBall();
+    window.Android?.playSound('levelup');
   }
 
-  function update(){
+  function shakeBoard(intensity){
+    shakeTime=Math.max(shakeTime,intensity||80);
+  }
+
+  function spawnParticles(x,y,color){
+    var count=8+Math.floor(Math.random()*3);
+    for(var i=0;i<count;i++){
+      particles.push({
+        x:x,
+        y:y,
+        dx:(Math.random()-0.5)*3.2,
+        dy:(Math.random()-0.5)*3.2-0.8,
+        life:500,
+        maxLife:500,
+        color:color
+      });
+    }
+  }
+
+  function updateEffects(delta){
+    if(shakeTime>0){
+      shakeTime=Math.max(0,shakeTime-delta);
+      var strength=Math.min(4,shakeTime/18);
+      canvas.style.transform='translate(' + ((Math.random()-0.5)*strength).toFixed(2) + 'px,' + ((Math.random()-0.5)*strength).toFixed(2) + 'px)';
+    }else{
+      canvas.style.transform='translate(0,0)';
+    }
+
+    trail.push({x:ball.x,y:ball.y});
+    if(trail.length>8)trail.shift();
+
+    for(var i=particles.length-1;i>=0;i--){
+      var p=particles[i];
+      p.life-=delta;
+      p.x+=p.dx*(delta/16.67);
+      p.y+=p.dy*(delta/16.67);
+      p.dy+=0.11*(delta/16.67);
+      if(p.life<=0)particles.splice(i,1);
+    }
+  }
+
+  function update(delta){
+    paddle.x += (targetPaddleX-paddle.x)*Math.min(1,0.22*(delta/16.67));
     if(!launched){
       ball.x=paddle.x+PADDLE_W/2;
       ball.y=paddle.y-BALL_R-2;
@@ -139,14 +193,15 @@ canvas{display:block;background:#020a02}
     ball.y+=ball.dy;
 
     // Wall bounce
-    if(ball.x-BALL_R<=0){ball.x=BALL_R;ball.dx=Math.abs(ball.dx);}
-    if(ball.x+BALL_R>=W){ball.x=W-BALL_R;ball.dx=-Math.abs(ball.dx);}
-    if(ball.y-BALL_R<=0){ball.y=BALL_R;ball.dy=Math.abs(ball.dy);}
+    if(ball.x-BALL_R<=0){ball.x=BALL_R;ball.dx=Math.abs(ball.dx);window.Android?.playSound('blip');}
+    if(ball.x+BALL_R>=W){ball.x=W-BALL_R;ball.dx=-Math.abs(ball.dx);window.Android?.playSound('blip');}
+    if(ball.y-BALL_R<=0){ball.y=BALL_R;ball.dy=Math.abs(ball.dy);window.Android?.playSound('blip');}
 
     // Bottom = lose life
     if(ball.y+BALL_R>=H){
       lives--;
       livesEl.textContent=lives;
+      window.Android?.vibrate(60);
       if(lives<=0){
         gameOver();
         return;
@@ -160,11 +215,13 @@ canvas{display:block;background:#020a02}
       var hitPos=(ball.x-paddle.x)/PADDLE_W;
       var angle=(-140+(hitPos*100))*(Math.PI/180);
       var speed=Math.sqrt(ball.dx*ball.dx+ball.dy*ball.dy);
-      speed=Math.min(speed+0.02,8);
+      speed=Math.min(speed+0.08,9.6);
       ball.dx=Math.cos(angle)*speed;
       ball.dy=Math.sin(angle)*speed;
       if(ball.dy>-1)ball.dy=-1;
       ball.y=paddle.y-BALL_R-1;
+      shakeBoard(70);
+      window.Android?.playSound('blip');
     }
 
     // Brick collision
@@ -178,8 +235,15 @@ canvas{display:block;background:#020a02}
         if(b.hits<=0){
           b.alive=false;
           score+=(b.row+1)*10*level;
+          spawnParticles(b.x+b.w/2,b.y+b.h/2,COLORS[b.row%COLORS.length]);
+          shakeBoard(100);
+          window.Android?.vibrate(30);
+          window.Android?.playSound('crash');
         }else{
           score+=5;
+          shakeBoard(80);
+          window.Android?.vibrate(30);
+          window.Android?.playSound('blip');
         }
         scoreEl.textContent=score;
 
@@ -231,6 +295,19 @@ canvas{display:block;background:#020a02}
     ctx.fillStyle='rgba(255,255,255,0.15)';
     ctx.fillRect(paddle.x,paddle.y,PADDLE_W,3);
 
+    // Ball trail
+    if(launched){
+      for(var t=0;t<trail.length;t++){
+        var node=trail[t];
+        var alpha=0.1*(t/trail.length);
+        var radius=BALL_R*(0.45+0.55*(t/trail.length));
+        ctx.fillStyle='rgba(57,255,20,'+alpha.toFixed(3)+')';
+        ctx.beginPath();
+        ctx.arc(node.x,node.y,radius,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+
     // Ball
     ctx.shadowColor='#88ffaa';
     ctx.shadowBlur=12;
@@ -240,12 +317,12 @@ canvas{display:block;background:#020a02}
     ctx.fill();
     ctx.shadowBlur=0;
 
-    // Ball trail
-    if(launched){
-      ctx.fillStyle='rgba(51,255,51,0.08)';
-      ctx.beginPath();
-      ctx.arc(ball.x-ball.dx*2,ball.y-ball.dy*2,BALL_R*0.7,0,Math.PI*2);
-      ctx.fill();
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i];
+      ctx.globalAlpha=Math.max(0,p.life/p.maxLife);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x,p.y,2,2);
+      ctx.globalAlpha=1;
     }
   }
 
@@ -259,10 +336,13 @@ canvas{display:block;background:#020a02}
     overlay.classList.remove('hidden');
   }
 
-  function loop(){
+  function loop(time){
     if(!alive)return;
     rafId=requestAnimationFrame(loop);
-    update();
+    var delta=lastFrame?time-lastFrame:16.67;
+    lastFrame=time;
+    update(delta);
+    updateEffects(delta);
     draw();
   }
 
@@ -276,7 +356,7 @@ canvas{display:block;background:#020a02}
   function launchBall(){
     if(!launched&&alive){
       launched=true;
-      var speed=3.5+level*0.3;
+      var speed=3.8+level*0.42;
       var angle=-60-(Math.random()*60);
       ball.dx=Math.cos(angle*Math.PI/180)*speed;
       ball.dy=Math.sin(angle*Math.PI/180)*speed;
@@ -284,7 +364,7 @@ canvas{display:block;background:#020a02}
   }
 
   function movePaddle(x){
-    paddle.x=Math.max(0,Math.min(W-PADDLE_W,x-PADDLE_W/2));
+    targetPaddleX=Math.max(0,Math.min(W-PADDLE_W,x-PADDLE_W/2));
   }
 
   // Mouse
@@ -319,9 +399,9 @@ canvas{display:block;background:#020a02}
   // Keyboard movement in loop
   var origUpdate=update;
   update=function(){
-    if(keys['ArrowLeft']||keys['a']||keys['A'])paddle.x=Math.max(0,paddle.x-6);
-    if(keys['ArrowRight']||keys['d']||keys['D'])paddle.x=Math.min(W-PADDLE_W,paddle.x+6);
-    origUpdate();
+    if(keys['ArrowLeft']||keys['a']||keys['A'])targetPaddleX=Math.max(0,targetPaddleX-7);
+    if(keys['ArrowRight']||keys['d']||keys['D'])targetPaddleX=Math.min(W-PADDLE_W,targetPaddleX+7);
+    origUpdate.apply(null,arguments);
   };
 
   goBtn.addEventListener('click',startGame);

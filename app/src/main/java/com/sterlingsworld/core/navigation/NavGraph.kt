@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -31,7 +32,10 @@ import com.sterlingsworld.data.catalog.GameLaunchSpec
 import com.sterlingsworld.domain.model.GameDefinition
 import com.sterlingsworld.domain.model.GameResult
 import com.sterlingsworld.feature.aol.AolScreen
+import com.sterlingsworld.feature.arcade.ArcadeScreen
 import com.sterlingsworld.feature.arcade.GrandArcadeIndoorScreen
+import com.sterlingsworld.feature.cinema.CinemaMenuScreen
+import com.sterlingsworld.feature.cinema.CinemaScreen
 import com.sterlingsworld.feature.game.games.webview.WebViewGame
 import com.sterlingsworld.feature.creamery.CreameryScreen
 import com.sterlingsworld.feature.doodle.DoodleScreen
@@ -47,11 +51,13 @@ import com.sterlingsworld.feature.kidzcinema.KidzCinemaScreen
 import com.sterlingsworld.feature.linebreaker.LinebreakerScreen
 import com.sterlingsworld.feature.luckypaws.LuckyPawsScreen
 import com.sterlingsworld.feature.lumistarquest.LumisStarQuestScreen
+import com.sterlingsworld.feature.map.MapScreen
 import com.sterlingsworld.feature.nostalgia.NostalgiaScreen
 import com.sterlingsworld.feature.game.suites.relaxation.RelaxationSuiteHost
 import com.sterlingsworld.feature.relaxationretreat.RelaxationRetreatScreen
 import com.sterlingsworld.feature.settings.SettingsScreen
 import com.sterlingsworld.feature.spoongauntlet.GauntletScreen
+import com.sterlingsworld.feature.studio.MusicLandScreen
 import com.sterlingsworld.feature.studio.StudioScreen
 import com.sterlingsworld.feature.symptomstriker.SymptomStrikerScreen
 import com.sterlingsworld.feature.video.VideoPlayerScreen
@@ -62,43 +68,62 @@ import com.sterlingsworld.feature.welcome.WelcomeScreen
 fun MeetSterlingNavGraph(
     navController: NavHostController,
     startDestination: String,
+    modifier: Modifier = Modifier,
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
+        modifier = modifier,
     ) {
         composable(Screen.Welcome.route) {
             WelcomeScreen(
                 onEnterPark = {
-                    navController.navigate(Screen.Park.route) {
+                    navController.navigate(Screen.Map.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
+                        launchSingleTop = true
                     }
-                },
-                onStartMyelinProtocol = { context ->
-                    context.startActivity(MyelinProtocolActivity.intent(context))
                 },
             )
         }
 
-        composable(Screen.Park.route) {
-            ParkScaffold(
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToGame = { gameId ->
-                    navController.navigate(Screen.GamePlayer.withId(gameId))
-                },
-                onNavigateToVideo = { videoId, source ->
-                    navController.navigate(Screen.VideoPlayer.withId(videoId, source))
-                },
-                onNavigateToGrandArcade = {
-                    navController.navigate(Screen.GrandArcadeIndoor.route)
-                },
-                onNavigateToKidzHub = {
-                    navController.navigate(Screen.KidzHub.route)
-                },
-                onNavigateToStudio = {
-                    navController.navigate(Screen.StudioPlayer.route)
-                },
+        composable(Screen.Arcade.route) {
+            ArcadeScreen(onEnterArcade = { navController.navigate(Screen.GrandArcadeIndoor.route) })
+        }
+
+        composable(Screen.Cinema.route) {
+            CinemaScreen(onOpenSelection = {
+                navController.navigate(Screen.CinemaMenu.route)
+            })
+        }
+
+        composable(Screen.CinemaMenu.route) {
+            CinemaMenuScreen(onWatchVideo = { videoId ->
+                navController.navigate(Screen.VideoPlayer.withId(videoId, "cinema"))
+            })
+        }
+
+        composable(Screen.Studio.route) {
+            MusicLandScreen(onListen = { navController.navigate(Screen.StudioPlayer.route) })
+        }
+
+        composable(Screen.Kidz.route) {
+            KidzGameshellScreen(
+                onGamesLand = { navController.navigate(Screen.KidzArcadeMenu.route) },
+                onStorybookLand = { navController.navigate(Screen.StorybookLand.route) },
             )
+        }
+
+        composable(Screen.Map.route) {
+            MapScreen(onNavigateToZone = { zone ->
+                navController.navigate(zone) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            })
         }
 
         composable(Screen.Settings.route) {
@@ -131,7 +156,9 @@ fun MeetSterlingNavGraph(
                     is GameLaunchSpec.WebView -> { onComplete ->
                         WebViewGame(assetFolder = launchSpec.assetFolder, onDone = onComplete)
                     }
-                    GameLaunchSpec.RelaxationSuite -> { _ -> RelaxationSuiteHost() }
+                    GameLaunchSpec.RelaxationSuite -> { onComplete ->
+                        RelaxationSuiteHost(onComplete = onComplete)
+                    }
                     GameLaunchSpec.Unsupported -> { _ -> InertGameContent(game = game) }
                 }
 
@@ -187,10 +214,10 @@ fun MeetSterlingNavGraph(
             CompletionScreen(
                 gameId = gameId,
                 onReturnToPark = {
-                    navController.navigate(Screen.Park.route) {
-                        popUpTo(Screen.Park.route) { inclusive = false }
-                        launchSingleTop = true
-                    }
+                    navController.popBackStack(
+                        route = Screen.Arcade.route,
+                        inclusive = false,
+                    )
                 },
                 onReplay = {
                     navController.navigate(Screen.GamePlayer.withId(gameId)) {
@@ -208,7 +235,7 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.LuckyPaws.route) {
-            LuckyPawsScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("lucky-paws")) })
+            LuckyPawsScreen()
         }
 
         composable(Screen.Gauntlet.route) {
@@ -242,8 +269,9 @@ fun MeetSterlingNavGraph(
             val kidzGameRoutes = listOf(
                 Screen.LumiStarQuest.route,
                 Screen.Doodle.route,
-                Screen.Linebreaker.route,
                 Screen.Nostalgia.route,
+                Screen.Linebreaker.route,
+                Screen.SnailsJourney.route,
             )
             KidzArcadeMenuScreen(
                 onMenuItemClick = { index ->
@@ -294,6 +322,10 @@ fun MeetSterlingNavGraph(
 
         composable(Screen.Nostalgia.route) {
             NostalgiaScreen(onPlay = { navController.navigate(Screen.GamePlayer.withId("nostalgia")) })
+        }
+
+        composable(Screen.SnailsJourney.route) {
+            TechnicalDifficultiesScreen() // Placeholder or direct game launch
         }
 
         composable(Screen.Aol.route) {

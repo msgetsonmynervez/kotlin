@@ -83,7 +83,7 @@ object GameCatalog {
             estimatedDurationSec = 75,
             partyEligible = true,
             accentLabel = "Rewards",
-            shipReady = true,
+            shipReady = false,
         ),
         GameDefinition(
             id = "ghost",
@@ -113,6 +113,7 @@ object GameCatalog {
             estimatedDurationSec = 150,
             partyEligible = false,
             accentLabel = "Battle",
+            shipReady = true,
         ),
         GameDefinition(
             id = NativeGameRegistry.GAME_ID_ACCESS_QUEST,
@@ -127,7 +128,7 @@ object GameCatalog {
             estimatedDurationSec = 120,
             partyEligible = true,
             accentLabel = "Mobility",
-            shipReady = true,
+            shipReady = false,
         ),
         GameDefinition(
             id = NativeGameRegistry.GAME_ID_ACCESS_RACER,
@@ -142,13 +143,13 @@ object GameCatalog {
             estimatedDurationSec = 90,
             partyEligible = true,
             accentLabel = "Racing",
-            shipReady = true,
+            shipReady = false,
         ),
         GameDefinition(
             id = NativeGameRegistry.GAME_ID_SNAILS_JOURNEY,
             title = "Snail's Journey",
-            section = GameSection.GAMES,
-            zone = GameZone.ARCADE,
+            section = GameSection.KIDZ,
+            zone = GameZone.KIDZ,
             suite = GameSuite.MINI_GAME,
             description = "A gentle side-scrolling stroll where timing rest stops matters more than speedrunning.",
             objective = "Guide the snail safely past obstacles, refill energy wisely, and finish the level intact.",
@@ -157,7 +158,7 @@ object GameCatalog {
             estimatedDurationSec = 90,
             partyEligible = true,
             accentLabel = "Cozy",
-            shipReady = true,
+            shipReady = false,
         ),
         // Kidz zone games
         GameDefinition(

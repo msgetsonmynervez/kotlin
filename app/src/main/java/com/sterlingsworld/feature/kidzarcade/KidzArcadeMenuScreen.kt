@@ -32,8 +32,9 @@ private data class KidzArcadeEntry(val label: String, val sublabel: String)
 private val kidzArcadeGames = listOf(
     KidzArcadeEntry("Lumi's Star Quest", "Fantasy adventure"),
     KidzArcadeEntry("Doodle Land",       "Save Doodle Land!"),
-    KidzArcadeEntry("Linebreaker",       "Arcade puzzling"),
     KidzArcadeEntry("Nostalgia",         "Retro breakout"),
+    KidzArcadeEntry("Linebreaker",       "Arcade puzzling"),
+    KidzArcadeEntry("Snail's Journey",   "A gentle stroll"),
 )
 
 @Composable

@@ -21,10 +21,8 @@ class SettingsViewModel(
         initialValue = true,
     )
 
-    fun toggleSound() {
-        viewModelScope.launch {
-            prefs.setSoundEnabled(!soundEnabled.value)
-        }
+    fun setSoundEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setSoundEnabled(enabled) }
     }
 
     /**

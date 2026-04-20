@@ -1,24 +1,18 @@
 package com.sterlingsworld.feature.arcade
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
+import com.sterlingsworld.core.ui.components.ArtworkTapTarget
 
 @Composable
 fun ArcadeScreen(onEnterArcade: () -> Unit = {}) {
@@ -30,16 +24,12 @@ fun ArcadeScreen(onEnterArcade: () -> Unit = {}) {
             alignment = Alignment.TopCenter,
             modifier = Modifier.fillMaxSize(),
         )
-        Box(
+        ArtworkTapTarget(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Color(0xEE1A2440))
-                .padding(horizontal = 56.dp, vertical = 16.dp)
-                .clickable { onEnterArcade() },
-        ) {
-            Text("Enter", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        }
+                .padding(bottom = 12.dp)
+                .size(width = 340.dp, height = 340.dp),
+            onTap = onEnterArcade,
+        )
     }
 }

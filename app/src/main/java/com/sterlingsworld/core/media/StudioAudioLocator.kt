@@ -2,6 +2,7 @@ package com.sterlingsworld.core.media
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.sterlingsworld.BuildConfig
 import com.sterlingsworld.data.catalog.StudioCatalog
 
@@ -44,7 +45,7 @@ class StudioAudioLocator(private val context: Context) {
      * all, some, or none of the tracks resolved.
      */
     fun resolveAll(): Pair<List<Pair<String, Uri>>, StudioAvailability> {
-        val all = StudioCatalog.allTracks
+        val all = StudioCatalog.playableTracks
         val resolved = all.mapNotNull { track ->
             val uri = resolve(track.assetPath) ?: return@mapNotNull null
             track.id to uri
@@ -53,6 +54,19 @@ class StudioAudioLocator(private val context: Context) {
             resolvedCount = resolved.size,
             totalCount = all.size,
         )
+
+        // In PAD builds, any unavailable track is a release validation failure.
+        // If you see this log from a Play-delivered install, the PAD asset-path assumption is broken.
+        if (BuildConfig.USE_ASSET_PACKS && availability != StudioAvailability.READY) {
+            Log.w(
+                "StudioAudioLocator",
+                "PAD build: ${all.size - resolved.size}/${all.size} tracks not reachable " +
+                    "via AssetManager. Validate that the :studio-audio pack is install-time " +
+                    "and that file:///android_asset/ URIs resolve from the delivered pack. " +
+                    "Availability = $availability",
+            )
+        }
+
         return resolved to availability
     }
 

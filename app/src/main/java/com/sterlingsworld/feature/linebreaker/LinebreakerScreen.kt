@@ -2,20 +2,17 @@ package com.sterlingsworld.feature.linebreaker
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -23,18 +20,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sterlingsworld.R
-import com.sterlingsworld.core.ui.components.BathroomMapButton
-
+import com.sterlingsworld.core.ui.components.ArtworkTapTarget
 @Composable
 fun LinebreakerScreen(onPlay: () -> Unit = {}) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_linebreaker),
             contentDescription = "Linebreaker Game",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        BathroomMapButton(
+        com.sterlingsworld.core.ui.components.BathroomMapButton(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
@@ -45,16 +41,12 @@ fun LinebreakerScreen(onPlay: () -> Unit = {}) {
                 .padding(bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
+            ArtworkTapTarget(
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.Black.copy(alpha = 0.8f))
-                    .clickable { onPlay() }
-                    .padding(horizontal = 50.dp, vertical = 14.dp),
-            ) {
-                Text("Play", color = Color.White, fontWeight = FontWeight.Bold)
-            }
+                    .padding(bottom = 10.dp)
+                    .size(width = 340.dp, height = 300.dp),
+                onTap = onPlay,
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

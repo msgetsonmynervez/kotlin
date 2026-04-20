@@ -5,7 +5,6 @@ import android.net.Uri
 /** Typed route registry for top-level, nested, and parameterized destinations. */
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
-    object Park : Screen("park")
     object Settings : Screen("settings")
 
     object GamePlayer : Screen("game_player/{gameId}") {
@@ -23,6 +22,7 @@ sealed class Screen(val route: String) {
 
     object Arcade : Screen("arcade")
     object Cinema : Screen("cinema")
+    object CinemaMenu : Screen("cinema_menu")
     object Studio : Screen("studio")
     object Kidz : Screen("kidz")
     object Map : Screen("map")
@@ -45,6 +45,7 @@ sealed class Screen(val route: String) {
     object Linebreaker : Screen("linebreaker")
     object LumiStarQuest : Screen("lumi_star_quest")
     object Nostalgia : Screen("nostalgia")
+    object SnailsJourney : Screen("snails_journey")
 
     object Aol : Screen("aol")
 

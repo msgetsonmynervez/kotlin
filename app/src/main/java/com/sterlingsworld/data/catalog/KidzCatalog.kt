@@ -26,6 +26,11 @@ object KidzCatalog {
             title = "Nostalgia",
             gameId = "nostalgia",
         ),
+        KidzActivity.KidzGame(
+            id = "kids-game-05",
+            title = "Snail's Journey",
+            gameId = "snails-journey",
+        ),
         KidzActivity.KidzVideo(
             id = "kids-video-01",
             title = "Friendly Shapes",

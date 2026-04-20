@@ -15,14 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sterlingsworld.MeetSterlingApplication
+import com.sterlingsworld.core.di.LocalAppContainer
 import com.sterlingsworld.core.ui.theme.Background
 import com.sterlingsworld.core.ui.theme.Primary
 import com.sterlingsworld.core.ui.theme.Secondary
@@ -37,14 +36,13 @@ fun GameShellScreen(
     onComplete: (result: GameResult) -> Unit,
     gameContent: @Composable (onComplete: (GameResult) -> Unit) -> Unit,
 ) {
-    val app = LocalContext.current.applicationContext as MeetSterlingApplication
     val vm: GameShellViewModel = viewModel(
         factory = GameShellViewModel.Factory(
             gameId = gameId,
-            progressRepository = app.gameProgressRepository,
+            progressRepository = LocalAppContainer.current.gameProgressRepository,
         ),
     )
-    val uiState by vm.uiState.collectAsState()
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
     val game = GameCatalog.byId(gameId)
 
     LaunchedEffect(vm) {

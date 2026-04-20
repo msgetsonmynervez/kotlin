@@ -1,5 +1,7 @@
 # MeetSterling Android Kotlin Rebuild - Phase Status
 
+This repository at `C:\Users\Gutie\projects\kotlin-clean` is the main build and the canonical shipping path for the Android app.
+
 ## Phase 1: Foundation - COMPLETE
 **Completed:** 2026-04-12
 
@@ -9,12 +11,11 @@
 
 ---
 
-## Phase 2: Shell - COMPLETE
-**Completed:** 2026-04-12
+## Phase 2: Shell - COMPLETE WITH ACTIVE CLEANUP
 
-- Welcome, park shell, settings, map, completion, cinema, studio, arcade, and kidz surfaces exist
-- Shared navigation and game shell chrome are wired
-- Themed attraction surfaces now sit on top of the shell:
+- Welcome, map, settings, completion, cinema, studio, arcade, and kidz surfaces exist
+- the Kidz entry path now lands directly on the storybooks-or-games chooser
+- attraction and zone surfaces exist for:
   - `GrandArcadeIndoor`
   - `Lucky Paws`
   - `Symptom Striker`
@@ -29,72 +30,83 @@
   - `Linebreaker`
   - `Lumi's Star Quest`
   - `Nostalgia`
+- artwork tap targets replaced the old pill CTA pattern on landing pages
+
+Open shell cleanup:
+
+- global bottom-nav behavior still needs route-by-route hardening
+- route policy and shell chrome still need cleanup to remove drift from recent refactors
 
 ---
 
-## Phase 3: Media - COMPLETE WITH VALIDATION PENDING
+## Phase 3: Media - COMPLETE WITH RUNTIME VALIDATION STILL OPEN
 
 - Cinema and Kidz video assets are staged and routed through `VideoPlayerScreen`
-- `VideoPlayerScreen` now uses Media3/ExoPlayer against bundled app assets
-- Storybook Land and Kidz Cinema now route selected Kidz videos into the shared player
+- `VideoPlayerScreen` uses Media3/ExoPlayer against bundled app assets
+- Storybook Land and Kidz Cinema route selected Kidz videos into the shared player
 - Studio audio corpus is staged in the `:studio-audio` PAD module
-- Studio now has catalog and transport UI wiring, but availability still depends on PAD runtime asset resolution
-- Studio remains present but unavailable until PAD runtime validation is proven on a Play-installed build
+- Studio now exposes a real album model:
+  - available now: `Dark Side of the Spoon`, `Stand Up`, `Neural Garden`
+  - download later: `Groove`, `Sterling Main Library`
+- Studio UI marks deferred albums as download-later and playback is restricted to the intended live albums
 
 Open media validation:
 
-- device smoke test for all 4 videos
-- device validation for Studio PAD runtime asset access
+- device smoke test for all routed videos
+- device validation for Studio runtime asset access on the intended install path
 
 ---
 
 ## Phase 4: Game Platform Foundation - COMPLETE WITH MIXED RUNTIME MODES
 
-Current runtime foundations now in place:
+Current runtime foundations in place:
 
-- `GameShellScreen` + `GameShellViewModel` with real pause, restart, exit, and completion flow
+- `GameShellScreen` + `GameShellViewModel` with pause, restart, exit, and completion flow
 - progress repository integration for session start, restart, and completion recording
 - real completion routing from playable games back into the shared completion surface
 - native family foundations under `feature/game/games/`
-  - Reward: `Lucky Paws`
-  - Narrative: `Ghost`
-  - Mini-game: `Cognitive Creamery`
-  - Battle: `Symptom Striker`
-- HTML/WebView game runtime is wired for packaged asset games under `app/src/main/assets/games/`
+- HTML/WebView runtime is wired for packaged asset games under `app/src/main/assets/games/`
 - attraction detail screens route into either native runtimes or packaged WebView games through the shared `game_player/{gameId}` entry point
 
 Still open at the platform level:
 
-- broader cross-family runtime polish beyond the current v1 ship-ready set
+- broader cross-family runtime polish
 - accessibility and haptics pass
-- battle-family follow-on reuse for `AOL` and `Lumi's Star Quest`
+- battle-family follow-on reuse hardening
+- navigation cleanup to keep shell behavior consistent across the app
 
 ---
 
 ## Phase 5: Individual Games - IN PROGRESS
 
-### Ship-ready native games
+### Currently live in app
 
-| Game | Suite | State |
-|---|---|---|
-| Lucky Paws | RewardSuite | Ship-ready |
-| Ghost | NarrativeSuite | Ship-ready |
-| Cognitive Creamery | MiniGameSuite | Ship-ready |
-| Symptom Striker | BattleSuite | Ship-ready |
+| Game | State |
+|---|---|
+| Ghost | Live |
+| Cognitive Creamery | Live |
+| Symptom Striker | Live |
+| Spoon Gauntlet | Live |
+| Relaxation Retreat | Live |
+| AOL | Live |
 
-### Launchable in app but not ship-ready for v1
+### Currently unavailable or intentionally deferred
 
-These titles now have dedicated attraction screens and route into packaged HTML/WebView game assets, but are still outside the current ship-ready v1 set.
+| Game | State |
+|---|---|
+| Lucky Paws | Coming soon / unavailable |
+| Access Quest | Not live in surfaced app flow |
+| Access Racer | Not live in surfaced app flow |
+| Snail's Journey | Not live in surfaced app flow |
 
-| Game | Suite | State |
-|---|---|---|
-| Relaxation Retreat | MiniGameSuite | Launchable, not ship-ready |
-| Spoon Gauntlet | NarrativeSuite | Launchable, not ship-ready |
-| AOL | BattleSuite | Launchable, not ship-ready |
-| Kidz Doodle Land | MiniGameSuite | Launchable, not ship-ready |
-| Kidz Linebreaker | ArcadeSuite | Launchable, not ship-ready |
-| Lumi's Star Quest | BattleSuite | Launchable, not ship-ready |
-| Nostalgia | ArcadeSuite | Launchable, not ship-ready |
+### Kidz titles present in app
+
+| Game | State |
+|---|---|
+| Kidz Doodle Land | Present |
+| Kidz Linebreaker | Present |
+| Lumi's Star Quest | Present |
+| Nostalgia | Present |
 
 ---
 
@@ -113,7 +125,8 @@ Current verified baseline:
 
 Still open:
 
-- manual device or emulator pass for the current four playable games
-- manual smoke pass for the seven packaged WebView titles
-- Studio PAD runtime validation on a Play-installed build
-- release packaging, signing, and broader regression sweep across native and WebView-backed game paths
+- manual device or emulator pass for the currently live game routes
+- manual smoke pass for packaged WebView-backed titles
+- Studio runtime validation on the intended install path
+- bottom navigation and route-policy cleanup
+- broader regression sweep so docs, catalog state, and surfaced UI stay aligned

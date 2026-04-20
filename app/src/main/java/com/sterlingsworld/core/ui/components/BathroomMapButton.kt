@@ -1,6 +1,7 @@
 package com.sterlingsworld.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -15,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sterlingsworld.core.ui.theme.Accent
 import com.sterlingsworld.core.util.openNearbyBathroomMap
 
 @Composable
@@ -25,14 +27,15 @@ fun BathroomMapButton(modifier: Modifier = Modifier) {
         modifier = modifier
             .size(54.dp)
             .clip(CircleShape)
-            .background(Color(0xEE000000))
+            .background(Color(0xF0141414))
+            .border(width = 1.5.dp, color = Accent.copy(alpha = 0.7f), shape = CircleShape)
             .clickable { openNearbyBathroomMap(context) },
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = "WC",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
+            color = Accent,
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
         )
     }

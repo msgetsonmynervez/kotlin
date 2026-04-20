@@ -47,13 +47,16 @@ class LuckyPawsViewModel : ViewModel() {
         )
     }
 
-    fun buildResult(): GameResult = GameResult(
-        completed = true,
-        score = 1,
-        stars = 3,
-        durationMs = 0L,
-        perfect = true,
-    )
+    fun buildResult(): GameResult {
+        val revealed = uiState.value.phase == LuckyPawsPhase.REVEALED
+        return GameResult(
+            completed = revealed,
+            score = if (revealed) 1 else 0,
+            stars = if (revealed) 1 else 0,
+            durationMs = 0L,
+            perfect = false,
+        )
+    }
 
     private fun randomReward(): String = LUCKY_PAWS_REWARDS.random()
 }

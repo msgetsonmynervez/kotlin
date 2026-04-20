@@ -35,7 +35,6 @@ fun KidzCinemaScreen(
             modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
             onClick = onBack,
         )
-        DashedCornerButton(Modifier.align(Alignment.TopEnd).padding(16.dp))
 
         // Transparent tap zone over the theater screen in the artwork
         Box(

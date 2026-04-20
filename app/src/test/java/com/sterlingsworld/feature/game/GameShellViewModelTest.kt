@@ -162,7 +162,7 @@ class GameShellViewModelTest {
     }
 }
 
-private class FakeGameProgressDao : GameProgressDao {
+private class FakeGameProgressDao : GameProgressDao() {
     private val entities = MutableStateFlow<Map<String, GameProgressEntity>>(emptyMap())
 
     override fun observeProgress(gameId: String): Flow<GameProgressEntity?> =
@@ -171,14 +171,44 @@ private class FakeGameProgressDao : GameProgressDao {
     override fun observeAll(): Flow<List<GameProgressEntity>> =
         entities.map { it.values.toList() }
 
-    override suspend fun getProgress(gameId: String): GameProgressEntity? = entities.value[gameId]
+    suspend fun getProgress(gameId: String): GameProgressEntity? = entities.value[gameId]
 
-    override suspend fun insert(entity: GameProgressEntity) {
-        entities.value = entities.value + (entity.gameId to entity)
+    override suspend fun insertOrIgnore(entity: GameProgressEntity) {
+        if (entity.gameId !in entities.value) {
+            entities.value = entities.value + (entity.gameId to entity)
+        }
     }
 
-    override suspend fun update(entity: GameProgressEntity) {
-        entities.value = entities.value + (entity.gameId to entity)
+    override suspend fun incrementPlayCount(gameId: String, now: String) {
+        val current = entities.value[gameId] ?: return
+        entities.value = entities.value + (
+            gameId to current.copy(
+                playCount = current.playCount + 1,
+                lastPlayedAt = now,
+            )
+        )
+    }
+
+    override suspend fun incrementRestartCount(gameId: String) {
+        val current = entities.value[gameId] ?: return
+        entities.value = entities.value + (
+            gameId to current.copy(
+                restartCount = current.restartCount + 1,
+            )
+        )
+    }
+
+    override suspend fun incrementCompletion(gameId: String, score: Int, stars: Int, now: String) {
+        val current = entities.value[gameId] ?: return
+        entities.value = entities.value + (
+            gameId to current.copy(
+                completionCount = current.completionCount + 1,
+                bestScore = maxOf(current.bestScore, score),
+                bestStars = maxOf(current.bestStars, stars),
+                lastPlayedAt = now,
+                lastCompletedAt = now,
+            )
+        )
     }
 
     override suspend fun deleteAll() {

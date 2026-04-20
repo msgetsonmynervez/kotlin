@@ -1,7 +1,13 @@
 package com.sterlingsworld.feature.game.games.cognitivecreamery
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,28 +17,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val ClarityPanel = Color(0xFF231916)
-private val ClarityText = Color(0xFFF6EADD)
-private val ClarityMuted = Color(0xFFC9B6A1)
-private val ClarityCyan = Color(0xFF8BCFD6)
-private val ClarityRed = Color(0xFFD97A7A)
 
 @Composable
 fun CognitiveClarityGame(
@@ -45,7 +47,7 @@ fun CognitiveClarityGame(
 
     Card(
         modifier = Modifier.fillMaxSize(),
-        colors = CardDefaults.cardColors(containerColor = ClarityPanel),
+        colors = CardDefaults.cardColors(containerColor = CreameryCard),
         shape = RoundedCornerShape(22.dp),
     ) {
         Column(
@@ -63,18 +65,20 @@ fun CognitiveClarityGame(
                 Text(
                     text = "COGNITIVE CLARITY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = ClarityCyan,
+                    color = CreameryClarity,
                     letterSpacing = 3.sp,
                 )
-                FilledTonalButton(onClick = onBackToParlor) {
-                    Text("Parlor")
-                }
+                PressScaleButton(
+                    label = "Parlor",
+                    onClick = onBackToParlor,
+                    filled = true,
+                )
             }
 
             Text(
                 text = group.theme,
                 style = MaterialTheme.typography.headlineLarge,
-                color = ClarityText,
+                color = CreameryText,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
@@ -82,7 +86,7 @@ fun CognitiveClarityGame(
             Text(
                 text = "Tap the three words that belong with the theme.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = ClarityMuted,
+                color = CreameryMuted,
                 textAlign = TextAlign.Center,
             )
 
@@ -95,44 +99,54 @@ fun CognitiveClarityGame(
                     words.forEach { word ->
                         val isFound = word in state.foundWords
                         val isWrong = word in state.wrongWords
-                        val targetColor = when {
-                            isFound -> ClarityCyan
-                            isWrong -> ClarityRed.copy(alpha = 0.35f)
-                            else -> Color.White.copy(alpha = 0.08f)
-                        }
                         val background by animateColorAsState(
-                            targetValue = targetColor,
-                            animationSpec = tween(250),
-                            label = "clarity_button_$word",
+                            targetValue = when {
+                                isFound -> CreameryClarity.copy(alpha = 0.88f)
+                                isWrong -> CreameryDanger.copy(alpha = 0.32f)
+                                else -> Color.White.copy(alpha = 0.08f)
+                            },
+                            label = "clarity_button_bg_$word",
                         )
-                        val textColor = when {
-                            isFound -> Color.Black
-                            isWrong -> ClarityRed
-                            else -> ClarityText
-                        }
+                        val borderColor by animateColorAsState(
+                            targetValue = when {
+                                isFound -> CreameryClarity
+                                isWrong -> CreameryDanger
+                                else -> Color.Transparent
+                            },
+                            label = "clarity_button_border_$word",
+                        )
+                        val fade by animateFloatAsState(
+                            targetValue = if (isFound) 0.58f else 1f,
+                            label = "clarity_fade_$word",
+                        )
+                        val scale by animateFloatAsState(
+                            targetValue = if (isFound || isWrong) 1.04f else 1f,
+                            label = "clarity_scale_$word",
+                        )
 
-                        Button(
-                            onClick = { if (!state.roundComplete) onWordTapped(word) },
+                        BoxedWordButton(
+                            text = word,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                textDecoration = if (isFound) TextDecoration.LineThrough else TextDecoration.None,
+                            ),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(68.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = background,
-                                contentColor = textColor,
-                                disabledContainerColor = background,
-                                disabledContentColor = textColor,
+                                .height(72.dp)
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
+                                .alpha(fade),
+                            containerBrush = Brush.horizontalGradient(
+                                listOf(
+                                    background,
+                                    background.copy(alpha = 0.85f),
+                                ),
                             ),
+                            borderColor = borderColor,
                             enabled = !state.roundComplete || isFound,
-                        ) {
-                            Text(
-                                text = word,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                            )
-                        }
+                            onClick = { if (!state.roundComplete) onWordTapped(word) },
+                        )
                     }
                     if (words.size < 2) {
                         Spacer(modifier = Modifier.weight(1f))
@@ -143,19 +157,72 @@ fun CognitiveClarityGame(
             Text(
                 text = "${state.foundWords.size} / ${group.members.size} found",
                 style = MaterialTheme.typography.labelMedium,
-                color = ClarityCyan,
+                color = CreameryClarity,
             )
 
             if (state.roundComplete) {
-                Button(onClick = onNextRound, modifier = Modifier.fillMaxWidth()) {
-                    Text("Next Round")
-                }
+                PressScaleButton(
+                    label = "Next Round",
+                    onClick = onNextRound,
+                    modifier = Modifier.fillMaxWidth(),
+                    filled = false,
+                )
             }
 
             Text(
                 text = "Rounds cleared: ${state.roundsCompleted}",
                 style = MaterialTheme.typography.labelSmall,
-                color = ClarityMuted,
+                color = CreameryMuted,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxedWordButton(
+    text: String,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier,
+    containerBrush: Brush,
+    borderColor: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 1.1f else 1f, label = "word_scale_$text")
+
+    Card(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .background(containerBrush, RoundedCornerShape(18.dp))
+            .border(2.dp, borderColor, RoundedCornerShape(18.dp))
+            .background(Color.Transparent, RoundedCornerShape(18.dp))
+            .then(
+                Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick,
+                ),
+            ),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        shape = RoundedCornerShape(18.dp),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = textStyle,
+                color = CreameryText,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
             )
         }
     }

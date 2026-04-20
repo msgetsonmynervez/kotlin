@@ -305,6 +305,25 @@ class CognitiveCreameryViewModelTest {
         assertEquals(ROUND_LENGTHS.size, vm.buildResult().score)
     }
 
+    @Test
+    fun `clarity-only session can earn 3 stars`() {
+        val vm = CognitiveCreameryViewModel()
+        vm.navigateTo(CreameryActivity.CLARITY)
+
+        repeat(3) {
+            val group = vm.uiState.value.clarity.currentGroup ?: error("missing clarity group")
+            group.members.forEach(vm::onClarityWordTapped)
+            if (it < 2) {
+                vm.onClarityNextRound()
+            }
+        }
+
+        val result = vm.buildResult()
+        assertEquals(3, result.score)
+        assertEquals(3, result.stars)
+        assertTrue(result.perfect)
+    }
+
     // ── buildRound companion ──────────────────────────────────────────────────
 
     @Test

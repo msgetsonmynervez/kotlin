@@ -2,44 +2,43 @@
 
 ## Objective
 
-The next sprint is not about rescuing project basics anymore.
-The project is already buildable and the shell is materially real.
+The next sprint is a hardening sprint for the main build in this repo.
 
-The next sprint should harden the `new-ui` build, verify the newly launched attraction surfaces, and close the gap between "launchable in app" and "ship-ready for v1".
+It is not a feature-explosion sprint.
+It should make the current surfaced app materially more trustworthy and make the docs match the actual product state.
 
 ## Current checkpoint summary
 
 What is solid:
 
 - app structure and Gradle wrapper flow
-- typed navigation shell and themed park attraction screens
-- welcome/state foundations
-- settings/reset foundations
-- catalog migration
+- current Kotlin navigation shell
+- welcome to map flow
+- themed attraction screens and tappable artwork landing surfaces
 - native game shell and completion flow
 - Media3-backed video playback for Cinema and Kidz
-- packaged HTML/WebView game entry for non-native titles
-- targeted unit tests for catalog and native gameplay flows
+- Studio catalog with real album groupings
+- targeted unit tests for catalog and current native gameplay flows
 
-What is not acceptable yet:
+What is still weak:
 
-- no manual QA pass against the current `new-ui` flow
-- no verified device/emulator smoke test for the seven WebView-backed games
-- Studio PAD runtime still not proven in a Play-installed build
-- battle-family follow-on titles are live in UI but not yet promoted into the ship-ready set
-- project docs were lagging behind the new UI branch until this update
+- no full manual QA pass against the current surfaced build
+- Studio runtime still needs honest device validation
+- bottom-nav and route-policy cleanup is still open
+- Lucky Paws is intentionally unavailable, but older docs and assumptions were lagging behind until this cleanup
+- app docs have been updated, but future changes must keep them aligned with code
 
 ## Sprint goals
 
 Claude must complete the following in this sprint.
 
-### 1. Re-verify build and test baseline on the promoted UI branch
+### 1. Re-verify build and test baseline on the main build
 
 Required outcomes:
 
-- prove the promoted `new-ui` branch still builds from the project root
-- rerun the targeted unit test suite that covers the current ship-ready games and catalog state
-- report the exact commands used and whether they passed
+- prove this main build still builds from the project root
+- rerun the targeted unit test suite that covers catalog and current live gameplay flows
+- report exact commands used and whether they passed
 
 Required reporting:
 
@@ -47,96 +46,95 @@ Required reporting:
 - whether it passed
 - if it failed, exact blocker and file
 
-This is still the first priority because the current PR to make `new-ui` the main build should not merge on stale build assumptions.
-
-### 2. Run a manual QA pass on the current routed surface area
+### 2. Run a manual QA pass on the current surfaced routes
 
 Required outcomes:
 
-- verify the four ship-ready native games:
-  - `Lucky Paws`
+- verify the currently live game routes:
   - `Ghost`
   - `Cognitive Creamery`
   - `Symptom Striker`
-- smoke test the seven packaged WebView-backed titles:
-  - `Relaxation Retreat`
   - `Spoon Gauntlet`
+  - `Relaxation Retreat`
   - `AOL`
-  - `Kidz Doodle Land`
-  - `Kidz Linebreaker`
-  - `Lumi's Star Quest`
-  - `Nostalgia`
-- verify the attraction-to-runtime routing from the new park UI
+- verify Kidz entry routing into the chooser page
 - verify Cinema and Kidz video routing through the shared player
+- verify `Lucky Paws` remains unavailable through normal UI flow
 
 Required reporting:
 
 - what was exercised
 - exact failure points
-- whether failures are content bugs, routing bugs, or asset-loading bugs
+- whether failures are routing bugs, runtime bugs, asset-loading bugs, or state bugs
 
 ### 3. Validate Studio honestly
 
 Required outcomes:
 
-- prove whether PAD-provided Studio assets resolve in the intended install path
-- confirm whether playback can be promoted from "unavailable in this build" to a real ready state
-- if PAD validation still cannot be completed, keep the documentation and user-facing copy explicit about that limitation
+- prove whether the intended live albums resolve on the actual install path
+- verify that only these albums are treated as currently available:
+  - `Dark Side of the Spoon`
+  - `Stand Up`
+  - `Neural Garden`
+- verify `Groove` and `Sterling Main Library` stay visible but non-playable
 
 Required reporting:
 
 - whether the blocker is tooling, install method, asset resolution, or playback
-- what exact change would be required to graduate Studio into v1
+- whether Studio can be treated as actually ready or still needs to remain conditional
 
-### 4. Decide the next ship-ready promotion candidate
+### 4. Clean up navigation drift
 
 Required outcomes:
 
-- choose whether `AOL` or `Lumi's Star Quest` is the next title to move from WebView-backed launchable state into a native or otherwise ship-ready state
-- do not start both in the same sprint
-- use reuse from `Symptom Striker` where possible instead of inventing another parallel battle implementation
+- review current bottom-nav and route-policy behavior
+- use `bottom.md` as the execution guide if this sprint reaches navigation work
+- do not patch this with per-screen duplication
+
+Required reporting:
+
+- what still behaves inconsistently
+- whether the app shell needs another focused refactor sprint
 
 ## Explicit non-goals for this sprint
 
 Do not:
 
-- add more attraction screens just for visual coverage
-- expand into speculative features
-- add analytics, backend, auth, or notifications
-- claim Studio is solved without a verified Play-installed PAD path
-- claim the WebView-backed games are v1 ship-ready without manual validation and a deliberate scope decision
+- add more attraction pages just for visual coverage
+- invent another new media structure
+- mark Lucky Paws live again unless product explicitly changes that state
+- claim Studio is solved without real runtime proof
+- let docs drift away from actual app state again
 
 ## Deliverables required at end of sprint
 
 Claude must provide:
 
 1. Build status
-   - exact working wrapper commands
+   - exact wrapper commands
    - whether `assembleDebug` works
    - whether targeted tests run
 
 2. QA status
-   - native game pass/fail notes
-   - WebView game pass/fail notes
-   - media routing pass/fail notes
+   - pass/fail notes for current live routes
+   - pass/fail notes for media routing
+   - Lucky Paws availability check result
 
 3. Studio status
-   - PAD validation result
-   - playback readiness result
-   - remaining blocker if still unavailable
+   - runtime validation result
+   - current live album validation result
+   - remaining blocker if still not fully verified
 
-4. Game status
-   - which titles remain v1 ship-ready
-   - which titles are still launchable-only
-   - which title is the next promotion candidate
+4. Navigation status
+   - what is still inconsistent
+   - whether `bottom.md` should be the next focused sprint
 
 ## Completion standard
 
-This sprint is successful only if the promoted UI branch is materially more trustworthy at the end:
+This sprint is successful only if the main build is more trustworthy at the end:
 
 - verified by build and targeted tests
-- manually exercised on the surfaced routes that now exist
-- more honest about Studio readiness
-- clearer about which games are truly in v1 versus only launchable in the app
-
-The next sprint should not begin until this one produces a concrete QA and validation answer.
+- manually exercised on the routes the app actually exposes
+- honest about Studio readiness
+- honest about Lucky Paws being unavailable
+- aligned between code, UI state, and repo docs

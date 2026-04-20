@@ -2,7 +2,6 @@ package com.sterlingsworld.feature.luckypaws
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,7 @@ import com.sterlingsworld.R
 import com.sterlingsworld.core.ui.components.BathroomMapButton
 
 @Composable
-fun LuckyPawsScreen(onPlay: () -> Unit = {}) {
+fun LuckyPawsScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_lucky_paws),
@@ -48,11 +47,10 @@ fun LuckyPawsScreen(onPlay: () -> Unit = {}) {
                 modifier = Modifier
                     .padding(bottom = 32.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xEE1A1A1A))
-                    .clickable { onPlay() }
+                    .background(Color(0xAA1A1A1A))
                     .padding(horizontal = 64.dp, vertical = 16.dp),
             ) {
-                Text("Play", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Coming Soon", color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
             Column(
                 modifier = Modifier
@@ -73,6 +71,21 @@ fun LuckyPawsScreen(onPlay: () -> Unit = {}) {
                     fontSize = 10.sp,
                 )
             }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.58f))
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+        ) {
+            Text(
+                "UNAVAILABLE",
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 16.sp,
+                letterSpacing = 2.sp,
+            )
         }
     }
 }

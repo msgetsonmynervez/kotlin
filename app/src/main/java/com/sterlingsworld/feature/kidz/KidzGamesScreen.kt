@@ -24,6 +24,7 @@ private val kidzGames = listOf(
     "Doodle"            to "doodle",
     "Linebreaker"       to "linebreaker",
     "Nostalgia"         to "nostalgia",
+    "Snail's Journey"   to "snails_journey",
 )
 
 @Composable

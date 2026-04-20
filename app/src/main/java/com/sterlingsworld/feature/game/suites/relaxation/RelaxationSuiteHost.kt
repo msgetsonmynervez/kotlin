@@ -30,12 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sterlingsworld.domain.model.GameResult
 
 private val BeachSand = Color(0xFFFFF8E1)
 private val TropicalTeal = Color(0xFF00897B)
 
 @Composable
 fun RelaxationSuiteHost(
+    onComplete: (GameResult) -> Unit,
     vm: RelaxationSuiteViewModel = viewModel(),
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -98,6 +100,7 @@ fun RelaxationSuiteHost(
                             uiState = uiState.trivia,
                             onSelectAnswer = vm::selectAnswer,
                             onNext = vm::nextQuestion,
+                            onFinish = { onComplete(vm.buildResult()) },
                             onRestart = vm::startTrivia,
                         )
                     }
