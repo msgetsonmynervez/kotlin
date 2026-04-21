@@ -1,75 +1,59 @@
-# V1 Scope
+# Current Shipping Scope
 
-Current v1 candidate for `C:\Users\Gutie\projects\android`.
+Canonical repo:
 
-## Playable
+- `C:\Users\Gutie\projects\kotlin-clean`
 
-- `Lucky Paws`
+This file reflects the current shipping/preview split in the final working branch.
+
+## Ship-Ready Titles
+
 - `Ghost`
 - `Cognitive Creamery`
 - `Symptom Striker`
+- `Spoon Gauntlet`
+- `Relaxation Retreat`
 
-These are the only titles currently treated as ship-ready for v1.
+These are the titles currently treated as ship-ready in `GameCatalog`.
 
-## Watchable
+## Preview-Live Titles
+
+- `Busy Streets`
+- `Spoons and Stairs`
+
+These titles are integrated and playable in the arcade UI, but they remain preview-tier and are not marked ship-ready in `GameCatalog`.
+
+## Present But Not Ship-Ready
+
+- `AOL`
+- `Lucky Paws`
+- `Access Quest`
+- `Access Racer`
+- `Snail's Journey`
+
+## Media Surface
 
 - Cinema videos through the shared `VideoPlayerScreen`
 - Kidz videos through Storybook Land and Kidz Cinema into the shared `VideoPlayerScreen`
+- Studio UI and catalog are present, but Studio runtime readiness is still conditional on PAD/install-path validation
 
-## Present But Unavailable
+## Kidz Surface Present In App
 
-- Studio
-
-Current Studio state:
-
-- UI is present
-- corpus is staged in the `:studio-audio` PAD module (126 tracks)
-- catalog and transport UI are wired
-- audio controls remain dependent on PAD runtime asset availability in the install path
-- user-facing copy must continue to read as unavailable, not broken, until validation is complete
-
-Studio audio uses install-time Play Asset Delivery (PAD) via the `:studio-audio` module.
-
-Studio remains excluded from the playable v1 surface until:
-
-- a Play-delivered install proves the assets resolve at runtime
-- device playback validation passes
-
-## Launchable In App But Excluded From Current Ship-Ready v1 Build
-
-- Relaxation Retreat
-- Spoon Gauntlet
-- AOL
-- Kidz Doodle Land
-- Kidz Linebreaker
-- Lumi's Star Quest
-- Nostalgia
-
-These games remain outside the current v1 promise even though the `new-ui` branch now gives them real attraction screens and packaged runtime entry points through `WebViewGame`.
-
-## Other Included Surfaces
-
-- Welcome
-- park shell and tab navigation
-- themed attraction screens for Arcade and Kidz flows
-- settings and reset flow
-- map
+- `Kidz Doodle Land`
+- `Kidz Linebreaker`
+- `Lumi's Star Quest`
+- `Nostalgia`
 
 ## Verification Baseline
 
-- Android Studio sync works
-- targeted native unit tests pass:
-  - `GameCatalogTest`
-  - `GameShellViewModelTest`
-  - `LuckyPawsViewModelTest`
-  - `GhostViewModelTest`
-  - `CognitiveCreameryViewModelTest`
-  - `SymptomStrikerViewModelTest`
-- `assembleDebug` passes
+- `:app:assembleDebug`
+- `:app:installDebug`
+- emulator relaunch after clean rebuild and reinstall
+- targeted native unit coverage remains in repo for catalog and gameplay view models
 
-## Remaining v1 gaps
+## Current Remaining Gaps
 
-- manual device or emulator verification for the four playable games
-- manual smoke verification for the seven WebView-backed launchable titles
-- Studio PAD runtime validation on a Play-installed build
-- deliberate promotion decision for the next non-v1 title, most likely `AOL`
+- Studio runtime validation on the intended install path
+- manual smoke verification across surfaced routes
+- bottom-nav and shell consistency cleanup
+- future promotion decision for `Busy Streets` and `Spoons and Stairs`

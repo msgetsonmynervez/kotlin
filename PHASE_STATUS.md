@@ -1,6 +1,10 @@
 # MeetSterling Android Kotlin Rebuild - Phase Status
 
-This repository at `C:\Users\Gutie\projects\kotlin-clean` is the main build and the canonical shipping path for the Android app.
+Canonical app repo:
+
+- `C:\Users\Gutie\projects\kotlin-clean`
+
+This file reflects the current final working branch snapshot.
 
 ## Phase 1: Foundation - COMPLETE
 **Completed:** 2026-04-12
@@ -11,93 +15,81 @@ This repository at `C:\Users\Gutie\projects\kotlin-clean` is the main build and 
 
 ---
 
-## Phase 2: Shell - COMPLETE WITH ACTIVE CLEANUP
+## Phase 2: Shell - COMPLETE
 
 - Welcome, map, settings, completion, cinema, studio, arcade, and kidz surfaces exist
-- the Kidz entry path now lands directly on the storybooks-or-games chooser
-- attraction and zone surfaces exist for:
-  - `GrandArcadeIndoor`
-  - `Lucky Paws`
-  - `Symptom Striker`
-  - `Creamery`
-  - `Gauntlet`
-  - `Relaxation Retreat`
-  - `AOL`
-  - `KidzArcadeMenu`
-  - `StorybookLand`
-  - `KidzCinema`
-  - `Doodle`
-  - `Linebreaker`
-  - `Lumi's Star Quest`
-  - `Nostalgia`
-- artwork tap targets replaced the old pill CTA pattern on landing pages
+- Kidz entry path lands on the storybooks-or-games chooser
+- Attraction and zone surfaces exist for the shipped and preview titles currently represented in app code
+- Artwork tap targets replaced the older visible pill CTA pattern on landing pages
 
-Open shell cleanup:
+Remaining shell follow-up:
 
-- global bottom-nav behavior still needs route-by-route hardening
-- route policy and shell chrome still need cleanup to remove drift from recent refactors
+- bottom-nav and route-policy cleanup
+- route-by-route shell chrome consistency pass
 
 ---
 
-## Phase 3: Media - COMPLETE WITH RUNTIME VALIDATION STILL OPEN
+## Phase 3: Media - COMPLETE WITH STUDIO VALIDATION STILL CONDITIONAL
 
 - Cinema and Kidz video assets are staged and routed through `VideoPlayerScreen`
 - `VideoPlayerScreen` uses Media3/ExoPlayer against bundled app assets
 - Storybook Land and Kidz Cinema route selected Kidz videos into the shared player
 - Studio audio corpus is staged in the `:studio-audio` PAD module
-- Studio now exposes a real album model:
+- Studio exposes real album groupings:
   - available now: `Dark Side of the Spoon`, `Stand Up`, `Neural Garden`
   - download later: `Groove`, `Sterling Main Library`
-- Studio UI marks deferred albums as download-later and playback is restricted to the intended live albums
 
-Open media validation:
+Still conditional:
 
-- device smoke test for all routed videos
-- device validation for Studio runtime asset access on the intended install path
+- Studio runtime validation on the intended install path / PAD delivery path
 
 ---
 
-## Phase 4: Game Platform Foundation - COMPLETE WITH MIXED RUNTIME MODES
+## Phase 4: Game Platform Foundation - COMPLETE
 
-Current runtime foundations in place:
-
-- `GameShellScreen` + `GameShellViewModel` with pause, restart, exit, and completion flow
-- progress repository integration for session start, restart, and completion recording
-- real completion routing from playable games back into the shared completion surface
-- native family foundations under `feature/game/games/`
+- `GameShellScreen` + `GameShellViewModel` provide pause, restart, exit, and completion flow
+- progress repository integration records session start, restart, and completion
+- real completion routing exists for the native game flows currently wired through the shell
+- native game families live under `feature/game/games/`
 - HTML/WebView runtime is wired for packaged asset games under `app/src/main/assets/games/`
 - attraction detail screens route into either native runtimes or packaged WebView games through the shared `game_player/{gameId}` entry point
 
-Still open at the platform level:
+Still open at platform level:
 
-- broader cross-family runtime polish
-- accessibility and haptics pass
-- battle-family follow-on reuse hardening
-- navigation cleanup to keep shell behavior consistent across the app
+- broader accessibility and haptics pass
+- bottom-nav / shell consistency cleanup
+- broader regression sweep across surfaced routes
 
 ---
 
-## Phase 5: Individual Games - IN PROGRESS
+## Phase 5: Individual Games - COMPLETE WITH TIERED READINESS
 
-### Currently live in app
-
-| Game | State |
-|---|---|
-| Ghost | Live |
-| Cognitive Creamery | Live |
-| Symptom Striker | Live |
-| Spoon Gauntlet | Live |
-| Relaxation Retreat | Live |
-| AOL | Live |
-
-### Currently unavailable or intentionally deferred
+### Ship-ready in catalog
 
 | Game | State |
 |---|---|
-| Lucky Paws | Coming soon / unavailable |
-| Access Quest | Not live in surfaced app flow |
-| Access Racer | Not live in surfaced app flow |
-| Snail's Journey | Not live in surfaced app flow |
+| Ghost | Ship-ready |
+| Cognitive Creamery | Ship-ready |
+| Symptom Striker | Ship-ready |
+| Spoon Gauntlet | Ship-ready |
+| Relaxation Retreat | Ship-ready |
+
+### Preview-live in app
+
+| Game | State |
+|---|---|
+| Busy Streets (`frogger`) | Launchable preview |
+| Spoons and Stairs | Launchable preview |
+
+### Integrated but not ship-ready
+
+| Game | State |
+|---|---|
+| AOL | Implemented route, not ship-ready, not promoted in arcade UI |
+| Lucky Paws | Present but unavailable / not ship-ready |
+| Access Quest | Present in catalog/runtime path, not ship-ready |
+| Access Racer | Present in catalog/runtime path, not ship-ready |
+| Snail's Journey | Present in catalog/runtime path, not ship-ready |
 
 ### Kidz titles present in app
 
@@ -107,26 +99,28 @@ Still open at the platform level:
 | Kidz Linebreaker | Present |
 | Lumi's Star Quest | Present |
 | Nostalgia | Present |
+| Storybook Land / Kidz Cinema | Routed through shared player flow |
+
+Current game-specific note:
+
+- `Busy Streets` now uses integrated Frogger preview art for traffic and raft obstacles
 
 ---
 
-## Phase 6: Hardening - IN PROGRESS
+## Phase 6: Hardening - COMPLETE (Architecture + Runtime Recovery)
+**Completed:** 2026-04-21
 
-Current verified baseline:
-
-- targeted native unit tests pass:
-  - `GameCatalogTest`
-  - `GameShellViewModelTest`
-  - `LuckyPawsViewModelTest`
-  - `GhostViewModelTest`
-  - `CognitiveCreameryViewModelTest`
-  - `SymptomStrikerViewModelTest`
-- `:app:assembleDebug` passes
+- Domain-layer repository interfaces (`AppPreferencesRepository`, `GameProgressRepository`) are in place
+- AppContainer and ViewModels depend on domain abstractions instead of concrete data implementations
+- Progress persistence uses Room `@Transaction` and atomic updates
+- WebView navigation is restricted to local assets
+- Speech/audio support changes are in place for the native game stack
+- Shadow `new games` directory has been removed from the shipping path
+- Preview arcade titles for Frogger and Spoons are integrated into the main app path
+- Current debug launch path was revalidated after a stale APK artifact caused a startup failure; a clean rebuild and reinstall restored normal startup
 
 Still open:
 
-- manual device or emulator pass for the currently live game routes
-- manual smoke pass for packaged WebView-backed titles
-- Studio runtime validation on the intended install path
-- bottom navigation and route-policy cleanup
-- broader regression sweep so docs, catalog state, and surfaced UI stay aligned
+- manual smoke pass for all surfaced routes
+- Studio PAD/runtime validation on the intended install path
+- final shell cleanup so bottom-nav behavior stays consistent

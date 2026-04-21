@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The AndroidManifest describes essential information about the app, such as
+    its package name, the components it contains, and how it interacts with
+    the Android system. Our Frogger game declares a single activity
+    (MainActivity) that launches the Jetpack Compose game screen.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.frogger">
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.FroggerCompose">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -22,6 +22,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.myelin.game.android.NativeGameRegistry
 import com.myelin.game.android.MyelinProtocolActivity
 import com.sterlingsworld.core.ui.theme.Surface
 import com.sterlingsworld.core.ui.theme.TextMuted
@@ -271,7 +272,7 @@ fun MeetSterlingNavGraph(
                 Screen.Doodle.route,
                 Screen.Nostalgia.route,
                 Screen.Linebreaker.route,
-                Screen.SnailsJourney.route,
+                Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY),
             )
             KidzArcadeMenuScreen(
                 onMenuItemClick = { index ->
@@ -325,7 +326,10 @@ fun MeetSterlingNavGraph(
         }
 
         composable(Screen.SnailsJourney.route) {
-            TechnicalDifficultiesScreen() // Placeholder or direct game launch
+            NativeGameLauncher(
+                gameId = NativeGameRegistry.GAME_ID_SNAILS_JOURNEY,
+                onLaunched = { navController.popBackStack() },
+            )
         }
 
         composable(Screen.Aol.route) {

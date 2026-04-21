@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spoon Gauntlet: The Invisible War</title>
+    <style>
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-cyan: #00ffff;
+            --neon-green: #39ff14;
+            --danger-red: #ff0000;
+            --bg-dark: #0a0a0a;
+            --panel-bg: rgba(10, 10, 10, 0.98);
+        }
+
+```
+    /* Nuke mobile text highlighting and tap flashes */
+    * {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+        user-select: none; 
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+        background: var(--bg-dark);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 0;
+        box-sizing: border-box;
+    }
+
+    .ui-panel {
+        background: var(--panel-bg);
+        border: 2px solid var(--neon-cyan);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        text-align: center;
+        max-width: 90%;
+        margin-bottom: 40px;
+    }
+
+    /* Narrative Text Styling */
+    .lore-text {
+        font-size: 1.15rem;
+        line-height: 1.6;
+        text-align: left;
+        margin-bottom: 20px;
+        color: #ddd;
+    }
+
+    /* HUD */
+    .hud-top {
+        position: sticky;
+        top: 10px;
+        z-index: 100;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: rgba(0,0,0,0.95);
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid var(--neon-cyan);
+    }
+
+    .spoon-counter { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+    .spoon-icon { width: 25px; height: 25px; filter: drop-shadow(0 0 5px var(--neon-cyan)); }
+    .spoon-icon.spent { filter: grayscale(1) opacity(0.15); }
+
+    .karma-container {
+        width: 100%; height: 10px; background: #222;
+        border-radius: 5px; position: relative; margin-top: 10px; overflow: hidden;
+    }
+    #karma-bar {
+        position: absolute; height: 100%; width: 50%; 
+        background: linear-gradient(to right, var(--danger-red), var(--neon-green));
+        transition: width 0.5s ease;
+    }
+
+    /* Audio Toggle */
+    #audio-toggle {
+        cursor: pointer; font-size: 0.8rem; color: var(--neon-cyan);
+        border: 1px solid var(--neon-cyan); padding: 6px 12px;
+        border-radius: 8px; background: rgba(0,0,0,0.5); font-weight: bold;
+    }
+
+    .char-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; }
+
+    .scene-image {
+        width: 90%; max-width: 700px; border-radius: 15px;
+        border: 2px solid #333; margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+        pointer-events: none; 
+    }
+
+    .btn-hold {
+        position: relative; padding: 22px 25px; font-size: 1.05rem;
+        font-weight: bold; color: white; background: rgba(0,0,0,0.8);
+        border: 2px solid var(--neon-cyan); border-radius: 12px;
+        cursor: pointer; overflow: hidden; margin: 12px auto;
+        display: block; width: 100%; max-width: 500px;
+        text-align: left; 
+        line-height: 1.4;
+        transition: transform 0.1s;
+    }
+
+    .btn-hold:active {
+        transform: scale(0.97);
+    }
+    
+    .btn-hold.martyr { border-color: var(--neon-green); color: var(--neon-green); }
+    .btn-hold.savage { border-color: var(--danger-red); color: #ff6666; }
+    .btn-hold.bot { border-color: var(--neon-pink); color: var(--neon-pink); }
+    .btn-hold.center-text { text-align: center; color: var(--neon-cyan); border-color: var(--neon-cyan); }
+
+    .progress-bar {
+        position: absolute; left: 0; top: 0; height: 100%;
+        background: rgba(255, 255, 255, 0.2); width: 0%;
+        transition: width 0.1s linear; pointer-events: none;
+    }
+
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .active { display: flex; }
+
+    h1 { color: var(--neon-pink); text-shadow: 0 0 15px var(--neon-pink); font-size: 2.2rem; margin-bottom: 10px; }
+    h2 { color: var(--neon-cyan); margin-bottom: 15px; }
+</style>
+```
+
+</head>
+<body>
+
+<div id="game-container">
+    <div id="hud" class="hud-top" style="display:none;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span id="bot-status" style="font-size: 0.8rem; color: var(--neon-pink); font-weight: bold; letter-spacing: 1px;">ASSISTANT: OFFLINE</span>
+            <button id="audio-toggle" onclick="toggleMusic()">🔊 MUSIC: ON</button>
+        </div>
+        <div class="spoon-counter" id="spoon-container"></div>
+        <div style="display:flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-top: 5px; color: #888;">
+            <span>SAVAGE</span>
+            <span>MARTYR</span>
+        </div>
+        <div class="karma-container"><div id="karma-bar"></div></div>
+    </div>
+
+```
+<div id="screen-title" class="screen active">
+    <img src="https://i.imgur.com/6uysuyM.png" class="scene-image">
+    <div class="ui-panel">
+        <h1>SPOON GAUNTLET</h1>
+        <h2 style="font-size: 1.2rem; color: #aaa;">THE INVISIBLE WAR</h2>
+        <button id="btn-start" class="btn-hold center-text">
+            TAP TO INITIATE BIOMETRIC SCAN
+        </button>
+    </div>
+</div>
+
+<div id="screen-intro" class="screen">
+    <div class="ui-panel" style="max-width: 800px;">
+        <h1>SYSTEM OVERVIEW</h1>
+        <div class="lore-text">
+            <p>Welcome to your central nervous system. It's a hostile work environment.</p>
+            <p>In this gauntlet, your energy is measured in <strong>Spoons</strong>. Every action—fighting bureaucracy, managing ableism, or just assembling a plastic race track—costs Spoons.</p>
+            <p>Run out of Spoons, and your body initiates an autonomic shutdown. Total collapse.</p>
+            <p>Your choices will also affect your <strong>Karma</strong>. Will you play the agreeable Martyr and drain yourself for society? Or will you embrace the Savage and set ruthless boundaries to survive?</p>
+        </div>
+        <button class="btn-hold center-text" onmousedown="startHold(event, () => showScreen('screen-char'))" ontouchstart="startHold(event, () => showScreen('screen-char'))">
+            <div class="progress-bar"></div>
+            I UNDERSTAND THE STAKES
+        </button>
+    </div>
+</div>
+
+<div id="screen-char" class="screen">
+    <h1>CHOOSE YOUR WARRIOR</h1>
+    <div class="char-container">
+        <div class="ui-panel" style="flex: 1; min-width: 300px;">
+            <img src="https://i.imgur.com/iZ9VW4D.png" class="scene-image" style="width:100%;">
+            <h3>JANE DOE</h3>
+            <p><strong>The Detective.</strong> Cynical, sharp, sees the red tape before it wraps around her.</p>
+            <p style="color: var(--neon-cyan);"><small>Perk: Bureaucracy Shield (-1 Spoon cost on admin tasks)</small></p>
+            <button class="btn-hold center-text" onmousedown="startHold(event, () => pickWarrior('Jane'))" ontouchstart="startHold(event, () => pickWarrior('Jane'))">
+                <div class="progress-bar"></div>
+                SELECT JANE
+            </button>
+        </div>
+        <div class="ui-panel" style="flex: 1; min-width: 300px;">
+            <img src="https://i.imgur.com/YwPefDu.png" class="scene-image" style="width:100%;">
+            <h3>JOHN DOE</h3>
+            <p><strong>The Sentinel.</strong> Sturdy, patient, enduring. He's survived worse wait times than this.</p>
+            <p style="color: var(--neon-cyan);"><small>Perk: Zen Endurance (20% lower chance of random Flare-Ups)</small></p>
+            <button class="btn-hold center-text" onmousedown="startHold(event, () => pickWarrior('John'))" ontouchstart="startHold(event, () => pickWarrior('John'))">
+                <div class="progress-bar"></div>
+                SELECT JOHN
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="screen-bot-intro" class="screen">
+    <div class="ui-panel" style="max-width: 800px;">
+        <h1>CO-PILOT REQUIRED</h1>
+        <div class="lore-text">
+            <p>WARNING: Cognitive fatigue ("Brain Fog") detected.</p>
+            <p>Your organic processor is heavily compromised. Navigating a world built for healthy people requires ruthless algorithmic precision. You cannot do this alone.</p>
+            <p>Please select a digital AI Assistant to interface with your prefrontal cortex. They will provide tactical advantages, unlock unique dialogue paths, and handle the social arithmetic your brain is too exhausted to compute.</p>
+        </div>
+        <button class="btn-hold center-text" onmousedown="startHold(event, () => showScreen('screen-bot'))" ontouchstart="startHold(event, () => showScreen('screen-bot'))">
+            <div class="progress-bar"></div>
+            BROWSE AI CATALOG
+        </button>
+    </div>
+</div>
+
+<div id="screen-bot" class="screen">
+    <h1>SYNC AI ASSISTANT</h1>
+    <div class="char-container">
+        <div class="ui-panel" style="flex: 1; min-width: 280px; border-color: white;">
+            <img src="https://i.imgur.com/1umKyx9.png" class="scene-image" style="width:100%; border:none; box-shadow:none;">
+            <h3>i-bot</h3>
+            <p>"Optimization is my primary function."</p>
+            <p><small>Perk: -1 cost on all Physical tasks. Unlocks destructive, clinical choices.</small></p>
+            <button class="btn-hold center-text" style="color: white; border-color: white;" onmousedown="startHold(event, () => pickBot('i-bot'))" ontouchstart="startHold(event, () => pickBot('i-bot'))">
+                <div class="progress-bar"></div>
+                SYNC i-bot
+            </button>
+        </div>
+        <div class="ui-panel" style="flex: 1; min-width: 280px; border-color: #0078d4;">
+            <img src="https://i.imgur.com/fHwaPyK.png" class="scene-image" style="width:100%; border:none; box-shadow:none;">
+            <h3>M-S0ft</h3>
+            <p>"It looks like you're trying to survive!"</p>
+            <p><small>Perk: One 'Mandatory Update' (0 cost pass). Unlocks passive-aggressive glitch choices.</small></p>
+            <button class="btn-hold center-text" style="color: #0078d4; border-color: #0078d4;" onmousedown="startHold(event, () => pickBot('M-S0ft'))" ontouchstart="startHold(event, () => pickBot('M-S0ft'))">
+                <div class="progress-bar"></div>
+                SYNC M-S0ft
+            </button>
+        </div>
+        <div class="ui-panel" style="flex: 1; min-width: 280px; border-color: #4285f4;">
+            <img src="https://i.imgur.com/qAB3lEh.png" class="scene-image" style="width:100%; border:none; box-shadow:none;">
+            <h3>G00gl-</h3>
+            <p>"I know exactly when you will crash."</p>
+            <p><small>Perk: Starts with +2 extra Spoons. Unlocks omniscient, privacy-invading choices.</small></p>
+            <button class="btn-hold center-text" style="color: #4285f4; border-color: #4285f4;" onmousedown="startHold(event, () => pickBot('G00gl-'))" ontouchstart="startHold(event, () => pickBot('G00gl-'))">
+                <div class="progress-bar"></div>
+                SYNC G00gl-
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="screen-agenda" class="screen">
+    <h1>07:00 AM - CALIBRATION</h1>
+    <img src="https://i.imgur.com/sr714ot.png" class="scene-image">
+    <div class="ui-panel">
+        <p id="bot-welcome" style="font-style: italic; color: var(--neon-pink); font-size: 1.1rem;"></p>
+        <p style="font-size: 1.2rem;">System lottery complete. You are starting the day with <span id="rand-spoons" style="color:var(--neon-cyan); font-weight:bold; font-size: 1.8rem;">?</span> Spoons.</p>
+        <h3 style="margin-top: 30px;">SET DAILY AGENDA:</h3>
+        <button class="btn-hold center-text" style="color: var(--danger-red); border-color: var(--danger-red);" onmousedown="startHold(event, () => setAgenda('The Hustle', -2))" ontouchstart="startHold(event, () => setAgenda('The Hustle', -2))">
+            <div class="progress-bar"></div>
+            THE HUSTLE (-2 Spoons / High Risk)
+        </button>
+        <button class="btn-hold center-text" style="color: white; border-color: #888;" onmousedown="startHold(event, () => setAgenda('Equilibrium', 0))" ontouchstart="startHold(event, () => setAgenda('Equilibrium', 0))">
+            <div class="progress-bar"></div>
+            EQUILIBRIUM (Standard Load)
+        </button>
+        <button class="btn-hold center-text" style="color: var(--neon-green); border-color: var(--neon-green);" onmousedown="startHold(event, () => setAgenda('Survival', 2))" ontouchstart="startHold(event, () => setAgenda('Survival', 2))">
+            <div class="progress-bar"></div>
+            SURVIVAL (+2 Spoons / Maximum Caution)
+        </button>
+    </div>
+</div>
+
+<div id="screen-game" class="screen">
+    <img id="current-scene-img" src="" class="scene-image">
+    <div class="ui-panel" style="max-width: 800px;">
+        <h2 id="scene-title"></h2>
+        <p id="scene-desc" class="lore-text" style="font-size: 1.1rem; text-align: center;"></p>
+        <div id="choices"></div>
+    </div>
+</div>
+
+<div id="screen-flareup" class="screen">
+    <img src="https://i.imgur.com/gTaDdDa.png" class="scene-image" style="border-color: var(--danger-red); box-shadow: 0 10px 40px rgba(255,0,0,0.5);">
+    <div class="ui-panel" style="border-color: var(--danger-red); max-width: 600px;">
+        <h1 style="color: var(--danger-red); text-shadow: 0 0 15px var(--danger-red);">SYSTEM INTERRUPTION</h1>
+        <p style="font-size: 1.2rem; font-weight: bold; color: white;">Neurological Flare-Up detected.</p>
+        <p class="lore-text" style="text-align: center;">The friction of the day has triggered an involuntary physical response. Your central nervous system is glitching. <strong style="color: var(--danger-red);">1 Spoon has been drained.</strong></p>
+        <button class="btn-hold center-text" style="color: var(--danger-red); border-color: var(--danger-red);" onmousedown="startHold(event, proceedToNextScene)" ontouchstart="startHold(event, proceedToNextScene)">
+            <div class="progress-bar" style="background: rgba(255,0,0,0.3);"></div>
+            PUSH THROUGH THE FOG
+        </button>
+    </div>
+</div>
+
+<div id="screen-result" class="screen">
+    <img id="result-img" src="" class="scene-image">
+    <div class="ui-panel">
+        <h1 id="result-title"></h1>
+        <p id="result-msg" style="font-size: 1.2rem; line-height: 1.5;"></p>
+        <button class="btn-hold center-text" onmousedown="startHold(event, resetGame)" ontouchstart="startHold(event, resetGame)">
+            <div class="progress-bar"></div>
+            REBOOT CONSCIOUSNESS
+        </button>
+    </div>
+</div>
+```
+
+</div>
+
+<script>
+    // ==========================================
+    // 8-BIT REGGAE / WORLD 2 SYNTH ENGINE
+    // ==========================================
+    let audioCtx = null;
+    let masterGain = null;
+    let isMuted = false;
+    let synthPlaying = false;
+    let nextNoteTime = 0;
+    let audioStep = 0;          // FIX #1: Renamed from `currentStep` to avoid collision with game state variable
+    let timerID = null;
+
+    function playTone(freq, type, startTime, duration, vol) {
+        if (!freq || !audioCtx) return;
+        try {
+            // Safari Failsafe: Never schedule in the past
+            if (startTime < audioCtx.currentTime) {
+                startTime = audioCtx.currentTime + 0.01;
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.value = freq;
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(vol, startTime + 0.01);
+            gain.gain.setValueAtTime(vol, Math.max(startTime + 0.01, startTime + duration - 0.03));
+            gain.gain.linearRampToValueAtTime(0, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        } catch (e) {
+            // Silently catch audio buffer errors
+        }
+    }
+
+    function scheduleLoop() {
+        if (!audioCtx) return;
+        const stepTime = 0.16; // ~95 BPM
+        
+        const notes = {
+            G2: 98.00, C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00,
+            C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88
+        };
+
+        const bass = [
+            notes.C3, null, notes.G2, null, notes.C3, null, notes.G3, null, 
+            notes.C3, null, notes.G2, null, notes.C3, notes.D3, notes.E3, null,
+            notes.F3, null, notes.C3, null, notes.F3, null, notes.C4, null,
+            notes.G3, null, notes.D3, null, notes.G3, notes.E3, notes.D3, null
+        ];
+        
+        const C_CHORD = [notes.C4, notes.E4, notes.G4];
+        const F_CHORD = [notes.C4, notes.F4, notes.A4];
+        const G_CHORD = [notes.D4, notes.G4, notes.B4];
+        
+        const skank = [
+            null, null, C_CHORD, null, null, null, C_CHORD, null,
+            null, null, C_CHORD, null, null, null, C_CHORD, null,
+            null, null, F_CHORD, null, null, null, F_CHORD, null,
+            null, null, G_CHORD, null, null, null, G_CHORD, null
+        ];
+        
+        const melody = [
+            notes.G4, null, notes.E4, notes.C4, null, notes.D4, notes.E4, null, 
+            notes.G4, null, notes.E4, notes.C4, null, null, null, null,
+            notes.A4, null, notes.F4, notes.C4, null, notes.D4, notes.F4, null,
+            notes.G4, null, notes.E4, notes.C4, null, null, null, null
+        ];
+        
+        try {
+            while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                if (bass[audioStep]) playTone(bass[audioStep], 'triangle', nextNoteTime, stepTime * 1.5, 0.4);           // FIX #1
+                if (skank[audioStep]) skank[audioStep].forEach(f => playTone(f, 'square', nextNoteTime, stepTime * 0.6, 0.05));  // FIX #1
+                if (melody[audioStep]) playTone(melody[audioStep], 'square', nextNoteTime, stepTime * 1.2, 0.12);         // FIX #1
+                
+                nextNoteTime += stepTime;
+                audioStep = (audioStep + 1) % 32;   // FIX #1
+            }
+        } catch (e) {
+            // Failsafe for timing math
+        }
+    }
+
+    function initAudio() {
+        if (synthPlaying) return;
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return; 
+            
+            audioCtx = new AudioContextClass();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.4;
+            masterGain.connect(audioCtx.destination);
+
+            // FIX #2: Immediately resume inside the user-gesture call stack.
+            // Moving resume() here instead of a setTimeout guarantees the
+            // browser treats this as a user-initiated audio unlock.
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(function() {});
+            }
+            
+            nextNoteTime = audioCtx.currentTime + 0.1;
+            timerID = setInterval(scheduleLoop, 25);
+            synthPlaying = true;
+        } catch (e) {
+            console.log("Audio Synth Blocked by Browser.");
+        }
+    }
+
+    function toggleMusic() {
+        isMuted = !isMuted;
+        try {
+            if (masterGain && audioCtx) {
+                masterGain.gain.setTargetAtTime(isMuted ? 0 : 0.4, audioCtx.currentTime, 0.05);
+            }
+        } catch(e){}
+        document.getElementById('audio-toggle').innerText = isMuted ? "🔇 MUSIC: OFF" : "🔊 MUSIC: ON";
+    }
+    // ==========================================
+
+    // ==========================================
+    // GLOBAL LONG-PRESS PROTECTION
+    // ==========================================
+    // Android Chrome fires contextmenu on long-press BEFORE touchstart
+    // sometimes reaches startHold. This global handler on the game
+    // container kills that at the root for all .btn-hold elements.
+    document.getElementById('game-container').addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.btn-hold')) {
+            e.preventDefault();
+        }
+    });
+    // ==========================================
+
+    // ==========================================
+    // AIR-GAPPED START BUTTON LOGIC
+    // ==========================================
+    document.getElementById('btn-start').addEventListener('click', function(e) {
+        // FIX #2: Call initAudio() synchronously inside the click handler.
+        // Browsers (especially Safari/iOS) require AudioContext creation AND
+        // resume() to happen in the same synchronous call stack as the user
+        // gesture. The original setTimeout(50ms) wrapper broke this contract,
+        // causing silent audio failure on mobile Safari and some Chrome builds.
+        try {
+            initAudio();
+        } catch (err) {
+            console.log("Audio engine bypassed to preserve UI flow.");
+        }
+
+        // Transition the UI after audio is unlocked
+        showScreen('screen-intro');
+    });
+    // ==========================================
+
+
+    let spoons = 0;
+    let maxSpoons = 0;
+    let karma = 50; 
+    let currentStep = 0;       // Game scene index — no longer collides with audio engine
+    let warrior = "";
+    let bot = "";
+    let mSoftUsed = false;
+    let holdTimer;
+    const holdDuration = 800;
+
+    const botDialogue = {
+        'i-bot': { welcome: "i-bot: Optimization link established. Biological redundancies detected. Let us proceed." },
+        'M-S0ft': { welcome: "M-S0ft: Welcome! Let's try to have a day without a critical system failure!" },
+        'G00gl-': { welcome: "G00gl-: Data link active. Your inevitable 3:00 PM collapse has already been mapped." }
+    };
+
+    const scenes = [
+        { 
+            title: "09:30 AM - The Pharmacy Loop", 
+            desc: "The automated system loops. Penelope puts you back on hold to 'check the back.' The smooth corporate jazz is physically eroding your sanity. Your meds are hostage.", 
+            img: "https://i.imgur.com/8OZ8MMk.png", 
+            type: "bureaucracy", 
+            choices: [
+                { class: "martyr", text: "Politely listen to 45 minutes of smooth jazz. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Fake a loud medical emergency to bypass the queue. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Optimize call by screaming binary noise at high pitch. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Force a Windows 95 update on Penelope's register. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Blackmail Penelope by reading her incognito searches aloud. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "11:00 AM - Owen's MLM Pitch", 
+            desc: "Owen corners you in the clinic waiting room. He thrusts a bottle of 'Cloudy Magic Water' into your personal space. It smells like patchouli and financial ruin. He claims it cures nerve damage and bad credit.", 
+            img: "https://i.imgur.com/peU0wG2.png", 
+            type: "social", 
+            choices: [
+                { class: "martyr", text: "Buy $40 of Cloudy Magic Water to make him leave. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Hiss like a feral cat until he slowly backs away. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Calculate and loudly recite his exact odds of bankruptcy. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Pretend your audio drivers crashed and stare blankly. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Cast targeted ads for 'Cult Deprogramming' to his phone. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "01:00 PM - Tammy's Kale Sermon", 
+            desc: "Tragic Tammy blocks aisle 4. She insists your central nervous system lesions are just 'repressed veggie-energy' and tries to force-feed you raw, unwashed kale while explaining her new wellness podcast.", 
+            img: "https://i.imgur.com/Ynr3W6X.png", 
+            type: "social", 
+            choices: [
+                { class: "martyr", text: "Accept the kale and nod agreeably at her 'vibes' theory. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Slowly bite into a stick of butter while maintaining eye contact. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Physically categorize kale as 'biowaste' and discard it. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Initiate 'Safe Mode' and play dead in the aisle. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Show her WebMD results proving kale causes sadness. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "02:30 PM - Parking Lot Standoff", 
+            desc: "Val is blocking the blue handicap spot with her massive SUV. 'You look fine to me, stop being lazy!' she shouts out the window, aggressively sipping a violently pink iced coffee.", 
+            img: "https://i.imgur.com/OBz8Gdi.png", 
+            type: "bureaucracy", 
+            choices: [
+                { class: "martyr", text: "Apologize for existing and park in the next zip code. (-3 Spoons)", cost: 3, karma: 20 },
+                { class: "savage", text: "Tell Val her personality is a handicap and block her in. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Deploy theoretical spike strip to optimize parking availability. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Error 404: Val's empathy not found. Ignore and park anyway. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Reroute Val's active GPS to the local landfill. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "04:30 PM - The BBQ Heatwave", 
+            desc: "Cousin Greg insists you sit in a sagging nylon camping chair in the direct 98-degree sun to 'be social.' The heat waves are radiating off the pavement. You can actually feel your myelin melting.", 
+            img: "https://i.imgur.com/VAaDwaT.png", 
+            type: "physical", 
+            choices: [
+                { class: "martyr", text: "Sit in the chair and literally melt into the asphalt for the family. (-3 Spoons)", cost: 3, karma: 30 },
+                { class: "savage", text: "Steal Greg's sunglasses and lock yourself in the bathroom. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Spray Greg with the garden hose to regulate ambient temp. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Ctrl+Alt+Delete Greg from your social circle and go inside. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Cast a 10-hour loop of screaming on his TV as a distraction. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "06:00 PM - Uncle Bob's Tablet", 
+            desc: "Uncle Bob shoves a sticky tablet in your face. It's infested with malware, crypto miners, and bizarre pop-ups. 'Can you just fix the internet real quick?' he asks, wiping BBQ sauce on his shirt.", 
+            img: "https://i.imgur.com/v99M5Ge.png", 
+            type: "social", 
+            choices: [
+                { class: "martyr", text: "Scrub the malware while he explains cryptocurrencies to you. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Snap the tablet over your knee. 'It was too far gone.' (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Microwave the device to cleanse the digital infection. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Install BonziBuddy to establish absolute dominance. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Forward his browser history directly to the family group chat. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "07:30 PM - The HOA Zoom Call", 
+            desc: "Margaret, the HOA president, is on a video call denying your accessibility ramp because the railing isn't 'community standard Desert Sand.' She takes a slow, agonizing sip of white wine.", 
+            img: "https://i.imgur.com/ypFD2U7.png", 
+            type: "bureaucracy", 
+            choices: [
+                { class: "martyr", text: "Agree to repaint the ramp and apologize to the board. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Hold a megaphone to the microphone and chant ADA regulations. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] DDoS the HOA servers. Ramp approved by default. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Apply an unremovable potato filter to Margaret's camera. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Share screen showing her unpaid property taxes. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "08:30 PM - The 12-Page Text", 
+            desc: "Karen sends a 12-page text message wall detailing how crystal healing and essential oils will 'align your chakras.' The screen glare in the dark room is a physical assault on your exhausted eyes.", 
+            img: "https://i.imgur.com/aA0Tt6X.png", 
+            type: "social", 
+            choices: [
+                { class: "martyr", text: "Read it all and draft a heartfelt 'Thank you so much!' (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Reply with 'K'. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Auto-reply with the Wikipedia link to 'Pseudoscience'. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Corrupt the text thread so her iPhone soft-bricks. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Sign her email up for 500 essential oil spam newsletters. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "09:30 PM - The 400-Piece Race Track", 
+            desc: "Your son is bouncing with excitement, holding a box of 400 tiny, identical plastic race track pieces. The instructions are a blurred mess. Your hands are shaking violently.", 
+            img: "https://i.imgur.com/94dPjIX.png", 
+            type: "physical", 
+            choices: [
+                { class: "martyr", text: "Assemble it with shaking hands to be the ultimate hero. (-4 Spoons)", cost: 4, karma: 40 },
+                { class: "savage", text: "Tell him race cars are bad for the environment and go to sleep. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Superglue the pieces into a single abstract orb. Finished. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Convince him the track is currently buffering and needs time. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Order a fully assembled track via 30-minute drone delivery. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        },
+        { 
+            title: "10:30 PM - The Pain Cave", 
+            desc: "Dave the trainer yells 'NO PAIN NO GAIN!' through the gym window as you walk by. He gestures to a rusted 50lb iron weight. He clearly has no idea what an autoimmune disease is.", 
+            img: "https://i.imgur.com/Z8Q1Q1H.png", 
+            type: "physical", 
+            choices: [
+                { class: "martyr", text: "Try to lift the iron and immediately regret all life choices. (-2 Spoons)", cost: 2, karma: 20 },
+                { class: "savage", text: "Throw a protein shaker at his head and walk out. (-0 Spoons)", cost: 0, karma: -20 }
+            ],
+            botChoices: {
+                'i-bot': { class: "bot", text: "[i-bot] Calculate Dave's VO2 max and insult his cardiovascular health. (-1 Spoon)", cost: 1, karma: 0 },
+                'M-S0ft': { class: "bot", text: "[M-S0ft] Blue screen your own body and collapse dramatically. (-0 Spoons)", cost: 0, karma: -10 },
+                'G00gl-': { class: "bot", text: "[G00gl-] Leave a devastating 1-star Yelp review from the floor. (-1 Spoon)", cost: 1, karma: -15 }
+            }
+        }
+    ];
+
+    function startHold(event, callback) {
+        // FIX: Prevent the browser's long-press text selection / callout / context menu.
+        // This is the core fix — CSS user-select alone doesn't stop all browsers
+        // (notably iOS Safari and some Android WebViews) from triggering selection
+        // on sustained touch. preventDefault() on the originating touchstart is the
+        // only reliable kill switch.
+        if (event.type === 'touchstart') {
+            event.preventDefault();
+        }
+
+        const btn = event.currentTarget;
+        if (btn.classList.contains('holding')) return; 
+        
+        const progress = btn.querySelector('.progress-bar');
+        let start = null;
+        btn.classList.add('holding');
+
+        // FIX: Block any selection attempts that slip through during the hold.
+        // Some browsers fire 'selectstart' independently of the touch event chain.
+        const blockSelect = (e) => e.preventDefault();
+        const blockContext = (e) => e.preventDefault();
+        document.addEventListener('selectstart', blockSelect);
+        btn.addEventListener('contextmenu', blockContext);
+        
+        function animate(timestamp) {
+            if (!start) start = timestamp;
+            let elapsed = timestamp - start;
+            let p = Math.min((elapsed / holdDuration) * 100, 100);
+            progress.style.width = p + "%";
+            
+            if (p < 100 && btn.classList.contains('holding')) {
+                holdTimer = requestAnimationFrame(animate);
+            } else if (p >= 100) {
+                cleanup(); 
+                btn.classList.remove('holding');
+                progress.style.width = "0%";
+                callback();
+            }
+        }
+        
+        holdTimer = requestAnimationFrame(animate);
+        
+        const stopHold = () => { 
+            cleanup();
+            cancelAnimationFrame(holdTimer); 
+            btn.classList.remove('holding'); 
+            progress.style.width = "0%"; 
+        };
+
+        const cleanup = () => {
+            window.removeEventListener('mouseup', stopHold);
+            window.removeEventListener('touchend', stopHold);
+            window.removeEventListener('touchcancel', stopHold);
+            document.removeEventListener('selectstart', blockSelect);
+            btn.removeEventListener('contextmenu', blockContext);
+            // FIX: Clear any accidental selection that made it through
+            window.getSelection()?.removeAllRanges();
+        };
+
+        window.addEventListener('mouseup', stopHold);
+        window.addEventListener('touchend', stopHold);
+        window.addEventListener('touchcancel', stopHold);  // FIX: Handle interrupted touches (e.g. incoming call)
+    }
+
+    function pickWarrior(name) { 
+        warrior = name; 
+        showScreen('screen-bot-intro'); 
+    }
+
+    function pickBot(name) { 
+        bot = name; 
+        spoons = Math.floor(Math.random() * 5) + 8; 
+        if (bot === 'G00gl-') spoons += 2;
+        document.getElementById('rand-spoons').innerText = spoons;
+        document.getElementById('bot-status').innerText = "ASSISTANT: " + bot;
+        document.getElementById('bot-welcome').innerText = botDialogue[bot].welcome;  // FIX #3: bot welcome text was never rendered
+        showScreen('screen-agenda'); 
+    }
+
+    function setAgenda(name, mod) {
+        spoons += mod; maxSpoons = spoons;
+        document.getElementById('hud').style.display = 'flex';
+        updateSpoons(); 
+        showScreen('screen-game'); 
+        loadScene();
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    function updateSpoons() {
+        const container = document.getElementById('spoon-container');
+        container.innerHTML = '';
+        for (let i = 0; i < maxSpoons; i++) {
+            const img = document.createElement('img');
+            img.src = "https://img.icons8.com/ios-filled/50/00ffff/spoon.png"; 
+            img.className = i < spoons ? "spoon-icon" : "spoon-icon spent";
+            container.appendChild(img);
+        }
+        document.getElementById('karma-bar').style.width = karma + "%";
+    }
+
+    function loadScene() {
+        window.scrollTo(0,0);
+
+        const scene = scenes[currentStep];
+        document.getElementById('current-scene-img').src = scene.img;
+        document.getElementById('scene-title').innerText = scene.title;
+        document.getElementById('scene-desc').innerHTML = scene.desc;
+        
+        const choiceContainer = document.getElementById('choices');
+        choiceContainer.innerHTML = '';
+        
+        let availableChoices = [...scene.choices];
+        if (bot && scene.botChoices && scene.botChoices[bot]) {
+            availableChoices.push(scene.botChoices[bot]);
+        }
+
+        availableChoices.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = `btn-hold ${c.class}`;
+            btn.innerHTML = `<div class="progress-bar"></div>${c.text}`;
+            btn.onmousedown = (e) => startHold(e, () => makeChoice(c, scene.type));
+            btn.ontouchstart = (e) => startHold(e, () => makeChoice(c, scene.type));
+            choiceContainer.appendChild(btn);
+        });
+    }
+
+    function makeChoice(choice, type) {
+        let finalCost = choice.cost;
+        
+        if (warrior === "Jane" && type === "bureaucracy") finalCost = Math.max(0, finalCost - 1);
+        if (bot === "i-bot" && type === "physical") finalCost = Math.max(0, finalCost - 1);
+        if (bot === "M-S0ft" && !mSoftUsed && finalCost >= 2) { 
+            finalCost = 0; mSoftUsed = true; 
+            alert("M-S0ft: Running Mandatory Update. Resource cost for this action bypassed."); 
+        }
+        
+        let isFlareUp = Math.random() < (warrior === "John" ? 0.05 : 0.15);
+        
+        spoons -= finalCost;
+        if (isFlareUp) {
+            spoons -= 1;
+        }
+
+        karma = Math.min(100, Math.max(0, karma + choice.karma));
+        updateSpoons();
+        
+        if (isFlareUp) {
+            showScreen('screen-flareup');
+        } else {
+            proceedToNextScene();
+        }
+    }
+
+    function proceedToNextScene() {
+        if (spoons <= 0) endGame(false);
+        else {
+            currentStep++;
+            if (currentStep >= scenes.length) endGame(true);
+            else {
+                showScreen('screen-game');
+                loadScene();
+            }
+        }
+    }
+
+    function endGame(win) {
+        showScreen('screen-result');
+        const title = document.getElementById('result-title');
+        const msg = document.getElementById('result-msg');
+        const img = document.getElementById('result-img');
+        if (win) {
+            img.src = "https://i.imgur.com/aUMvUMB.png";
+            title.innerText = "TRIAGE COMPLETE";
+            title.style.color = "var(--neon-pink)";  // FIX #4: Reset color in case previous game ended in crash
+            let persona = (karma >= 70) ? "The Self-Sacrificing Martyr" : (karma <= 30) ? "The Boundaried Savage" : "The Balanced Survivor";
+            msg.innerText = `You reached the end of the day with ${spoons} spoons remaining. \n\nYour survival strategy: ${persona}. \n\nSpend your spoons wisely. Visit SterlingtheSpoon.com.`;
+        } else {
+            img.src = "https://i.imgur.com/4CeTVBQ.png";
+            title.innerText = "SYSTEM CRASH";
+            title.style.color = "var(--danger-red)";
+            msg.innerText = "The tank is empty. Your body has initiated an emergency shutdown sequence. The world fades to static.";
+        }
+    }
+
+    function resetGame() {
+        spoons = 0;
+        maxSpoons = 0;
+        karma = 50; 
+        currentStep = 0;
+        warrior = "";
+        bot = "";
+        mSoftUsed = false;
+        
+        document.getElementById('hud').style.display = 'none';
+        showScreen('screen-title');
+    }
+</script>
+
+</body>
+</html>

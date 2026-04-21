@@ -2,7 +2,7 @@ package com.sterlingsworld.feature.game
 
 import com.sterlingsworld.data.progress.GameProgressDao
 import com.sterlingsworld.data.progress.GameProgressEntity
-import com.sterlingsworld.data.progress.GameProgressRepository
+import com.sterlingsworld.data.progress.GameProgressRepositoryImpl
 import com.sterlingsworld.domain.model.GameResult
 import com.sterlingsworld.feature.game.shell.GamePhase
 import com.sterlingsworld.feature.game.shell.GameShellEvent
@@ -129,7 +129,7 @@ class GameShellViewModelTest {
         dao: FakeGameProgressDao = FakeGameProgressDao(),
         scope: CoroutineScope? = null,
     ): GameShellViewModel {
-        val repository = GameProgressRepository(dao)
+        val repository = GameProgressRepositoryImpl(dao)
         return if (scope == null) {
             GameShellViewModel(
                 gameId = "lucky-paws",

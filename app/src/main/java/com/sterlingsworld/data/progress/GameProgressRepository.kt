@@ -1,27 +1,42 @@
 package com.sterlingsworld.data.progress
 
+import com.sterlingsworld.domain.model.GameProgress
 import com.sterlingsworld.domain.model.GameResult
+import com.sterlingsworld.domain.repository.GameProgressRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 
-class GameProgressRepository(private val dao: GameProgressDao) {
+class GameProgressRepositoryImpl(private val dao: GameProgressDao) : GameProgressRepository {
 
-    fun observeProgress(gameId: String): Flow<GameProgressEntity?> =
-        dao.observeProgress(gameId)
+    override fun observeProgress(gameId: String): Flow<GameProgress?> =
+        dao.observeProgress(gameId).map { it?.toDomain() }
 
-    fun observeAll(): Flow<List<GameProgressEntity>> = dao.observeAll()
+    override fun observeAll(): Flow<List<GameProgress>> =
+        dao.observeAll().map { list -> list.map { it.toDomain() } }
 
-    suspend fun recordSessionStart(gameId: String) {
+    override suspend fun recordSessionStart(gameId: String) {
         dao.atomicSessionStart(gameId, Instant.now().toString())
     }
 
-    suspend fun recordRestart(gameId: String) {
+    override suspend fun recordRestart(gameId: String) {
         dao.atomicRestart(gameId)
     }
 
-    suspend fun recordCompletion(gameId: String, result: GameResult) {
+    override suspend fun recordCompletion(gameId: String, result: GameResult) {
         dao.atomicCompletion(gameId, result.score, result.stars, Instant.now().toString())
     }
 
-    suspend fun deleteAll() = dao.deleteAll()
+    override suspend fun deleteAll() = dao.deleteAll()
 }
+
+private fun GameProgressEntity.toDomain(): GameProgress = GameProgress(
+    gameId = gameId,
+    completionCount = completionCount,
+    bestScore = bestScore,
+    bestStars = bestStars,
+    restartCount = restartCount,
+    playCount = playCount,
+    lastPlayedAt = lastPlayedAt,
+    lastCompletedAt = lastCompletedAt
+)

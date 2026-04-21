@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Creamery - Complete Suite</title>
+    <style>
+        :root {
+            --bg: #07070a;
+            --card: #12121a;
+            --pink: #ff00ff;
+            --cyan: #00ffff;
+            --lime: #ccff00;
+            --orange: #f97316;
+            --violet: #8b5cf6;
+            --cherry: #ff0055;
+            --text: #ffffff;
+            --subtext: #94a3b8;
+        }
+
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, transparent 70%);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* The Midnight Parlor Display Case */
+        #app-shell {
+            width: 95%;
+            max-width: 550px;
+            background: linear-gradient(145deg, #161625, #0f0f16);
+            border-radius: 40px;
+            border: 4px solid #2a2a35;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 255, 255, 0.05);
+            padding: 2.5rem;
+            position: relative;
+            min-height: 600px;
+            text-align: center;
+            transition: border-color 0.5s, box-shadow 0.5s;
+        }
+
+        /* Views */
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography & Neon */
+        .neon-title {
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-top: 0;
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--cyan), 0 0 40px var(--cyan);
+            animation: pulse 2s infinite alternate;
+        }
+        @keyframes pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--cyan), 0 0 40px var(--cyan); }
+            100% { text-shadow: 0 0 2px #fff, 0 0 5px #fff, 0 0 15px var(--cyan), 0 0 30px var(--cyan); }
+        }
+        
+        p { color: var(--subtext); line-height: 1.6; }
+
+        /* Midnight Parlor Menu Layout */
+        .menu-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 2rem; max-height: 65vh; overflow-y: auto; padding-right: 10px; padding-top: 5px; }
+        .menu-grid::-webkit-scrollbar { width: 6px; }
+        .menu-grid::-webkit-scrollbar-thumb { background: #334; border-radius: 10px; }
+        
+        /* Flavor Tags (Game Cards) */
+        .game-card {
+            background: rgba(20, 20, 30, 0.8); 
+            border: 1px solid #334; 
+            padding: 1.2rem; 
+            border-radius: 20px;
+            border-left: 6px solid var(--theme-color);
+            display: flex; align-items: center; gap: 20px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            text-align: left;
+            position: relative;
+        }
+        .game-card:hover { 
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 15px var(--theme-color);
+            border-color: var(--theme-color);
+            transform: scale(1.02);
+        }
+        .game-card .icon { font-size: 2.8rem; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
+        .game-card h3 { margin: 0; color: var(--text); font-size: 1.2rem; text-shadow: 0 0 10px var(--theme-color); }
+        .game-card p { margin: 5px 0 0; font-size: 0.85rem; color: #cbd5e1; }
+
+        /* Flavor of the Day Badge */
+        .fotd-badge {
+            position: absolute; top: -1px; right: -1px;
+            background: var(--theme-color); color: #000;
+            padding: 4px 12px; border-bottom-left-radius: 15px; border-top-right-radius: 15px;
+            font-size: 0.7rem; font-weight: 900; text-transform: uppercase;
+            box-shadow: 0 0 10px var(--theme-color); letter-spacing: 1px;
+        }
+
+        /* Shared Game UI */
+        .hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 10px; }
+        .bar-bg { flex-grow: 1; height: 14px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #444; }
+        .fill-bar { width: 0%; height: 100%; transition: width 0.3s ease; }
+        .level-tag { font-weight: bold; font-size: 0.9rem; }
+        
+        .btn-nav {
+            background: #2a2a35; color: #fff; border: 2px solid #445; padding: 0.5rem 1rem;
+            border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-nav:hover { background: #3f3f5a; border-color: var(--theme-color, #fff); }
+        
+        .btn-main {
+            background: var(--cyan); color: #000; border: none; padding: 1.2rem 3rem;
+            border-radius: 100px; font-weight: 900; font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.5); text-transform: uppercase; margin-top: 1rem;
+            transition: filter 0.2s;
+        }
+        .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+        .btn-main:hover { filter: brightness(1.2); }
+
+        .rules-box { background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 25px; text-align: left; margin: 1.5rem 0; border: 1px solid #334; }
+
+        /* Universal Grid Engine */
+        .grid-container { display: grid; gap: 12px; margin-top: 1rem; justify-content: center; }
+        .game-btn {
+            aspect-ratio: 1; background: #252535; border: 3px solid #353545; border-radius: 20px;
+            font-size: 2.5rem; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation; width: 100%; min-width: 70px; color: #fff;
+        }
+        .game-btn:active { transform: scale(0.95); }
+        .display-box { background: rgba(0,0,0,0.4); padding: 1.5rem; border-radius: 25px; margin-bottom: 1.5rem; border: 2px dashed #445; min-height: 80px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+<div id="app-shell">
+    
+    <div id="view-menu" class="view active">
+        <h1 class="neon-title">Cognitive Creamery</h1>
+        <p style="margin-bottom: 0;">Step up to the counter. Pick a flavor.</p>
+        <p style="font-size: 0.8rem; margin-top: 5px; color: #64748b;">Tremor-friendly & visually optimized</p>
+        <div class="menu-grid" id="menu-items">
+            </div>
+    </div>
+
+    <div id="view-clarity" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="clarity-bar" class="fill-bar" style="background: var(--cyan);"></div></div>
+            <div id="clarity-level" class="level-tag" style="color: var(--cyan);">1/50</div>
+        </div>
+        <div class="display-box" style="border-color: var(--cyan);">
+            <small style="color:var(--cyan); text-transform:uppercase; letter-spacing:2px;">Thought Focus</small>
+            <div id="clarity-target" style="font-size: 2.5rem; font-weight: 900; margin-top:5px;">READY?</div>
+        </div>
+        <p style="color: var(--cyan); font-weight: bold; letter-spacing:1px;">Find 3 related concepts</p>
+        <div id="clarity-grid" class="grid-container" style="grid-template-columns: 1fr 1fr;"></div>
+    </div>
+
+    <div id="view-scan" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="scan-bar" class="fill-bar" style="background: var(--pink);"></div></div>
+            <div id="scan-level" class="level-tag" style="color: var(--pink);">1/50</div>
+        </div>
+        <div class="display-box" style="border-color: var(--pink);">
+            <small style="color:var(--pink); text-transform:uppercase; letter-spacing:2px;">Locate All</small>
+            <div id="scan-target" style="font-size: 4rem; filter: drop-shadow(0 0 10px var(--pink));">?</div>
+        </div>
+        <div id="scan-grid" class="grid-container" style="grid-template-columns: repeat(4, 1fr);"></div>
+    </div>
+
+    <div id="view-sequence" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="seq-bar" class="fill-bar" style="background: var(--lime);"></div></div>
+            <div id="seq-level" class="level-tag" style="color: var(--lime);">1/50</div>
+        </div>
+        <div class="display-box" id="seq-display" style="border-color: var(--lime); font-size: 3rem; flex-direction: row; gap: 10px;"></div>
+        <p id="seq-msg" style="color: var(--lime); font-weight: bold; letter-spacing:1px; margin-top:1.5rem;">WATCH THE PATTERN</p>
+        <div id="seq-grid" class="grid-container" style="grid-template-columns: repeat(3, 1fr);"></div>
+    </div>
+
+    <div id="view-category" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="cat-bar" class="fill-bar" style="background: var(--orange);"></div></div>
+            <div id="cat-level" class="level-tag" style="color: var(--orange);">1/50</div>
+        </div>
+        <div class="display-box" style="border-color: var(--orange);">
+            <small style="color:var(--orange); text-transform:uppercase; letter-spacing:2px;">Target Category</small>
+            <div id="cat-target" style="font-size: 2.5rem; font-weight: 900; margin-top:5px;">---</div>
+        </div>
+        <div id="cat-grid" class="grid-container" style="grid-template-columns: repeat(3, 1fr);"></div>
+    </div>
+
+    <div id="view-symmetry" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="sym-bar" class="fill-bar" style="background: var(--violet);"></div></div>
+            <div id="sym-level" class="level-tag" style="color: var(--violet);">1/50</div>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top:2rem;">
+            <div><small style="color:var(--violet); letter-spacing:1px; text-transform:uppercase;">Blueprint</small><div id="sym-blue" class="grid-container" style="margin-top:5px; background:rgba(0,0,0,0.3); padding:10px; border-radius:15px; border:2px dashed #445;"></div></div>
+            <div style="font-size: 2.5rem; color:var(--violet); text-shadow:0 0 10px var(--violet);">➔</div>
+            <div><small style="color:var(--violet); letter-spacing:1px; text-transform:uppercase;">Your Grid</small><div id="sym-play" class="grid-container" style="margin-top:5px; background:rgba(0,0,0,0.3); padding:10px; border-radius:15px; border:2px dashed #445;"></div></div>
+        </div>
+        <button class="btn-main" style="padding: 1rem 2rem; font-size: 1rem; background: var(--violet); margin-top:2rem;" onclick="SymmetryGame.checkMatch()">Check Symmetry</button>
+    </div>
+
+    <div id="view-flip" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="flip-bar" class="fill-bar" style="background: var(--cherry);"></div></div>
+            <div id="flip-level" class="level-tag" style="color: var(--cherry);">1/50</div>
+        </div>
+        <div class="display-box" style="border-color: var(--cherry);">
+            <div id="flip-inst" style="color:#a1a1aa; font-weight:bold; letter-spacing:2px; margin-bottom:10px;">SELECT THE COLOR</div>
+            <div id="flip-word" style="font-size: 4rem; font-weight: 900; letter-spacing:2px;">MINT</div>
+        </div>
+        <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap:15px;">
+            <button class="game-btn" style="font-size:1.5rem; font-weight:bold; letter-spacing:1px;" onclick="FlipGame.guess('MINT')">MINT</button>
+            <button class="game-btn" style="font-size:1.5rem; font-weight:bold; letter-spacing:1px;" onclick="FlipGame.guess('CHERRY')">CHERRY</button>
+            <button class="game-btn" style="font-size:1.5rem; font-weight:bold; letter-spacing:1px;" onclick="FlipGame.guess('BLUEBERRY')">BLUE</button>
+            <button class="game-btn" style="font-size:1.5rem; font-weight:bold; letter-spacing:1px;" onclick="FlipGame.guess('LEMON')">LEMON</button>
+        </div>
+    </div>
+
+    <div id="view-pattern" class="view">
+        <div class="hud">
+            <button class="btn-nav" onclick="Suite.goHome()">Menu</button>
+            <div class="bar-bg"><div id="pat-bar" class="fill-bar" style="background: #a3e635;"></div></div>
+            <div id="pat-level" class="level-tag" style="color: #a3e635;">1/50</div>
+        </div>
+        <div class="display-box" id="pat-display" style="border-color: #a3e635; flex-direction: row; gap: 15px; font-size: 3rem;"></div>
+        <div id="pat-grid" class="grid-container" style="grid-template-columns: repeat(4, 1fr);"></div>
+    </div>
+
+    <div id="view-result" class="view">
+        <h1 id="res-title" style="font-size: 2.5rem; margin-top: 2rem; letter-spacing: 2px;">Result</h1>
+        <p id="res-msg" style="font-size: 1.2rem; margin-bottom: 2rem; color:#cbd5e1;"></p>
+        <button class="btn-main" onclick="Suite.goHome()" style="background: var(--theme-color, var(--cyan));">Back to Menu</button>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // LONG-LOOP AUDIO ENGINE
+    // ==========================================
+    const AudioEngine = (function() {
+        let ctx = null;
+        let loopInt = null;
+        const notes = { C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88, C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00 };
+        
+        const tracks = {
+            clarity: ['C4','E4','G4','E4','C5','G4','E4','C4','0','0'],
+            scan: ['C5','0','D5','E5','C5','E5','C5','E5','0','D5','0','E5','F5','F5','G5','0','C5','D5','E5','0','0'],
+            sequence: ['C4','0','C4','0','D4','0','D4','0','E4','G4','E4','C4','0','0','C4','0','C4','0','D4','0','D4','0','E4','C4','0','0','0'],
+            category: ['C4','C4','D4','E4','C4','E4','D4','0','C4','C4','D4','E4','C4','0','B4','0','C4','C4','D4','E4','F4','E4','D4','C4','B4','G4','A4','B4','C4','0','C4','0','0'],
+            symmetry: ['G4','G4','E4','G4','A4','G4','E4','0','E4','D4','0','E4','D4','0','G4','G4','E4','G4','A4','G4','E4','0','D4','E4','D4','C4','0','0','0'],
+            flip: ['C4','D4','E4','G4','G4','A4','G4','E4','C4','D4','E4','E4','D4','C4','D4','0','C4','D4','E4','G4','G4','A4','G4','E4','C4','D4','E4','E4','D4','D4','C4','0','0'],
+            pattern: ['G4','E4','G4','E4','D4','D4','F4','0','F4','E4','E4','G4','G4','0','G4','E4','G4','E4','D4','D4','F4','0','F4','E4','D4','C4','0','0','0']
+        };
+
+        let currentTrack = [];
+        let tIdx = 0;
+
+        function init() { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+        
+        function playTone(freq, d=0.2, v=0.015, type='square') {
+            if (!ctx || freq === 0) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(v, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + d);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + d);
+        }
+
+        function playTrack(id) {
+            init(); clearInterval(loopInt);
+            currentTrack = tracks[id] || tracks.clarity; tIdx = 0;
+            loopInt = setInterval(() => {
+                if (ctx.state === 'suspended') ctx.resume();
+                let n = currentTrack[tIdx];
+                if (n !== '0') playTone(notes[n], 0.25, 0.01, 'square');
+                tIdx = (tIdx + 1) % currentTrack.length;
+            }, 200);
+        }
+
+        function sfx(type) {
+            init();
+            if(type === 'win') playTone(880, 0.1, 0.05, 'sine');
+            if(type === 'fail') playTone(150, 0.4, 0.08, 'triangle');
+            if(type === 'click') playTone(440, 0.05, 0.02, 'sine');
+            if(type === 'bell') {
+                playTone(1200, 0.1, 0.03, 'sine');
+                setTimeout(()=>playTone(1800, 0.3, 0.02, 'sine'), 80);
+            }
+        }
+
+        return { init, playTrack, sfx, stop: () => clearInterval(loopInt) };
+    })();
+
+    // ==========================================
+    // SUITE CONTROLLER
+    // ==========================================
+    const Suite = (function() {
+        const gamesList = [
+            { id: 'clarity', icon: '🧠', title: 'Cognitive Clarity', color: 'var(--cyan)', desc: 'Semantic association: Find words that match the core thought.' },
+            { id: 'scan', icon: '🔍', title: 'Signal Scan', color: 'var(--pink)', desc: 'Visual filtering: Locate the specific symbols in the crowd.' },
+            { id: 'sequence', icon: '🍭', title: 'Sweet Sequence', color: 'var(--lime)', desc: 'Working memory: Repeat the candy pattern in exact order.' },
+            { id: 'category', icon: '📂', title: 'Candy Categorizer', color: 'var(--orange)', desc: 'Executive function: Sort treats by constantly shifting rules.' },
+            { id: 'symmetry', icon: '🪞', title: 'Sugar Symmetry', color: 'var(--violet)', desc: 'Visual-Spatial: Tap grid cells to perfectly match the blueprint.' },
+            { id: 'flip', icon: '🔄', title: 'Flavor Flip', color: 'var(--cherry)', desc: 'Inhibition: Train your brain to choose the color, not the word.' },
+            { id: 'pattern', icon: '🧩', title: 'Pattern Pieces', color: '#a3e635', desc: 'Logical Deduction: Complete the missing logical sequence.' }
+        ];
+
+        function buildMenu() {
+            const menu = document.getElementById('menu-items');
+            menu.innerHTML = '';
+            
+            // AAA Touch: Random "Flavor of the Day"
+            const fotdIndex = Math.floor(Math.random() * gamesList.length);
+
+            gamesList.forEach((g, index) => {
+                const c = document.createElement('div'); 
+                c.className = 'game-card';
+                c.style.setProperty('--theme-color', g.color);
+                
+                const badgeHTML = (index === fotdIndex) ? `<div class="fotd-badge">Flavor of the Day</div>` : '';
+
+                c.innerHTML = `
+                    ${badgeHTML}
+                    <div class="icon">${g.icon}</div>
+                    <div>
+                        <h3>${g.title}</h3>
+                        <p>${g.desc}</p>
+                    </div>
+                `;
+                c.onclick = () => launch(g.id, g.color);
+                menu.appendChild(c);
+            });
+        }
+
+        function init() {
+            buildMenu();
+            // Allows user to trigger context start on first click
+            document.body.addEventListener('click', () => AudioEngine.init(), {once:true});
+        }
+
+        function launch(id, color) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + id).classList.add('active');
+            
+            // Theme the app shell border and shadow based on game selection
+            const shell = document.getElementById('app-shell');
+            shell.style.borderColor = color;
+            shell.style.boxShadow = `0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px ${color}33`; // 33 is 20% opacity hex
+            
+            document.documentElement.style.setProperty('--theme-color', color);
+            AudioEngine.playTrack(id);
+
+            // Route to correct engine
+            if(id==='clarity') ClarityGame.start();
+            if(id==='scan') ScanGame.start();
+            if(id==='sequence') SequenceGame.start();
+            if(id==='category') CategoryGame.start();
+            if(id==='symmetry') SymmetryGame.start();
+            if(id==='flip') FlipGame.start();
+            if(id==='pattern') PatternGame.start();
+        }
+
+        function goHome() {
+            AudioEngine.stop();
+            AudioEngine.sfx('bell');
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-menu').classList.add('active');
+            
+            // Reset shell to default cyan glow
+            const shell = document.getElementById('app-shell');
+            shell.style.borderColor = '#2a2a35';
+            shell.style.boxShadow = `0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 255, 255, 0.05)`;
+            
+            buildMenu(); // Re-roll flavor of the day
+        }
+
+        function showResult(win, title, msg, color) {
+            AudioEngine.stop();
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-result').classList.add('active');
+            document.getElementById('res-title').innerText = title;
+            document.getElementById('res-title').style.color = color;
+            document.getElementById('res-title').style.textShadow = `0 0 15px ${color}`;
+            document.getElementById('res-msg').innerText = msg;
+            
+            document.documentElement.style.setProperty('--theme-color', color);
+            const shell = document.getElementById('app-shell');
+            shell.style.borderColor = color;
+            shell.style.boxShadow = `0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px ${color}4D`;
+        }
+
+        return { init, goHome, showResult };
+    })();
+
+    // ==========================================
+    // GAME 1: CLARITY
+    // ==========================================
+    const ClarityGame = (function() {
+        const words = [
+            { t: "Library", a: ["Book", "Quiet", "Shelf"], d: ["Pizza", "Sand", "Drum"] },
+            { t: "Winter", a: ["Snow", "Scarf", "Ice"], d: ["Heat", "Beach", "Sun"] },
+            { t: "Ocean", a: ["Salt", "Wave", "Whale"], d: ["Dust", "Tree", "Road"] },
+            { t: "Kitchen", a: ["Oven", "Fork", "Plate"], d: ["Cloud", "Grass", "Soap"] },
+            { t: "Space", a: ["Star", "Planet", "Orbit"], d: ["Carpet", "Socks", "Fence"] }
+        ]; // Expanded algorithmically to 50 via randomness later
+        
+        let lvl=1, fat=0, needed=0;
+        
+        function start() { lvl=1; fat=0; updateHUD(); next(); }
+        
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Clarity Achieved!", "All 50 semantic links restored.", "var(--cyan)");
+            let data = words[Math.floor(Math.random()*words.length)];
+            document.getElementById('clarity-target').innerText = data.t;
+            needed = 3;
+            
+            const grid = document.getElementById('clarity-grid'); grid.innerHTML = '';
+            let pool = [...data.a, ...data.d].sort(()=>0.5-Math.random());
+            pool.forEach(w => {
+                const b = document.createElement('button'); b.className='game-btn'; b.innerText=w; b.style.fontSize='1.3rem';
+                b.onclick = () => {
+                    if(b.classList.contains('correct')||b.classList.contains('wrong')) return;
+                    if(data.a.includes(w)) {
+                        b.classList.add('correct'); b.style.background='var(--cyan)'; AudioEngine.sfx('win'); needed--;
+                        if(needed===0) { lvl++; setTimeout(next, 500); }
+                    } else {
+                        b.classList.add('wrong'); AudioEngine.sfx('fail'); fat+=15; updateHUD();
+                    }
+                };
+                grid.appendChild(b);
+            });
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('clarity-bar').style.width = fat+"%";
+            document.getElementById('clarity-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Fatigue Reached", "Take a rest before your next session.", "var(--cyan)");
+        }
+        return { start };
+    })();
+
+    // ==========================================
+    // GAME 2: SCAN
+    // ==========================================
+    const ScanGame = (function() {
+        const syms = ["🍦", "🧁", "🍩", "🍪", "🍭", "🍒", "🍓", "🍎"];
+        let lvl=1, fat=0, needed=0, target="";
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Sugar Rush!", "You scanned all 50 levels.", "var(--pink)");
+            target = syms[Math.floor(Math.random()*syms.length)];
+            needed = Math.floor(Math.random()*3)+2; // 2 to 4
+            document.getElementById('scan-target').innerText = target;
+            
+            const grid = document.getElementById('scan-grid'); grid.innerHTML = '';
+            let cells = Array(16).fill(null);
+            let p=0; while(p<needed) { let i=Math.floor(Math.random()*16); if(!cells[i]){ cells[i]=target; p++; } }
+            for(let i=0; i<16; i++) { if(!cells[i]) { let d; do{d=syms[Math.floor(Math.random()*syms.length)]}while(d===target); cells[i]=d; } }
+
+            cells.forEach(c => {
+                const b = document.createElement('button'); b.className='game-btn'; b.innerText=c;
+                b.onclick = () => {
+                    if(b.classList.contains('correct')||b.classList.contains('wrong')) return;
+                    if(c===target) {
+                        b.classList.add('correct'); b.style.background='var(--pink)'; AudioEngine.sfx('win'); needed--;
+                        if(needed===0) { lvl++; setTimeout(next, 500); }
+                    } else {
+                        b.classList.add('wrong'); AudioEngine.sfx('fail'); fat+=15; updateHUD();
+                    }
+                };
+                grid.appendChild(b);
+            });
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('scan-bar').style.width = fat+"%";
+            document.getElementById('scan-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Brain Freeze", "Rest your eyes.", "var(--pink)");
+        }
+        return { start };
+    })();
+
+    // ==========================================
+    // GAME 3: SEQUENCE
+    // ==========================================
+    const SequenceGame = (function() {
+        const candy = ["🍬", "🍭", "🍩", "🧁", "🍫", "🍪", "🍓", "🍒", "🍨"];
+        let lvl=1, fat=0, seq=[], uIdx=0, observing=true;
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Memory Master!", "All 50 sequences recalled.", "var(--lime)");
+            observing = true; uIdx = 0;
+            let len = 2 + Math.floor(lvl/10);
+            seq = Array(len).fill(0).map(()=>candy[Math.floor(Math.random()*candy.length)]);
+            
+            const disp = document.getElementById('seq-display'); disp.innerHTML='';
+            seq.forEach(c => { let s=document.createElement('span'); s.innerText=c; disp.appendChild(s); });
+            document.getElementById('seq-msg').innerText = "WATCH THE PATTERN";
+
+            const grid = document.getElementById('seq-grid'); grid.innerHTML = '';
+            let pool = [...candy].sort(()=>0.5-Math.random());
+            pool.forEach(c => {
+                const b = document.createElement('button'); b.className='game-btn'; b.innerText=c;
+                b.onclick = () => {
+                    if(observing || b.classList.contains('wrong')) return;
+                    if(c===seq[uIdx]) {
+                        AudioEngine.sfx('win'); b.classList.add('correct'); b.style.background='var(--lime)';
+                        setTimeout(()=> {b.classList.remove('correct'); b.style.background='#252535';}, 300);
+                        uIdx++;
+                        if(uIdx===seq.length) { lvl++; setTimeout(next, 600); }
+                    } else {
+                        AudioEngine.sfx('fail'); b.classList.add('wrong'); fat+=20; updateHUD();
+                        setTimeout(()=>b.classList.remove('wrong'), 400);
+                    }
+                };
+                grid.appendChild(b);
+            });
+
+            updateHUD();
+            setTimeout(() => {
+                disp.innerHTML = Array(len).fill("?").join(" ");
+                document.getElementById('seq-msg').innerText = "REPEAT IT!";
+                observing = false;
+            }, 1000 + (len*500));
+        }
+
+        function updateHUD() {
+            document.getElementById('seq-bar').style.width = fat+"%";
+            document.getElementById('seq-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Memory Strain", "Take a cognitive break.", "var(--lime)");
+        }
+        return { start };
+    })();
+
+    // ==========================================
+    // GAME 4: CATEGORY
+    // ==========================================
+    const CategoryGame = (function() {
+        const cats = ["Red", "Fruit", "Bakery", "Candy", "Cold"];
+        const items = [
+            { s:"🍎", c:"Red/Fruit" }, { s:"🍒", c:"Red/Fruit" }, { s:"🍓", c:"Red/Fruit" },
+            { s:"🍩", c:"Bakery" }, { s:"🍪", c:"Bakery" }, { s:"🧁", c:"Bakery" },
+            { s:"🍫", c:"Candy" }, { s:"🍭", c:"Candy" }, { s:"🍬", c:"Candy" },
+            { s:"🍦", c:"Cold/Sweet" }, { s:"🍨", c:"Cold/Sweet" }, { s:"🧊", c:"Cold/Clear" }
+        ];
+        let lvl=1, fat=0, needed=0, target="";
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Flexibility Master!", "All 50 shifts handled.", "var(--orange)");
+            target = cats[Math.floor(Math.random()*cats.length)];
+            document.getElementById('cat-target').innerText = target.toUpperCase();
+            needed = 3;
+            
+            let valid = items.filter(i=>i.c.includes(target));
+            let invalid = items.filter(i=>!i.c.includes(target));
+            let pool = [...valid.sort(()=>0.5-Math.random()).slice(0,3), ...invalid.sort(()=>0.5-Math.random()).slice(0,6)].sort(()=>0.5-Math.random());
+
+            const grid = document.getElementById('cat-grid'); grid.innerHTML = '';
+            pool.forEach(i => {
+                const b = document.createElement('button'); b.className='game-btn'; b.innerText=i.s;
+                b.onclick = () => {
+                    if(b.classList.contains('correct')||b.classList.contains('wrong')) return;
+                    if(i.c.includes(target)) {
+                        b.classList.add('correct'); b.style.background='var(--orange)'; AudioEngine.sfx('win'); needed--;
+                        if(needed===0) { lvl++; setTimeout(next, 500); }
+                    } else {
+                        b.classList.add('wrong'); AudioEngine.sfx('fail'); fat+=15; updateHUD();
+                    }
+                };
+                grid.appendChild(b);
+            });
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('cat-bar').style.width = fat+"%";
+            document.getElementById('cat-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Rule Confusion", "Take a short rest.", "var(--orange)");
+        }
+        return { start };
+    })();
+
+    // ==========================================
+    // GAME 5: SYMMETRY
+    // ==========================================
+    const SymmetryGame = (function() {
+        const cands = ["", "🍭", "🍩", "🧁"];
+        let lvl=1, fat=0, pattern=[], player=[];
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Perfect Mirror!", "All 50 blueprints mapped.", "var(--violet)");
+            let size = lvl > 20 ? 6 : 4;
+            pattern = Array(size).fill(0).map(()=>Math.floor(Math.random()*(cands.length-1))+1);
+            player = Array(size).fill(0);
+            
+            const bGrid = document.getElementById('sym-blue'); bGrid.innerHTML=''; bGrid.style.gridTemplateColumns = size===6 ? 'repeat(3,1fr)' : 'repeat(2,1fr)';
+            const pGrid = document.getElementById('sym-play'); pGrid.innerHTML=''; pGrid.style.gridTemplateColumns = size===6 ? 'repeat(3,1fr)' : 'repeat(2,1fr)';
+
+            pattern.forEach(v => { let c=document.createElement('div'); c.className='cell-static'; c.innerText=cands[v]; c.style.fontSize='2rem'; c.style.width='50px'; c.style.height='50px'; c.style.display='flex'; c.style.alignItems='center'; c.style.justifyContent='center'; bGrid.appendChild(c); });
+            
+            player.forEach((v,i) => {
+                let btn = document.createElement('button'); btn.className='game-btn'; btn.style.width='50px'; btn.style.height='50px'; btn.style.fontSize='2rem'; btn.innerText=cands[v]; btn.style.minWidth='0';
+                btn.onclick = () => { AudioEngine.sfx('click'); player[i]=(player[i]+1)%cands.length; btn.innerText=cands[player[i]]; };
+                pGrid.appendChild(btn);
+            });
+            updateHUD();
+        }
+
+        function checkMatch() {
+            let match = JSON.stringify(pattern) === JSON.stringify(player);
+            if(match) { AudioEngine.sfx('win'); lvl++; setTimeout(next, 400); }
+            else { AudioEngine.sfx('fail'); fat+=20; updateHUD(); }
+        }
+
+        function updateHUD() {
+            document.getElementById('sym-bar').style.width = fat+"%";
+            document.getElementById('sym-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Spatial Fatigue", "Rest your eyes.", "var(--violet)");
+        }
+        return { start, checkMatch };
+    })();
+
+    // ==========================================
+    // GAME 6: FLIP (STROOP)
+    // ==========================================
+    const FlipGame = (function() {
+        const flavors = [ { n:"MINT", c:"#00ffaa" }, { n:"CHERRY", c:"#ff0055" }, { n:"BLUEBERRY", c:"#00aaff" }, { n:"LEMON", c:"#ffcc00" } ];
+        let lvl=1, fat=0, target="";
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Iron Focus!", "You conquered the Stroop test.", "var(--cherry)");
+            let rule = Math.random()>0.5 ? "COLOR" : "WORD";
+            let w = flavors[Math.floor(Math.random()*4)];
+            let c = flavors[Math.floor(Math.random()*4)];
+            if(Math.random()<0.7 && w===c) c=flavors[(flavors.indexOf(w)+1)%4];
+            
+            target = rule==="COLOR" ? c.n : w.n;
+            document.getElementById('flip-inst').innerText = `SELECT THE ${rule}`;
+            document.getElementById('flip-word').innerText = w.n;
+            document.getElementById('flip-word').style.color = c.c;
+            document.getElementById('flip-word').style.textShadow = `0 0 20px ${c.c}80`;
+            updateHUD();
+        }
+
+        function guess(ans) {
+            if(ans===target) { AudioEngine.sfx('win'); lvl++; setTimeout(next, 300); }
+            else { AudioEngine.sfx('fail'); fat+=20; updateHUD(); }
+        }
+
+        function updateHUD() {
+            document.getElementById('flip-bar').style.width = fat+"%";
+            document.getElementById('flip-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Interference Overload", "Brain melt reached. Rest.", "var(--cherry)");
+        }
+        return { start, guess };
+    })();
+
+    // ==========================================
+    // GAME 7: PATTERN
+    // ==========================================
+    const PatternGame = (function() {
+        const treats = ["🍦", "🍩", "🧁", "🍪", "🍭", "🍬", "🍒", "🍓"];
+        let lvl=1, fat=0, correct="";
+
+        function start() { lvl=1; fat=0; next(); }
+
+        function next() {
+            if(lvl>50) return Suite.showResult(true, "Logic Legend!", "All 50 sequences solved.", "#a3e635");
+            let t1 = treats[Math.floor(Math.random()*treats.length)];
+            let t2 = treats.filter(t=>t!==t1)[Math.floor(Math.random()*(treats.length-1))];
+            let type = Math.floor(Math.random()*3); if(lvl<10) type=0;
+            
+            let seq=[];
+            if(type===0) { seq=[t1,t2,t1,t2]; correct=t1; }
+            else if(type===1) { seq=[t1,t1,t2,t2]; correct=t1; }
+            else { seq=[t1,t2,t2,t1]; correct=t2; }
+
+            document.getElementById('pat-display').innerHTML = seq.map(s=>`<span>${s}</span>`).join('') + `<span style="color:#f97316; font-weight:900;">?</span>`;
+            
+            const grid = document.getElementById('pat-grid'); grid.innerHTML='';
+            let opts = [correct]; while(opts.length<4) { let r=treats[Math.floor(Math.random()*treats.length)]; if(!opts.includes(r)) opts.push(r); }
+            opts.sort(()=>0.5-Math.random()).forEach(o => {
+                const b = document.createElement('button'); b.className='game-btn'; b.innerText=o;
+                b.onclick = () => {
+                    if(b.classList.contains('correct')||b.classList.contains('wrong')) return;
+                    if(o===correct) { b.classList.add('correct'); b.style.background='#a3e635'; AudioEngine.sfx('win'); lvl++; setTimeout(next, 500); }
+                    else { b.classList.add('wrong'); AudioEngine.sfx('fail'); fat+=20; updateHUD(); }
+                };
+                grid.appendChild(b);
+            });
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('pat-bar').style.width = fat+"%";
+            document.getElementById('pat-level').innerText = `${lvl}/50`;
+            if(fat>=100) Suite.showResult(false, "Logic Drain", "Take a breather.", "#a3e635");
+        }
+        return { start };
+    })();
+
+    // Init App
+    window.onload = Suite.init;
+</script>
+</body>
+</html>

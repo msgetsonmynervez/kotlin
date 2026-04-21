@@ -1,5 +1,7 @@
 package com.sterlingsworld.feature.kidz
 
+import com.myelin.game.android.NativeGameRegistry
+import com.sterlingsworld.core.navigation.Screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +26,7 @@ private val kidzGames = listOf(
     "Doodle"            to "doodle",
     "Linebreaker"       to "linebreaker",
     "Nostalgia"         to "nostalgia",
-    "Snail's Journey"   to "snails_journey",
+    "Snail's Journey"   to Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_SNAILS_JOURNEY),
 )
 
 @Composable

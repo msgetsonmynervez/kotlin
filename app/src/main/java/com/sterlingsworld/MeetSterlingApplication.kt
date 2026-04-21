@@ -1,9 +1,11 @@
 package com.sterlingsworld
 
 import android.app.Application
-import com.sterlingsworld.data.preferences.AppPreferencesRepository
+import com.sterlingsworld.data.preferences.AppPreferencesRepositoryImpl
 import com.sterlingsworld.data.progress.GameProgressDatabase
-import com.sterlingsworld.data.progress.GameProgressRepository
+import com.sterlingsworld.data.progress.GameProgressRepositoryImpl
+import com.sterlingsworld.domain.repository.AppPreferencesRepository
+import com.sterlingsworld.domain.repository.GameProgressRepository
 
 class MeetSterlingApplication : Application() {
 
@@ -16,9 +18,9 @@ class MeetSterlingApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        preferencesRepository = AppPreferencesRepository(this)
+        preferencesRepository = AppPreferencesRepositoryImpl(this)
 
         val db = GameProgressDatabase.getInstance(this)
-        gameProgressRepository = GameProgressRepository(db.gameProgressDao())
+        gameProgressRepository = GameProgressRepositoryImpl(db.gameProgressDao())
     }
 }

@@ -3,8 +3,8 @@ package com.sterlingsworld.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.sterlingsworld.data.preferences.AppPreferencesRepository
-import com.sterlingsworld.data.progress.GameProgressRepository
+import com.sterlingsworld.domain.repository.AppPreferencesRepository
+import com.sterlingsworld.domain.repository.GameProgressRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

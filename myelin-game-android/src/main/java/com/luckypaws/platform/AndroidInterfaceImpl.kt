@@ -122,37 +122,39 @@ class AndroidInterfaceImpl(
     }
 
     override fun playProceduralTone(frequency: Double, durationMs: Int) {
-        val sampleRate = 44100
-        val sampleCount = (durationMs / 1000.0 * sampleRate).toInt()
-        val buffer = ShortArray(sampleCount)
-        for (i in buffer.indices) {
-            val angle = 2.0 * Math.PI * i * frequency / sampleRate
-            buffer[i] = (sin(angle) * Short.MAX_VALUE).toInt().toShort()
-        }
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            .build()
-        val audioFormat = AudioFormat.Builder()
-            .setSampleRate(sampleRate)
-            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-            .build()
-        val track = AudioTrack(
-            audioAttributes,
-            audioFormat,
-            buffer.size * 2,
-            AudioTrack.MODE_STATIC,
-            AudioManager.AUDIO_SESSION_ID_GENERATE,
-        )
-        track.write(buffer, 0, buffer.size)
-        track.play()
-        try {
-            Thread.sleep(durationMs.toLong())
-        } catch (_: InterruptedException) {
-        }
-        track.stop()
-        track.release()
+        Thread {
+            val sampleRate = 44100
+            val sampleCount = (durationMs / 1000.0 * sampleRate).toInt()
+            val buffer = ShortArray(sampleCount)
+            for (i in buffer.indices) {
+                val angle = 2.0 * Math.PI * i * frequency / sampleRate
+                buffer[i] = (sin(angle) * Short.MAX_VALUE).toInt().toShort()
+            }
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+            val audioFormat = AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build()
+            val track = AudioTrack(
+                audioAttributes,
+                audioFormat,
+                buffer.size * 2,
+                AudioTrack.MODE_STATIC,
+                AudioManager.AUDIO_SESSION_ID_GENERATE,
+            )
+            track.write(buffer, 0, buffer.size)
+            track.play()
+            try {
+                Thread.sleep(durationMs.toLong())
+            } catch (_: InterruptedException) {
+            }
+            track.stop()
+            track.release()
+        }.start()
     }
 
     fun setRecognitionListener(listener: RecognitionListener) {

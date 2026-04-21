@@ -3,8 +3,8 @@ package com.sterlingsworld.feature.game.shell
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.sterlingsworld.data.progress.GameProgressRepository
 import com.sterlingsworld.domain.model.GameResult
+import com.sterlingsworld.domain.repository.GameProgressRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

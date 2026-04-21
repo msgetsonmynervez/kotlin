@@ -4,7 +4,6 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -15,8 +14,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +23,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -33,8 +31,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,19 +44,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -67,39 +63,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sterlingsworld.R
 import com.sterlingsworld.domain.model.GameResult
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 internal val CreameryCard = Color(0xB8211715)
 internal val CreameryCardAlt = Color(0xBD2C1F1B)
 internal val CreameryGold = Color(0xFFD6AE63)
 internal val CreameryText = Color(0xFFF6EADD)
 internal val CreameryMuted = Color(0xFFC9B6A1)
-internal val CreamerySequence = Color(0xFFD39D63)
-internal val CreameryClarity = Color(0xFF8BCFD6)
 internal val CreameryDanger = Color(0xFFD97A7A)
 internal val CreameryFrost = Color(0xFFB9E7FF)
+private val SymmetryTilesUi = listOf("", "🍭", "🍩", "🧁")
 
-private enum class CreamerySfx {
-    TAP, SUCCESS
-}
+private enum class CreamerySfx { TAP, SUCCESS, FAIL }
 
 private class CreamerySoundPlayer {
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 55)
 
     fun play(effect: CreamerySfx) {
         when (effect) {
-            CreamerySfx.TAP -> toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 60)
-            CreamerySfx.SUCCESS -> toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 120)
+            CreamerySfx.TAP -> toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 50)
+            CreamerySfx.SUCCESS -> toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 110)
+            CreamerySfx.FAIL -> toneGenerator.startTone(ToneGenerator.TONE_CDMA_ABBR_ALERT, 140)
         }
     }
 
@@ -115,56 +104,24 @@ fun CognitiveCreameryGame(
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val soundPlayer = remember { CreamerySoundPlayer() }
-    var showSparkle by remember { mutableStateOf(false) }
-    var previousScore by remember { mutableIntStateOf(uiState.sessionScore) }
-    var previousFatigue by remember { mutableIntStateOf(uiState.fatigueLevel) }
-    var previousPhase by remember { mutableStateOf(uiState.sequence.phase) }
-    var previousClarityComplete by remember { mutableStateOf(uiState.clarity.roundComplete) }
-    var initialized by remember { mutableStateOf(false) }
+    var previousOverlay by remember { mutableStateOf<CreameryResultOverlay?>(null) }
 
     DisposableEffect(Unit) {
         onDispose { soundPlayer.release() }
     }
 
-    LaunchedEffect(
-        uiState.sessionScore,
-        uiState.fatigueLevel,
-        uiState.sequence.phase,
-        uiState.clarity.roundComplete,
-    ) {
-        if (!initialized) {
-            previousScore = uiState.sessionScore
-            previousFatigue = uiState.fatigueLevel
-            previousPhase = uiState.sequence.phase
-            previousClarityComplete = uiState.clarity.roundComplete
-            initialized = true
-            return@LaunchedEffect
+    LaunchedEffect(uiState.resultOverlay) {
+        val current = uiState.resultOverlay
+        if (current != null && current != previousOverlay) {
+            soundPlayer.play(if (current.success) CreamerySfx.SUCCESS else CreamerySfx.FAIL)
         }
-
-        if (uiState.sessionScore > previousScore) {
-            soundPlayer.play(CreamerySfx.SUCCESS)
-        }
-        if (
-            (uiState.sequence.phase == CreameryPhase.ROUND_RESULT &&
-                previousPhase != CreameryPhase.ROUND_RESULT &&
-                uiState.sequence.lastRoundCorrect) ||
-            (uiState.clarity.roundComplete && !previousClarityComplete)
-        ) {
-            showSparkle = true
-            delay(850)
-            showSparkle = false
-        }
-
-        previousScore = uiState.sessionScore
-        previousFatigue = uiState.fatigueLevel
-        previousPhase = uiState.sequence.phase
-        previousClarityComplete = uiState.clarity.roundComplete
+        previousOverlay = current
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.bg_cognitive_creamery),
-            contentDescription = "Cognitive Creamery parlor background",
+            contentDescription = "Cognitive Creamery background",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )
@@ -173,7 +130,7 @@ fun CognitiveCreameryGame(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.40f)),
         )
-        FatigueVignette(fatigueLevel = uiState.fatigueLevel)
+        FatigueVignette(fatigue = uiState.activeFatigue)
 
         Column(
             modifier = Modifier
@@ -183,7 +140,6 @@ fun CognitiveCreameryGame(
         ) {
             CreameryTopBar(
                 state = uiState,
-                previousFatigue = previousFatigue,
                 onBackToParlor = vm::backToParlor,
                 onFinish = { onDone(vm.buildResult()) },
             )
@@ -195,86 +151,99 @@ fun CognitiveCreameryGame(
                         soundPlayer.play(CreamerySfx.TAP)
                         vm.navigateTo(it)
                     },
-                    onFinish = { onDone(vm.buildResult()) },
                     onReset = vm::resetSession,
+                    onFinish = { onDone(vm.buildResult()) },
+                    modifier = Modifier.weight(1f),
                 )
-                CreameryActivity.SEQUENCE -> SequenceSuite(
-                    state = uiState.sequence,
-                    fatigueIncreased = uiState.fatigueLevel > previousFatigue,
-                    onReady = {
-                        soundPlayer.play(CreamerySfx.TAP)
-                        vm.onReady()
-                    },
-                    onTokenTapped = {
-                        soundPlayer.play(CreamerySfx.TAP)
-                        vm.onTokenTapped(it)
-                    },
-                    onUndo = vm::onUndo,
-                    onCheck = vm::onCheck,
-                    onNextRound = {
-                        soundPlayer.play(CreamerySfx.TAP)
-                        vm.onNextRound()
-                    },
-                    onBackToParlor = vm::backToParlor,
-                    onDone = { onDone(vm.buildResult()) },
-                )
-                CreameryActivity.CLARITY -> CognitiveClarityGame(
-                    state = uiState.clarity,
-                    onWordTapped = {
-                        soundPlayer.play(CreamerySfx.TAP)
-                        vm.onClarityWordTapped(it)
-                    },
-                    onNextRound = {
-                        soundPlayer.play(CreamerySfx.TAP)
-                        vm.onClarityNextRound()
-                    },
-                    onBackToParlor = vm::backToParlor,
-                )
+                else -> Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    when (uiState.currentActivity) {
+                        CreameryActivity.CLARITY -> ClarityMode(uiState.clarity, onTap = {
+                            soundPlayer.play(CreamerySfx.TAP)
+                            vm.onClarityWordTapped(it)
+                        })
+                        CreameryActivity.SCAN -> ScanMode(uiState.scan, onTap = {
+                            soundPlayer.play(CreamerySfx.TAP)
+                            vm.onScanTapped(it)
+                        })
+                        CreameryActivity.SEQUENCE -> SequenceMode(
+                            state = uiState.sequence,
+                            onReady = {
+                                soundPlayer.play(CreamerySfx.TAP)
+                                vm.onReadySequence()
+                            },
+                            onToken = {
+                                soundPlayer.play(CreamerySfx.TAP)
+                                vm.onSequenceTokenTapped(it)
+                            },
+                            onUndo = vm::onSequenceUndo,
+                            onCheck = vm::onSequenceCheck,
+                        )
+                        CreameryActivity.CATEGORY -> CategoryMode(uiState.category, onTap = {
+                            soundPlayer.play(CreamerySfx.TAP)
+                            vm.onCategoryTapped(it)
+                        })
+                        CreameryActivity.SYMMETRY -> SymmetryMode(
+                            state = uiState.symmetry,
+                            onCycle = {
+                                soundPlayer.play(CreamerySfx.TAP)
+                                vm.onSymmetryCycle(it)
+                            },
+                            onCheck = {
+                                soundPlayer.play(CreamerySfx.TAP)
+                                vm.onSymmetryCheck()
+                            },
+                        )
+                        CreameryActivity.FLIP -> FlipMode(uiState.flip, onGuess = {
+                            soundPlayer.play(CreamerySfx.TAP)
+                            vm.onFlipGuess(it)
+                        })
+                        CreameryActivity.PATTERN -> PatternMode(uiState.pattern, onGuess = {
+                            soundPlayer.play(CreamerySfx.TAP)
+                            vm.onPatternGuess(it)
+                        })
+                        CreameryActivity.PARLOR -> Unit
+                    }
+                }
             }
         }
 
-        SparkleBurst(visible = showSparkle)
-
-        if (uiState.isBrainFreeze) {
-            BrainFreezeOverlay(
-                onRecover = vm::resetBrainFreeze,
+        uiState.resultOverlay?.let { overlay ->
+            ResultOverlay(
+                overlay = overlay,
+                onMenu = vm::dismissResultOverlay,
                 onFinish = { onDone(vm.buildResult()) },
             )
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CreameryTopBar(
     state: CognitiveCreameryUiState,
-    previousFatigue: Int,
     onBackToParlor: () -> Unit,
     onFinish: () -> Unit,
 ) {
-    val pulse by rememberInfiniteTransition(label = "fatigue_pulse").animateFloat(
+    val pulse by rememberInfiniteTransition(label = "creamery_topbar").animateFloat(
         initialValue = 1f,
-        targetValue = 1.06f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
                 durationMillis = 900
                 1f at 0
-                1.06f at 450
+                1.05f at 450
                 1f at 900
             },
             repeatMode = RepeatMode.Restart,
         ),
-        label = "fatigue_pulse_value",
+        label = "creamery_topbar_pulse",
     )
-    val wobbleX = remember { Animatable(0f) }
-    LaunchedEffect(state.fatigueLevel) {
-        if (state.fatigueLevel <= previousFatigue) return@LaunchedEffect
-        val offsets = listOf(-8f, 7f, -5f, 4f, -2f, 0f)
-        offsets.forEach {
-            wobbleX.snapTo(it)
-            delay(22)
-        }
-        wobbleX.snapTo(0f)
-    }
+    val accent = Color(state.currentActivity.accent)
 
     Card(
         colors = CardDefaults.cardColors(containerColor = CreameryCard),
@@ -285,10 +254,9 @@ private fun CreameryTopBar(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -298,82 +266,90 @@ private fun CreameryTopBar(
                         letterSpacing = 3.sp,
                     )
                     Text(
-                        text = "Cognitive Creamery",
+                        text = state.currentActivity.label,
                         style = MaterialTheme.typography.headlineSmall,
                         color = CreameryText,
                         fontWeight = FontWeight.Black,
                     )
                 }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     if (state.currentActivity != CreameryActivity.PARLOR) {
-                        PressScaleButton(
-                            label = "Parlor",
-                            onClick = onBackToParlor,
-                            filled = true,
-                        )
+                        PressScaleButton(label = "Menu", onClick = onBackToParlor, filled = true)
                     }
-                    PressScaleButton(
-                        label = "Cash Out",
-                        onClick = onFinish,
-                        filled = false,
-                    )
+                    PressScaleButton(label = "Cash Out", onClick = onFinish, filled = false)
                 }
             }
 
-            Text(
-                text = "Fatigue",
-                style = MaterialTheme.typography.labelSmall,
-                color = CreameryMuted,
-                letterSpacing = 2.sp,
-            )
-
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(wobbleX.value.toInt(), 0) }
-                    .graphicsLayer {
-                        val levelRatio = state.fatigueLevel.toFloat() / MAX_FATIGUE.toFloat()
-                        val scale = if (levelRatio >= 0.8f) pulse else 1f
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                    .fillMaxWidth()
-                    .height(12.dp)
-                    .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(999.dp)),
-            ) {
+            if (state.currentActivity != CreameryActivity.PARLOR) {
+                Text(
+                    text = "Fatigue",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CreameryMuted,
+                    letterSpacing = 2.sp,
+                )
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(state.fatigueLevel.toFloat() / MAX_FATIGUE.toFloat())
+                        .fillMaxWidth()
                         .height(12.dp)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(CreameryClarity, CreameryGold, CreameryDanger),
+                        .graphicsLayer {
+                            if (state.activeFatigue >= 80) {
+                                scaleX = pulse
+                                scaleY = pulse
+                            }
+                        }
+                        .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(999.dp)),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(state.activeFatigue.toFloat() / CREAMERY_MAX_FATIGUE.toFloat())
+                            .height(12.dp)
+                            .background(
+                                brush = Brush.horizontalGradient(listOf(accent, CreameryGold, CreameryDanger)),
+                                shape = RoundedCornerShape(999.dp),
                             ),
-                            shape = RoundedCornerShape(999.dp),
-                        ),
+                    )
+                }
+                Text(
+                    text = "Level ${state.activeLevel}/$CREAMERY_MAX_LEVEL • Modes cleared ${state.clearedModes.size}/${PLAYABLE_ACTIVITIES_UI.size}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CreameryMuted,
+                )
+            } else {
+                Text(
+                    text = "Flavor of the day: ${state.flavorOfTheDay.label} • Modes cleared ${state.clearedModes.size}/${PLAYABLE_ACTIVITIES_UI.size}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CreameryMuted,
                 )
             }
-
-            Text(
-                text = "Session score ${state.sessionScore}  •  Flavor of the day: ${state.flavorOfTheDay.label}",
-                style = MaterialTheme.typography.bodySmall,
-                color = CreameryMuted,
-            )
         }
     }
 }
+
+private val PLAYABLE_ACTIVITIES_UI = listOf(
+    CreameryActivity.CLARITY,
+    CreameryActivity.SCAN,
+    CreameryActivity.SEQUENCE,
+    CreameryActivity.CATEGORY,
+    CreameryActivity.SYMMETRY,
+    CreameryActivity.FLIP,
+    CreameryActivity.PATTERN,
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MidnightParlor(
     state: CognitiveCreameryUiState,
     onSelectActivity: (CreameryActivity) -> Unit,
-    onFinish: () -> Unit,
     onReset: () -> Unit,
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
+            .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -392,13 +368,13 @@ private fun MidnightParlor(
                     letterSpacing = 4.sp,
                 )
                 Text(
-                    text = "Choose a calm focus activity.",
+                    text = "Full Creamery Suite",
                     style = MaterialTheme.typography.titleLarge,
                     color = CreameryText,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Sequence and Clarity now play inside one moody parlor with a shared fatigue meter.",
+                    text = "The original build had seven focus games. This port restores all seven as native mini-games with their own 50-level ladders.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = CreameryMuted,
                 )
@@ -406,13 +382,14 @@ private fun MidnightParlor(
         }
 
         FlowRow(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            listOf(CreameryActivity.SEQUENCE, CreameryActivity.CLARITY).forEach { activity ->
+            PLAYABLE_ACTIVITIES_UI.forEach { activity ->
                 CreameryActivityCard(
                     activity = activity,
                     featured = state.flavorOfTheDay == activity,
+                    completed = activity in state.clearedModes,
                     onClick = { onSelectActivity(activity) },
                 )
             }
@@ -439,16 +416,13 @@ private fun MidnightParlor(
 private fun CreameryActivityCard(
     activity: CreameryActivity,
     featured: Boolean,
+    completed: Boolean,
     onClick: () -> Unit,
 ) {
-    val accent = when (activity) {
-        CreameryActivity.SEQUENCE -> CreamerySequence
-        CreameryActivity.CLARITY -> CreameryClarity
-        CreameryActivity.PARLOR -> CreameryGold
-    }
+    val accent = Color(activity.accent)
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 1.08f else 1f, label = "activity_scale_${activity.name}")
+    val scale by animateFloatAsState(if (pressed) 1.04f else 1f, label = "activity_scale_${activity.name}")
 
     Card(
         modifier = Modifier
@@ -457,11 +431,7 @@ private fun CreameryActivityCard(
                 scaleX = scale
                 scaleY = scale
             }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick,
-            ),
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = CreameryCard),
         shape = RoundedCornerShape(22.dp),
     ) {
@@ -481,16 +451,13 @@ private fun CreameryActivityCard(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp,
                 )
-                if (featured) {
-                    Text(
-                        text = "FOTD",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF140D0B),
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier
-                            .background(accent, RoundedCornerShape(999.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (featured) {
+                        Tag("FOTD", accent, Color(0xFF140D0B))
+                    }
+                    if (completed) {
+                        Tag("50/50", CreameryGold, Color(0xFF140D0B))
+                    }
                 }
             }
             Text(
@@ -509,178 +476,173 @@ private fun CreameryActivityCard(
 }
 
 @Composable
-private fun SequenceSuite(
-    state: SequenceUiState,
-    fatigueIncreased: Boolean,
+private fun Tag(text: String, background: Color, content: Color) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = content,
+        fontWeight = FontWeight.Black,
+        modifier = Modifier
+            .background(background, RoundedCornerShape(999.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ClarityMode(state: ClarityRound, onTap: (String) -> Unit) {
+    ModeCard(title = "Find 3 related concepts", subtitle = state.theme, accent = Color(CreameryActivity.CLARITY.accent)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            maxItemsInEachRow = 2
+        ) {
+            state.options.forEach { word ->
+                val isFound = word in state.foundWords
+                val isWrong = word in state.wrongWords
+                val bg by animateColorAsState(
+                    targetValue = when {
+                        isFound -> Color(CreameryActivity.CLARITY.accent).copy(alpha = 0.88f)
+                        isWrong -> CreameryDanger.copy(alpha = 0.28f)
+                        else -> Color.White.copy(alpha = 0.08f)
+                    },
+                    label = "clarity_$word",
+                )
+                TileButton(
+                    text = word,
+                    modifier = Modifier
+                        .fillMaxWidth(0.48f)
+                        .height(64.dp),
+                    enabled = !isFound && !isWrong,
+                    background = bg,
+                    onClick = { onTap(word) },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ScanMode(state: ScanRound, onTap: (Int) -> Unit) {
+    ModeCard(
+        title = "Locate All",
+        subtitle = "Find ${state.needed} of ${state.target}",
+        accent = Color(CreameryActivity.SCAN.accent),
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 4) {
+            state.grid.forEachIndexed { index, symbol ->
+                val found = index in state.foundIndices
+                val wrong = index in state.wrongIndices
+                TileButton(
+                    text = symbol,
+                    modifier = Modifier.size(72.dp),
+                    enabled = !found && !wrong,
+                    background = when {
+                        found -> Color(CreameryActivity.SCAN.accent).copy(alpha = 0.85f)
+                        wrong -> CreameryDanger.copy(alpha = 0.3f)
+                        else -> Color.White.copy(alpha = 0.08f)
+                    },
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    onClick = { onTap(index) },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SequenceMode(
+    state: SequenceRound,
     onReady: () -> Unit,
-    onTokenTapped: (String) -> Unit,
-    onUndo: () -> Unit,
-    onCheck: () -> Unit,
-    onNextRound: () -> Unit,
-    onBackToParlor: () -> Unit,
-    onDone: () -> Unit,
-) {
-    when (state.phase) {
-        CreameryPhase.STUDY -> SequenceStudyPhase(state = state, onReady = onReady)
-        CreameryPhase.INPUT -> SequenceInputPhase(
-            state = state,
-            fatigueIncreased = fatigueIncreased,
-            onTokenTapped = onTokenTapped,
-            onUndo = onUndo,
-            onCheck = onCheck,
-        )
-        CreameryPhase.ROUND_RESULT -> SequenceRoundResultPhase(state = state, onNextRound = onNextRound)
-        CreameryPhase.RUN_COMPLETE -> SequenceRunCompletePhase(
-            state = state,
-            onBackToParlor = onBackToParlor,
-            onDone = onDone,
-        )
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SequenceStudyPhase(state: SequenceUiState, onReady: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CreameryCard),
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                text = "Flavor Sequence",
-                style = MaterialTheme.typography.titleLarge,
-                color = CreameryText,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Round ${state.currentRound + 1} of ${state.totalRounds}",
-                style = MaterialTheme.typography.labelMedium,
-                color = CreamerySequence,
-            )
-            Text(
-                text = "Memorize the order, then rebuild it from memory in the next step.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = CreameryMuted,
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                state.targetSequence.forEachIndexed { index, flavor ->
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
-                        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 6 }),
-                    ) {
-                        GradientChip(
-                            text = "${index + 1}. $flavor",
-                            colors = listOf(
-                                CreamerySequence.copy(alpha = 0.82f),
-                                CreameryGold.copy(alpha = 0.82f),
-                            ),
-                        )
-                    }
-                }
-            }
-            PressScaleButton(
-                label = "Ready",
-                onClick = onReady,
-                modifier = Modifier.fillMaxWidth(),
-                filled = false,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SequenceInputPhase(
-    state: SequenceUiState,
-    fatigueIncreased: Boolean,
-    onTokenTapped: (String) -> Unit,
+    onToken: (String) -> Unit,
     onUndo: () -> Unit,
     onCheck: () -> Unit,
 ) {
-    val sequenceFull = state.playerSequence.size == state.targetSequence.size
-    val wobble = remember { Animatable(0f) }
-    LaunchedEffect(fatigueIncreased) {
-        if (!fatigueIncreased) return@LaunchedEffect
-        listOf(-9f, 8f, -6f, 4f, -2f, 0f).forEach {
-            wobble.snapTo(it)
-            delay(18)
+    // AAA Mechanic: Automatic transition from STUDY to INPUT
+    if (state.phase == SequencePhase.STUDY) {
+        val studyDuration = 1000L + (state.targetSequence.size * 600L)
+        LaunchedEffect(state.targetSequence) {
+            kotlinx.coroutines.delay(studyDuration)
+            onReady()
         }
-        wobble.snapTo(0f)
     }
 
-    Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CreameryCard),
-        modifier = Modifier.offset { IntOffset(wobble.value.toInt(), 0) },
+    ModeCard(
+        title = "Sweet Sequence",
+        subtitle = when (state.phase) {
+            SequencePhase.STUDY -> "Watch the pattern"
+            SequencePhase.INPUT -> "Repeat it"
+            SequencePhase.ROUND_RESULT -> if (state.lastRoundCorrect == true) "Correct" else "Not quite"
+        },
+        accent = Color(CreameryActivity.SEQUENCE.accent),
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                text = "Rebuild the order",
-                style = MaterialTheme.typography.titleLarge,
-                color = CreameryText,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "${state.playerSequence.size} / ${state.targetSequence.size} selected",
-                style = MaterialTheme.typography.labelMedium,
-                color = CreameryMuted,
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                state.playerSequence.forEachIndexed { index, flavor ->
-                    GradientChip(
-                        text = "${index + 1}. $flavor",
-                        colors = listOf(
-                            CreameryGold.copy(alpha = 0.88f),
-                            CreamerySequence.copy(alpha = 0.80f),
-                        ),
-                    )
+        when (state.phase) {
+            SequencePhase.STUDY -> {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    state.targetSequence.forEach {
+                        GradientChip(it, listOf(Color(CreameryActivity.SEQUENCE.accent), CreameryGold))
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                // The "Ready" button is removed in favor of automatic transition
+            }
+            SequencePhase.INPUT -> {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    repeat(state.targetSequence.size) { index ->
+                        val token = state.playerSequence.getOrNull(index) ?: "?"
+                        GradientChip(token, listOf(CreameryGold.copy(alpha = 0.85f), Color(CreameryActivity.SEQUENCE.accent).copy(alpha = 0.8f)))
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 3) {
+                    state.choices.forEach {
+                        TileButton(
+                            text = it,
+                            modifier = Modifier.size(76.dp),
+                            background = Color.White.copy(alpha = 0.08f),
+                            textStyle = MaterialTheme.typography.headlineSmall,
+                            onClick = { onToken(it) },
+                        )
+                    }
+                }
+                // Undo and Check buttons removed per plan
+            }
+            SequencePhase.ROUND_RESULT -> {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    state.targetSequence.forEach {
+                        GradientChip(it, listOf(CreameryDanger.copy(alpha = 0.86f), Color(0xFF6E3434).copy(alpha = 0.86f)))
+                    }
                 }
             }
+        }
+    }
+}
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                state.availableTokens.forEach { token ->
-                    PressScaleButton(
-                        label = token,
-                        onClick = { onTokenTapped(token) },
-                        filled = true,
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (state.playerSequence.isNotEmpty()) {
-                    PressScaleButton(
-                        label = "Undo",
-                        onClick = onUndo,
-                        filled = true,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                PressScaleButton(
-                    label = "Check",
-                    onClick = onCheck,
-                    enabled = sequenceFull,
-                    filled = false,
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CategoryMode(state: CategoryRound, onTap: (Int) -> Unit) {
+    ModeCard(
+        title = "Target Category",
+        subtitle = state.targetCategory.uppercase(),
+        accent = Color(CreameryActivity.CATEGORY.accent),
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 3) {
+            state.items.forEachIndexed { index, item ->
+                val matched = index in state.matchedIndices
+                val wrong = index in state.wrongIndices
+                TileButton(
+                    text = item.symbol,
+                    modifier = Modifier.size(76.dp),
+                    enabled = !matched && !wrong,
+                    background = when {
+                        matched -> Color(CreameryActivity.CATEGORY.accent).copy(alpha = 0.85f)
+                        wrong -> CreameryDanger.copy(alpha = 0.3f)
+                        else -> Color.White.copy(alpha = 0.08f)
+                    },
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    onClick = { onTap(index) },
                 )
             }
         }
@@ -689,100 +651,172 @@ private fun SequenceInputPhase(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SequenceRoundResultPhase(
-    state: SequenceUiState,
-    onNextRound: () -> Unit,
-) {
-    Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CreameryCard),
+private fun SymmetryMode(state: SymmetryRound, onCycle: (Int) -> Unit, onCheck: () -> Unit) {
+    val columns = if (state.cellCount == 6) 3 else 2
+    ModeCard(
+        title = "Sugar Symmetry",
+        subtitle = "Match the blueprint",
+        accent = Color(CreameryActivity.SYMMETRY.accent),
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            maxItemsInEachRow = 2,
         ) {
-            Text(
-                text = if (state.lastRoundCorrect) "Correct" else "Not quite",
-                style = MaterialTheme.typography.titleLarge,
-                color = if (state.lastRoundCorrect) CreameryClarity else CreameryDanger,
-                fontWeight = FontWeight.Bold,
-            )
-            if (!state.lastRoundCorrect) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    state.targetSequence.forEachIndexed { index, flavor ->
-                        GradientChip(
-                            text = "${index + 1}. $flavor",
-                            colors = listOf(
-                                CreameryDanger.copy(alpha = 0.86f),
-                                Color(0xFF6E3434).copy(alpha = 0.86f),
-                            ),
-                        )
-                    }
-                }
-            }
-            PressScaleButton(
-                label = "Next Round",
-                onClick = onNextRound,
-                modifier = Modifier.fillMaxWidth(),
-                filled = false,
-            )
+            SymmetryGrid(title = "Blueprint", cells = state.blueprint, columns = columns, interactive = false, onTap = {})
+            SymmetryGrid(title = "Your Grid", cells = state.player, columns = columns, interactive = true, onTap = onCycle)
         }
+        PressScaleButton(
+            label = "Check Symmetry",
+            onClick = onCheck,
+            filled = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp),
+        )
     }
 }
 
 @Composable
-private fun SequenceRunCompletePhase(
-    state: SequenceUiState,
-    onBackToParlor: () -> Unit,
-    onDone: () -> Unit,
+private fun SymmetryGrid(
+    title: String,
+    cells: List<Int>,
+    columns: Int,
+    interactive: Boolean,
+    onTap: (Int) -> Unit,
 ) {
-    Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CreameryCard),
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = "Sequence complete",
-                style = MaterialTheme.typography.titleLarge,
-                color = CreameryText,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "${state.correctRounds} of ${state.totalRounds} rounds cleared",
-                style = MaterialTheme.typography.bodyLarge,
-                color = CreameryMuted,
-                textAlign = TextAlign.Center,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PressScaleButton(
-                    label = "Back to Parlor",
-                    onClick = onBackToParlor,
-                    modifier = Modifier.weight(1f),
-                    filled = true,
-                )
-                PressScaleButton(
-                    label = "Finish",
-                    onClick = onDone,
-                    modifier = Modifier.weight(1f),
-                    filled = false,
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, style = MaterialTheme.typography.labelSmall, color = CreameryMuted)
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = columns) {
+            cells.forEachIndexed { index, tile ->
+                TileButton(
+                    text = SymmetryTilesUi[tile].ifEmpty { "·" },
+                    modifier = Modifier.size(56.dp),
+                    enabled = interactive,
+                    background = Color.White.copy(alpha = 0.08f),
+                    textStyle = MaterialTheme.typography.titleLarge,
+                    onClick = { onTap(index) },
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BrainFreezeOverlay(
-    onRecover: () -> Unit,
+private fun FlipMode(state: FlipRound, onGuess: (String) -> Unit) {
+    ModeCard(
+        title = "Flavor Flip",
+        subtitle = "Select the ${state.rule}",
+        accent = Color(CreameryActivity.FLIP.accent),
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("SELECT THE ${state.rule}", style = MaterialTheme.typography.labelSmall, color = CreameryMuted)
+                Text(
+                    text = state.displayWord,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color(state.displayColor),
+                    fontWeight = FontWeight.Black,
+                )
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            maxItemsInEachRow = 2
+        ) {
+            state.answerLabels.forEach { (label, color) ->
+                TileButton(
+                    text = "", // Swatch only
+                    modifier = Modifier
+                        .fillMaxWidth(0.48f)
+                        .height(80.dp),
+                    background = Color(color),
+                    onClick = { onGuess(label) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PatternMode(state: PatternRound, onGuess: (String) -> Unit) {
+    ModeCard(
+        title = "Pattern Pieces",
+        subtitle = "Complete the missing treat",
+        accent = Color(CreameryActivity.PATTERN.accent),
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            state.sequence.forEach {
+                Text(it, style = MaterialTheme.typography.displaySmall)
+            }
+            Text("?", style = MaterialTheme.typography.displaySmall, color = Color(CreameryActivity.PATTERN.accent), fontWeight = FontWeight.Black)
+        }
+        Spacer(Modifier.height(12.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 4) {
+            state.options.forEach {
+                TileButton(
+                    text = it,
+                    modifier = Modifier.size(72.dp),
+                    background = Color.White.copy(alpha = 0.08f),
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    onClick = { onGuess(it) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeCard(
+    title: String,
+    subtitle: String,
+    accent: Color,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = CreameryCard),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            content = {
+                Text(title, style = MaterialTheme.typography.titleLarge, color = CreameryText, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = accent, fontWeight = FontWeight.SemiBold)
+                content()
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ResultOverlay(
+    overlay: CreameryResultOverlay,
+    onMenu: () -> Unit,
     onFinish: () -> Unit,
 ) {
+    val accent = Color(overlay.activity.accent)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -795,35 +829,31 @@ private fun BrainFreezeOverlay(
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
-                modifier = Modifier.padding(22.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Brain Freeze",
+                    text = overlay.title,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = CreameryText,
+                    color = if (overlay.success) accent else CreameryDanger,
                     fontWeight = FontWeight.Black,
                 )
                 Text(
-                    text = "Too many misses built up fatigue. Recover to continue the suite or cash out now.",
+                    text = overlay.message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = CreameryMuted,
                     textAlign = TextAlign.Center,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PressScaleButton(
-                        label = "Recover",
-                        onClick = onRecover,
-                        modifier = Modifier.weight(1f),
-                        filled = true,
-                    )
-                    PressScaleButton(
-                        label = "Finish",
-                        onClick = onFinish,
-                        modifier = Modifier.weight(1f),
-                        filled = false,
-                    )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PressScaleButton("Back to Menu", onMenu, modifier = Modifier.fillMaxWidth(), filled = true)
+                    PressScaleButton("Finish", onFinish, modifier = Modifier.fillMaxWidth(), filled = false)
                 }
             }
         }
@@ -831,25 +861,46 @@ private fun BrainFreezeOverlay(
 }
 
 @Composable
-private fun GradientChip(
-    text: String,
-    colors: List<Color>,
-    textStyle: TextStyle = MaterialTheme.typography.labelLarge,
-) {
+private fun GradientChip(text: String, colors: List<Color>, textStyle: TextStyle = MaterialTheme.typography.labelLarge) {
     Box(
         modifier = Modifier
-            .background(
-                brush = Brush.horizontalGradient(colors),
-                shape = RoundedCornerShape(24.dp),
-            )
+            .background(brush = Brush.horizontalGradient(colors), shape = RoundedCornerShape(24.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = text,
-            color = Color(0xFF120D0B),
-            style = textStyle,
-            fontWeight = FontWeight.SemiBold,
-        )
+        Text(text = text, color = Color(0xFF120D0B), style = textStyle, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun TileButton(
+    text: String,
+    modifier: Modifier,
+    enabled: Boolean = true,
+    background: Color,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 1.06f else 1f, label = "tile_$text")
+    Card(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clickable(interactionSource = interactionSource, indication = null, enabled = enabled, onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = background),
+        shape = RoundedCornerShape(18.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = text, style = textStyle, color = CreameryText, textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
 
@@ -863,15 +914,12 @@ internal fun PressScaleButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 1.1f else 1f, label = "press_scale_$label")
+    val scale by animateFloatAsState(if (pressed) 1.08f else 1f, label = "press_scale_$label")
 
     if (filled) {
         FilledTonalButton(
             onClick = onClick,
-            modifier = modifier.graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+            modifier = modifier.graphicsLayer { scaleX = scale; scaleY = scale },
             interactionSource = interactionSource,
             enabled = enabled,
         ) {
@@ -880,16 +928,10 @@ internal fun PressScaleButton(
     } else {
         Button(
             onClick = onClick,
-            modifier = modifier.graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+            modifier = modifier.graphicsLayer { scaleX = scale; scaleY = scale },
             interactionSource = interactionSource,
             enabled = enabled,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = CreameryGold,
-                contentColor = Color(0xFF120D0B),
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = CreameryGold, contentColor = Color(0xFF120D0B)),
         ) {
             Text(label, fontWeight = FontWeight.Bold)
         }
@@ -897,9 +939,9 @@ internal fun PressScaleButton(
 }
 
 @Composable
-private fun FatigueVignette(fatigueLevel: Int) {
-    if (fatigueLevel <= 0) return
-    val intensity = fatigueLevel.toFloat() / MAX_FATIGUE.toFloat()
+private fun FatigueVignette(fatigue: Int) {
+    if (fatigue <= 0) return
+    val intensity = fatigue.toFloat() / CREAMERY_MAX_FATIGUE.toFloat()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -907,8 +949,8 @@ private fun FatigueVignette(fatigueLevel: Int) {
                 Brush.radialGradient(
                     colors = listOf(
                         Color.Transparent,
-                        CreameryFrost.copy(alpha = 0.12f * intensity),
-                        CreameryFrost.copy(alpha = 0.32f * intensity),
+                        CreameryFrost.copy(alpha = 0.10f * intensity),
+                        CreameryFrost.copy(alpha = 0.26f * intensity),
                     ),
                     radius = 1200f,
                 ),
@@ -919,28 +961,20 @@ private fun FatigueVignette(fatigueLevel: Int) {
 @Composable
 private fun SparkleBurst(visible: Boolean) {
     val sparkles = remember {
-        listOf(
-            Triple(IntOffset(-42, -36), 22.sp, 0L),
-            Triple(IntOffset(38, -28), 18.sp, 80L),
-            Triple(IntOffset(-18, 30), 16.sp, 140L),
-            Triple(IntOffset(28, 34), 20.sp, 40L),
-            Triple(IntOffset(0, -54), 24.sp, 110L),
-        )
+        listOf("✦", "✧", "✦", "✧", "✦")
     }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        sparkles.forEachIndexed { index, (offset, size, delayMs) ->
+        sparkles.forEachIndexed { index, symbol ->
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn() + scaleIn(initialScale = 0.6f),
                 exit = fadeOut() + scaleOut(targetScale = 1.2f),
             ) {
                 Text(
-                    text = if (index % 2 == 0) "✦" else "✧",
-                    color = if (index % 2 == 0) CreameryGold else CreameryClarity,
-                    fontSize = size,
-                    modifier = Modifier.offset {
-                        IntOffset(offset.x, offset.y)
-                    },
+                    text = symbol,
+                    color = if (index % 2 == 0) CreameryGold else CreameryFrost,
+                    fontSize = (18 + index * 2).sp,
+                    modifier = Modifier.padding((index * 6).dp),
                 )
             }
         }

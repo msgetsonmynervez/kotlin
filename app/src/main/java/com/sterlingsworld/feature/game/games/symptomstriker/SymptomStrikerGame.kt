@@ -13,7 +13,6 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -32,9 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -282,6 +279,7 @@ private fun BattleField(
         EncounterHeader(state)
         EnemyCard(state)
         PlayerStatusCard(state)
+        SessionProgressBanner(state)
         StatusHud(state)
         AnimatedContent(
             targetState = turnSignature,
@@ -359,6 +357,7 @@ private fun EnemyCard(state: SymptomStrikerUiState) {
                 }
             }
             GlowingSprite(
+                portraitRes = state.enemyPortraitRes,
                 sprite = state.enemySprite,
                 enraged = state.enemyEnraged,
             )
@@ -374,6 +373,7 @@ private fun EnemyCard(state: SymptomStrikerUiState) {
 
 @Composable
 private fun GlowingSprite(
+    portraitRes: Int?,
     sprite: String,
     enraged: Boolean,
 ) {
@@ -411,18 +411,30 @@ private fun GlowingSprite(
             }
             .padding(vertical = 8.dp),
     ) {
-        Text(
-            text = sprite,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 20.sp,
-            color = if (enraged) Color(0xFFFFE0D4) else Color(0xFFE6FAFF),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .shadow(if (enraged) 18.dp else 10.dp, RoundedCornerShape(12.dp))
-                .background(Color.Black.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-        )
+        if (portraitRes != null) {
+            Image(
+                painter = painterResource(id = portraitRes),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .shadow(if (enraged) 18.dp else 10.dp, RoundedCornerShape(16.dp)),
+            )
+        } else {
+            Text(
+                text = sprite,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 20.sp,
+                color = if (enraged) Color(0xFFFFE0D4) else Color(0xFFE6FAFF),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .shadow(if (enraged) 18.dp else 10.dp, RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+        }
     }
 }
 
@@ -444,15 +456,56 @@ private fun PlayerStatusCard(state: SymptomStrikerUiState) {
             HpBar(
                 current = state.playerHp,
                 max = state.playerMaxHp,
-            color = BattleSuccess,
-                label = "Your HP: ${state.playerHp} / ${state.playerMaxHp}",
+                color = BattleSuccess,
+                label = if (state.status.masked > 0) {
+                    "Your HP: ???"
+                } else {
+                    "Your HP: ${state.playerHp} / ${state.playerMaxHp}"
+                },
+                masked = state.status.masked > 0,
             )
-            SpoonRow(spoons = state.playerSpoons, maxSpoons = state.playerMaxSpoons)
+            SpoonRow(
+                spoons = state.playerSpoons,
+                maxSpoons = state.playerMaxSpoons,
+                masked = state.status.masked > 0,
+            )
             if (state.sessionSpoonPenalty > 0) {
                 Text(
                     text = "Overuse penalty: \u2212${state.sessionSpoonPenalty} max Spoons this session",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFFFFAB91),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionProgressBanner(state: SymptomStrikerUiState) {
+    if (state.unlockedMoveLabels.isEmpty() && state.latestUnlockedMoveLabel == null) return
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.48f)),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            state.latestUnlockedMoveLabel?.let { latest ->
+                Text(
+                    text = "Session unlock: $latest",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = BattleAccent,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (state.unlockedMoveLabels.isNotEmpty()) {
+                Text(
+                    text = "Unlocked moves: ${state.unlockedMoveLabels.joinToString(", ")}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.74f),
                 )
             }
         }
@@ -555,7 +608,10 @@ private fun MoveGrid(
     state: SymptomStrikerUiState,
     onMoveSelected: (String) -> Unit,
 ) {
-    val regularMoves = state.moves.filter { it.id != "push_through" }
+    val regularMoves = remember(state.moves, state.status.numb, state.battleLog) {
+        val source = state.moves.filter { it.id != "push_through" }
+        if (state.status.numb > 0) source.shuffled(Random(state.battleLog.hashCode().toLong())) else source
+    }
     val pushThrough = state.moves.find { it.id == "push_through" }
 
     FlowRow(
@@ -663,27 +719,33 @@ private fun MoveButton(
 }
 
 @Composable
-private fun HpBar(current: Int, max: Int, color: Color, label: String) {
+private fun HpBar(
+    current: Int,
+    max: Int,
+    color: Color,
+    label: String,
+    masked: Boolean = false,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.74f))
         LinearProgressIndicator(
-            progress = { if (max > 0) current.toFloat() / max else 0f },
+            progress = { if (masked) 1f else if (max > 0) current.toFloat() / max else 0f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(10.dp)
                 .shadow(8.dp, RoundedCornerShape(6.dp))
                 .background(Color.Black.copy(alpha = 0.18f), RoundedCornerShape(6.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.18f),
+            color = if (masked) BattleAccent else color,
+            trackColor = if (masked) BattleAccent.copy(alpha = 0.25f) else color.copy(alpha = 0.18f),
         )
     }
 }
 
 @Composable
-private fun SpoonRow(spoons: Int, maxSpoons: Int) {
+private fun SpoonRow(spoons: Int, maxSpoons: Int, masked: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "Spoons: $spoons / $maxSpoons",
+            text = if (masked) "Spoons: ???" else "Spoons: $spoons / $maxSpoons",
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.74f),
         )
@@ -692,7 +754,11 @@ private fun SpoonRow(spoons: Int, maxSpoons: Int) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_spoon),
                     contentDescription = null,
-                    tint = if (index < spoons) BattleAccent else BattleAccent.copy(alpha = 0.22f),
+                    tint = when {
+                        masked -> BattleAccent
+                        index < spoons -> BattleAccent
+                        else -> BattleAccent.copy(alpha = 0.22f)
+                    },
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -836,6 +902,14 @@ private fun EncounterWinOverlay(state: SymptomStrikerUiState, onNext: () -> Unit
                     color = Color.White.copy(alpha = 0.72f),
                     textAlign = TextAlign.Center,
                 )
+                state.latestUnlockedMoveLabel?.let { unlocked ->
+                    Text(
+                        text = "Unlocked for the rest of this run: $unlocked",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = BattleAccent,
+                        textAlign = TextAlign.Center,
+                    )
+                }
                 Text(
                     text = "HP remaining: ${state.playerHp} / ${state.playerMaxHp}",
                     style = MaterialTheme.typography.labelMedium,
@@ -898,6 +972,14 @@ private fun OutcomeOverlay(
                         text = "Push Through penalty: \u2212${state.sessionSpoonPenalty} max Spoon(s) used",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFFFFAB91),
+                    )
+                }
+                if (won && state.unlockedMoveLabels.isNotEmpty()) {
+                    Text(
+                        text = "Session unlocks carried: ${state.unlockedMoveLabels.joinToString(", ")}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = BattleAccent,
+                        textAlign = TextAlign.Center,
                     )
                 }
                 Button(

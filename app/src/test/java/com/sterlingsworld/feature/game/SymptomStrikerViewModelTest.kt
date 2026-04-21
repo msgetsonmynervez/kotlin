@@ -444,6 +444,40 @@ class SymptomStrikerViewModelTest {
     }
 
     @Test
+    fun `clearing encounter unlocks its reward move for the next gym`() {
+        val first = safeEncounter(enemyHp = 28, playerSpoons = 8).copy(
+            rewardMoveId = "adaptive_yoga",
+        )
+        val second = safeEncounter(enemyHp = 400).copy(
+            moves = listOf("rest", "box_breathing", "physical_therapy", "push_through"),
+        )
+        val vm = vmWith(first, second)
+        vm.beginBattle()
+        vm.onMoveSelected("physical_therapy")
+        assertEquals("Adaptive Yoga", vm.uiState.value.latestUnlockedMoveLabel)
+
+        vm.onNextEncounter()
+        val nextMoveIds = vm.uiState.value.moves.map { it.id }
+        assertTrue(nextMoveIds.contains("adaptive_yoga"))
+    }
+
+    @Test
+    fun `blurred status reduces non-clearing attack damage`() {
+        val blurEnc = alwaysSpecialEncounter(
+            appliesStatus = StatusKey.BLURRED,
+            moves = listOf("rest", "physical_therapy", "corticosteroids", "push_through"),
+        )
+        val vm = SymptomStrikerViewModel.test(listOf(blurEnc), DEFAULT_BATTLE_CONFIG, Random(0))
+        vm.beginBattle()
+        vm.onMoveSelected("rest")
+        assertTrue(vm.uiState.value.status.blurred > 0)
+
+        val enemyHpBefore = vm.uiState.value.enemyHp
+        vm.onMoveSelected("physical_therapy")
+        assertEquals(22, enemyHpBefore - vm.uiState.value.enemyHp)
+    }
+
+    @Test
     fun `result stars are 3 when all encounters cleared with high HP`() {
         // Win single encounter with most HP remaining (200/200 -> ~50%+ after enemy hits)
         val vm = vmWith(safeEncounter(playerHp = 200, enemyHp = 28))

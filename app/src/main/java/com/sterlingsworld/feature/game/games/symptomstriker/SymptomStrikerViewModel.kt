@@ -12,7 +12,7 @@ data class SymptomStrikerUiState(
 
     // Encounter context
     val encounterIndex: Int = 0,
-    val totalEncounters: Int = 3,
+    val totalEncounters: Int = 8,
     val encounterTitle: String = "",
     val introText: String = "",
     val symptomsDesc: String = "",
@@ -29,6 +29,7 @@ data class SymptomStrikerUiState(
 
     // Enemy
     val enemyName: String = "",
+    val enemyPortraitRes: Int? = null,
     val enemySprite: String = "",
     val enemyHp: Int = 0,
     val enemyMaxHp: Int = 0,
@@ -39,6 +40,8 @@ data class SymptomStrikerUiState(
 
     // Moves available this encounter (resolved from MOVE_LIBRARY)
     val moves: List<MoveDefinition> = emptyList(),
+    val unlockedMoveLabels: List<String> = emptyList(),
+    val latestUnlockedMoveLabel: String? = null,
 
     // Narrative feedback for the last resolved turn
     val battleLog: String = "",
@@ -78,6 +81,8 @@ class SymptomStrikerViewModel private constructor(
 
     private var sessionSpoonPenalty = 0
     private var encountersCleared = 0
+    private val unlockedMoveIds = linkedSetOf<String>()
+    private var latestUnlockedMoveLabel: String? = null
     private val startTimeMs = System.currentTimeMillis()
 
     private val _uiState = MutableStateFlow(SymptomStrikerUiState())
@@ -135,12 +140,16 @@ class SymptomStrikerViewModel private constructor(
         if (enemyHp <= 0) {
             enemyHp = 0
             encountersCleared++
+            val unlockedMove = unlockEncounterReward(enc)
             phase = if (encounterIndex >= encounters.lastIndex) {
                 BattlePhase.RUN_WIN
             } else {
                 BattlePhase.ENCOUNTER_WIN
             }
             log.append(" You defeated the ${enc.enemy.name}!")
+            if (unlockedMove != null) {
+                log.append(" New move unlocked: ${unlockedMove.label}.")
+            }
             battleLog = log.toString()
             pushState()
             return
@@ -221,6 +230,7 @@ class SymptomStrikerViewModel private constructor(
         status = BattleStatus()
         phase = BattlePhase.INTRO
         battleLog = ""
+        latestUnlockedMoveLabel = null
         pushState()
     }
 
@@ -258,8 +268,13 @@ class SymptomStrikerViewModel private constructor(
                 log.append("${move.label} missed! (Vertigo). ")
             } else {
                 val enemy = encounters[encounterIndex].enemy
-                enemyHp = maxOf(0, enemyHp - move.power)
-                log.append("${move.label} deals ${move.power} damage. ")
+                val damage = if (status.blurred > 0 && move.id != "corticosteroids") {
+                    maxOf(1, (move.power * config.blurredDamageMultiplier).toInt())
+                } else {
+                    move.power
+                }
+                enemyHp = maxOf(0, enemyHp - damage)
+                log.append("${move.label} deals $damage damage. ")
                 if (enemyHp > 0) log.append("${enemy.name} HP: $enemyHp/${enemy.maxHp}.")
             }
         }
@@ -318,6 +333,7 @@ class SymptomStrikerViewModel private constructor(
     }
 
     private fun applyEnemyStatus(enc: EncounterDefinition, log: StringBuilder) {
+        val currentMoves = resolveEncounterMoves(enc).map { it.id }
         when (enc.enemy.appliesStatus) {
             StatusKey.LOCKED -> {
                 if (status.locked == 0) {
@@ -327,7 +343,7 @@ class SymptomStrikerViewModel private constructor(
             }
             StatusKey.FOGGED -> {
                 if (status.fogged == 0) {
-                    val targetId = pickFoggedTarget(enc.moves)
+                    val targetId = pickFoggedTarget(currentMoves)
                     status = status.copy(fogged = config.statusDuration, foggedMoveId = targetId)
                     val targetLabel = targetId?.let { MOVE_LIBRARY[it]?.label } ?: "a move"
                     log.append("You are FOGGED \u2014 $targetLabel is blocked for ${config.statusDuration} turns. ")
@@ -337,6 +353,24 @@ class SymptomStrikerViewModel private constructor(
                 if (status.overheated == 0) {
                     status = status.copy(overheated = config.statusDuration)
                     log.append("You are OVERHEATED \u2014 burn damage each turn for ${config.statusDuration} turns. ")
+                }
+            }
+            StatusKey.MASKED -> {
+                if (status.masked == 0) {
+                    status = status.copy(masked = config.statusDuration)
+                    log.append("You are MASKED \u2014 your exact HP and Spoons are hidden for ${config.statusDuration} turns. ")
+                }
+            }
+            StatusKey.BLURRED -> {
+                if (status.blurred == 0) {
+                    status = status.copy(blurred = config.statusDuration)
+                    log.append("You are BLURRED \u2014 most attacks deal reduced damage for ${config.statusDuration} turns. ")
+                }
+            }
+            StatusKey.NUMB -> {
+                if (status.numb == 0) {
+                    status = status.copy(numb = config.statusDuration)
+                    log.append("You are NUMB \u2014 your move layout becomes harder to read for ${config.statusDuration} turns. ")
                 }
             }
             StatusKey.VERTIGO -> {
@@ -365,6 +399,23 @@ class SymptomStrikerViewModel private constructor(
         return cost
     }
 
+    private fun unlockEncounterReward(encounter: EncounterDefinition): MoveDefinition? {
+        val rewardId = encounter.rewardMoveId ?: return null
+        val wasAdded = unlockedMoveIds.add(rewardId)
+        val move = MOVE_LIBRARY[rewardId]
+        latestUnlockedMoveLabel = if (wasAdded) move?.label else null
+        return if (wasAdded) move else null
+    }
+
+    private fun resolveEncounterMoves(encounter: EncounterDefinition): List<MoveDefinition> {
+        val orderedIds = buildList {
+            addAll(encounter.moves)
+            unlockedMoveIds.forEach(::add)
+            if (!contains("push_through")) add("push_through")
+        }.distinct()
+        return orderedIds.mapNotNull { MOVE_LIBRARY[it] }
+    }
+
     private fun pushState() {
         val enc = encounters[encounterIndex]
         _uiState.value = SymptomStrikerUiState(
@@ -383,12 +434,15 @@ class SymptomStrikerViewModel private constructor(
             pushThroughSafeUses = config.pushThroughSafeUses,
             sessionSpoonPenalty = sessionSpoonPenalty,
             enemyName = enc.enemy.name,
+            enemyPortraitRes = enc.enemy.portraitRes,
             enemySprite = enc.enemy.sprite,
             enemyHp = enemyHp,
             enemyMaxHp = enc.enemy.maxHp,
             enemyEnraged = enemyEnraged,
             status = status,
-            moves = enc.moves.mapNotNull { MOVE_LIBRARY[it] },
+            moves = resolveEncounterMoves(enc),
+            unlockedMoveLabels = unlockedMoveIds.mapNotNull { MOVE_LIBRARY[it]?.label },
+            latestUnlockedMoveLabel = latestUnlockedMoveLabel,
             battleLog = battleLog,
             encountersCleared = encountersCleared,
         )

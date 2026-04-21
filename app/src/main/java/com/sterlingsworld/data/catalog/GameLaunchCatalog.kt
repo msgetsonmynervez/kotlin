@@ -13,8 +13,11 @@ sealed interface GameLaunchSpec {
 object GameLaunchCatalog {
     fun forGame(gameId: String): GameLaunchSpec = when (gameId) {
         "cognitive-creamery",
+        "frogger",
         "ghost",
         "lucky-paws",
+        "spoon-gauntlet",
+        "spoons-and-stairs",
         "symptom-striker",
             -> GameLaunchSpec.EmbeddedCompose
 
@@ -23,7 +26,6 @@ object GameLaunchCatalog {
         NativeGameRegistry.GAME_ID_ACCESS_QUEST,
         NativeGameRegistry.GAME_ID_ACCESS_RACER,
         NativeGameRegistry.GAME_ID_SNAILS_JOURNEY,
-        NativeGameRegistry.GAME_ID_SPOON_GAUNTLET,
             -> GameLaunchSpec.Native(gameId)
 
         "kidz-doodle-land" -> GameLaunchSpec.WebView("Kidz-doodle_land")

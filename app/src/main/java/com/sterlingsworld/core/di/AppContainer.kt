@@ -1,8 +1,8 @@
 package com.sterlingsworld.core.di
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.sterlingsworld.data.preferences.AppPreferencesRepository
-import com.sterlingsworld.data.progress.GameProgressRepository
+import com.sterlingsworld.domain.repository.AppPreferencesRepository
+import com.sterlingsworld.domain.repository.GameProgressRepository
 
 data class AppContainer(
     val preferencesRepository: AppPreferencesRepository,

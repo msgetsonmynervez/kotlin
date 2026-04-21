@@ -1,2 +1,0 @@
-rootProject.name = 'ms_racer_game'
-include 'core', 'android'

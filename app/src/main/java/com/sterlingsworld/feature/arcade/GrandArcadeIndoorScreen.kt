@@ -75,72 +75,98 @@ import kotlinx.coroutines.launch
 private data class ArcadeEntry(
     val gameId: String,
     val route: String,
-    val isLive: Boolean,
+    val fallbackLive: Boolean,
+    val isPreview: Boolean,
     val description: String,
     @param:DrawableRes val thumbnailRes: Int,
 )
 
 private val arcadeGames = listOf(
     ArcadeEntry(
+        gameId = "spoons-and-stairs",
+        route = Screen.GamePlayer.withId("spoons-and-stairs"),
+        fallbackLive = true,
+        isPreview = true,
+        description = "Preview build: a faster three-lane spoon run with clearer collisions, combos, and pickup recovery.",
+        thumbnailRes = R.drawable.bg_rug,
+    ),
+    ArcadeEntry(
+        gameId = "frogger",
+        route = Screen.GamePlayer.withId("frogger"),
+        fallbackLive = true,
+        isPreview = true,
+        description = "Preview build: stylized crossing action with stronger onboarding, scoring, and lane reads.",
+        thumbnailRes = R.drawable.bg_road,
+    ),
+    ArcadeEntry(
         gameId = "symptom-striker",
         route = Screen.SymptomStriker.route,
-        isLive = true,
+        fallbackLive = true,
+        isPreview = false,
         description = "Flagship strategy battles with readable turns and crisp payoff.",
         thumbnailRes = R.drawable.bg_symptom_striker,
     ),
     ArcadeEntry(
         gameId = "cognitive-creamery",
         route = Screen.Creamery.route,
-        isLive = true,
+        fallbackLive = true,
+        isPreview = false,
         description = "Memory and focus rounds staged like a warm neon brain-training parlor.",
         thumbnailRes = R.drawable.bg_cognitive_creamery,
     ),
     ArcadeEntry(
         gameId = NativeGameRegistry.GAME_ID_SPOON_GAUNTLET,
         route = Screen.Gauntlet.route,
-        isLive = true,
+        fallbackLive = true,
+        isPreview = false,
         description = "Premium narrative runs with choices that visibly reshape the route.",
         thumbnailRes = R.drawable.bg_spoon_gauntlet,
     ),
     ArcadeEntry(
         gameId = "relaxation-retreat",
         route = Screen.RelaxationRetreat.route,
-        isLive = true,
+        fallbackLive = true,
+        isPreview = false,
         description = "Short, restorative mini-games designed to reset the pace without friction.",
         thumbnailRes = R.drawable.bg_relaxation_retreat,
     ),
     ArcadeEntry(
         gameId = "aol",
         route = Screen.Aol.route,
-        isLive = true,
-        description = "A sharper battle-theme remix with fast retries and a louder attitude.",
+        fallbackLive = false,
+        isPreview = false,
+        description = "A battle-theme side path still being prepared for release.",
         thumbnailRes = R.drawable.bg_aol,
     ),
     ArcadeEntry(
         gameId = NativeGameRegistry.GAME_ID_ACCESS_QUEST,
         route = Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_QUEST),
-        isLive = false,
+        fallbackLive = false,
+        isPreview = false,
         description = "Mobility-first route planning with hazards, pacing, and comeback checkpoints.",
         thumbnailRes = R.drawable.bg_grand_arcadie,
     ),
     ArcadeEntry(
         gameId = NativeGameRegistry.GAME_ID_ACCESS_RACER,
         route = Screen.GamePlayer.withId(NativeGameRegistry.GAME_ID_ACCESS_RACER),
-        isLive = false,
+        fallbackLive = false,
+        isPreview = false,
         description = "Assistive-ride racing built around readable handling and clean touch controls.",
         thumbnailRes = R.drawable.bg_grand_arcadie,
     ),
     ArcadeEntry(
         gameId = "Myelin Protocol",
         route = Screen.TechnicalDifficulties.route,
-        isLive = false,
+        fallbackLive = false,
+        isPreview = false,
         description = "A deep protocol experience. Details coming soon.",
         thumbnailRes = R.drawable.bg_grand_arcadie,
     ),
     ArcadeEntry(
         gameId = "lucky-paws",
         route = Screen.LuckyPaws.route,
-        isLive = false,
+        fallbackLive = false,
+        isPreview = false,
         description = "Reward reveals, cozy pet energy, and short replay-friendly runs.",
         thumbnailRes = R.drawable.bg_lucky_paws,
     ),
@@ -246,11 +272,12 @@ private fun NeonArcadeCard(
     val context = LocalContext.current
     val info = GameCatalog.byId(entry.gameId)
     val title = info?.title ?: entry.gameId
+    val isLive = entry.isPreview || info?.shipReady == true || (info == null && entry.fallbackLive)
     val slideAnim = remember(entry.gameId) { Animatable(36f) }
     val alphaAnim = remember(entry.gameId) { Animatable(0f) }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val borderBrush = if (entry.isLive) {
+    val borderBrush = if (isLive) {
         Brush.linearGradient(listOf(Color(0xFF00F2FF), Color(0xFFFF007F)))
     } else {
         Brush.linearGradient(listOf(Color(0xFF6B7280), Color(0xFF4B5563)))
@@ -270,8 +297,8 @@ private fun NeonArcadeCard(
             .graphicsLayer {
                 translationY = slideAnim.value
                 alpha = alphaAnim.value
-                scaleX = if (isPressed && entry.isLive) 1.02f else 1f
-                scaleY = if (isPressed && entry.isLive) 1.02f else 1f
+                scaleX = if (isPressed && isLive) 1.02f else 1f
+                scaleY = if (isPressed && isLive) 1.02f else 1f
             }
             .clip(RoundedCornerShape(16.dp))
             .background(Color.Black.copy(alpha = 0.75f))
@@ -283,7 +310,7 @@ private fun NeonArcadeCard(
                 shape = RoundedCornerShape(16.dp),
             )
             .clickable(
-                enabled = entry.isLive,
+                enabled = isLive,
                 interactionSource = interactionSource,
                 indication = null,
             ) { },
@@ -305,7 +332,7 @@ private fun NeonArcadeCard(
                     painter = painterResource(id = entry.thumbnailRes),
                     contentDescription = title,
                     contentScale = ContentScale.Crop,
-                    colorFilter = if (entry.isLive) null else grayscaleFilter(),
+                    colorFilter = if (isLive) null else grayscaleFilter(),
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -313,6 +340,14 @@ private fun NeonArcadeCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
+                if (entry.isPreview) {
+                    Text(
+                        text = "PREVIEW",
+                        color = Color(0xFFFFD166),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                }
                 Text(
                     text = title,
                     color = Color.White,
@@ -330,7 +365,7 @@ private fun NeonArcadeCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (entry.isLive) {
+            if (isLive) {
                 val playInteraction = remember { MutableInteractionSource() }
                 val playPressed by playInteraction.collectIsPressedAsState()
                 Box(
@@ -374,7 +409,7 @@ private fun NeonArcadeCard(
             }
         }
 
-        if (!entry.isLive) {
+        if (!isLive) {
             Text(
                 text = "COMING SOON",
                 color = Color.White.copy(alpha = 0.92f),

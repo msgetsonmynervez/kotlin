@@ -9,15 +9,24 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.sterlingsworld.domain.model.GameResult
+import com.sterlingsworld.feature.error.TechnicalDifficultiesScreen
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -37,11 +46,27 @@ fun WebViewGame(
     assetFolder: String,
     onDone: (GameResult) -> Unit,
 ) {
+    var hasLoadError by remember(assetFolder) { mutableStateOf(false) }
     var bridge: GameBridge? = null
+    if (hasLoadError) {
+        TechnicalDifficultiesScreen()
+        return
+    }
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
+                val assetPath = "games/$assetFolder/index.html"
+                val assetUrl = "file:///android_asset/$assetPath"
+                val assetExists = runCatching {
+                    context.assets.open(assetPath).close()
+                }.isSuccess
+                if (!assetExists) {
+                    Log.e("WebViewGame", "Missing local game asset: $assetPath")
+                    hasLoadError = true
+                    return@apply
+                }
+
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true          // required by some asset games for local state
                 settings.allowFileAccess = true            // needed to load the asset HTML page itself
@@ -63,12 +88,36 @@ fun WebViewGame(
                             uri.path?.startsWith(gamesAssetPrefix) == true
                         return !isPermitted
                     }
+
+                    override fun onReceivedError(
+                        view: WebView,
+                        request: WebResourceRequest,
+                        error: WebResourceError,
+                    ) {
+                        super.onReceivedError(view, request, error)
+                        if (request.isForMainFrame) {
+                            Log.e(
+                                "WebViewGame",
+                                "Main frame load error for $assetUrl: ${error.description}",
+                            )
+                            hasLoadError = true
+                        }
+                    }
+                }
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                        Log.d(
+                            "WebViewGame",
+                            "[${consoleMessage.messageLevel()}] ${consoleMessage.sourceId()}:${consoleMessage.lineNumber()} ${consoleMessage.message()}",
+                        )
+                        return super.onConsoleMessage(consoleMessage)
+                    }
                 }
 
                 // Only trusted local game assets may call methods on this bridge.
                 bridge = GameBridge(context, onDone)
                 addJavascriptInterface(bridge!!, "Android")
-                loadUrl("file:///android_asset/games/$assetFolder/index.html")
+                loadUrl(assetUrl)
             }
         },
         onRelease = { webView ->

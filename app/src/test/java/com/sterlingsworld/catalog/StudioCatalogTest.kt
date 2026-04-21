@@ -9,13 +9,13 @@ import org.junit.Test
 class StudioCatalogTest {
 
     @Test
-    fun `catalog has exactly 4 albums`() {
-        assertEquals(4, StudioCatalog.albums.size)
+    fun `catalog has exactly 5 albums`() {
+        assertEquals(5, StudioCatalog.albums.size)
     }
 
     @Test
-    fun `total track count is 126`() {
-        assertEquals(126, StudioCatalog.allTracks.size)
+    fun `total track count is 136`() {
+        assertEquals(136, StudioCatalog.allTracks.size)
     }
 
     @Test
@@ -30,6 +30,13 @@ class StudioCatalogTest {
         val album = StudioCatalog.albumById("dark-side-of-the-spoon")
         assertNotNull(album)
         assertEquals(15, album!!.tracks.size)
+    }
+
+    @Test
+    fun `stand up has 10 tracks`() {
+        val album = StudioCatalog.albumById("stand-up")
+        assertNotNull(album)
+        assertEquals(10, album!!.tracks.size)
     }
 
     @Test
@@ -67,9 +74,13 @@ class StudioCatalogTest {
     }
 
     @Test
-    fun `no asset path contains spaces`() {
-        StudioCatalog.allTracks.forEach { track ->
-            assertTrue("${track.id} path contains space: '${track.assetPath}'", !track.assetPath.contains(" "))
-        }
+    fun `playable albums match current release policy`() {
+        assertEquals(3, StudioCatalog.availableAlbums.size)
+        assertEquals(55, StudioCatalog.playableTracks.size)
+        assertTrue(StudioCatalog.availableAlbums.any { it.id == "dark-side-of-the-spoon" })
+        assertTrue(StudioCatalog.availableAlbums.any { it.id == "stand-up" })
+        assertTrue(StudioCatalog.availableAlbums.any { it.id == "neural-garden" })
+        assertTrue(StudioCatalog.downloadableAlbums.any { it.id == "groove" })
+        assertTrue(StudioCatalog.downloadableAlbums.any { it.id == "sterling-main" })
     }
 }

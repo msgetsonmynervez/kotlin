@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Base application theme. This theme uses Material 3 and removes the
+        default action bar since Jetpack Compose provides its own app bars.
+    -->
+    <style name="Theme.FroggerCompose" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your theme here if desired -->
+        <item name="colorPrimary">@color/green_500</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/blue_200</item>
+    </style>
+</resources>
